@@ -93,12 +93,12 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 - `get_schema(namespace='flow-schema', schema_type='flow-data')` — flow agent graph shape 확인 (필요 시 `vox-flow`로 handoff)
 
 ### Docs (vox-docs search)
-- `docs/build/overview` — 에이전트 빌드 개요
-- `docs/build/single-prompt/prompt-writing` — 프롬프트 작성 가이드
-- `docs/build/voice/voice-select` — 음성/LLM 선택
-- `docs/build/knowledge/overview` — 지식 베이스
-- `docs/build/variables/system-variables` — 시스템 변수
-- `docs/build/variables/dynamic-variables` — 동적 변수
+- `https://docs.tryvox.co/docs/build/overview` — 에이전트 빌드 개요
+- `https://docs.tryvox.co/docs/build/single-prompt/prompt-writing` — 프롬프트 작성 가이드
+- `https://docs.tryvox.co/docs/build/voice/voice-select` — 음성/LLM 선택
+- `https://docs.tryvox.co/docs/build/knowledge/overview` — 지식 베이스
+- `https://docs.tryvox.co/docs/build/variables/system-variables` — 시스템 변수
+- `https://docs.tryvox.co/docs/build/variables/dynamic-variables` — 동적 변수
 
 ### App URLs
 - `https://www.tryvox.co/dashboard/{organizationId}/agents` — 에이전트 목록

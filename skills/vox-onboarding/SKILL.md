@@ -128,8 +128,8 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 번호 구매와 인바운드 에이전트 연결은 공개 MCP에 도구가 없으므로 `https://www.tryvox.co/dashboard/{organizationId}/numbers`로 안내한다.
 
 ### Docs (vox-docs)
-- `docs/quickstart` — 빠른 시작 가이드
-- `docs/pricing` — 요금 안내
+- `https://docs.tryvox.co/docs/start/quickstart` — 빠른 시작 가이드
+- `https://docs.tryvox.co/docs/start/pricing` — 요금 안내
 
 ### App URLs
 - `https://www.tryvox.co` — 대시보드 홈

@@ -212,19 +212,19 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 - `validate_flow_data(flow_data=...)` — flow_data dry-run. 응답: `{valid, fixed_flow_data, warnings, errors}`. `create_agent` / `update_agent` 직전에 호출해 차단 오류를 사전 차단하고 자동 보정 결과를 사용자에게 전달한다.
 
 ### Docs (vox.ai docs / vox-docs)
-- `docs/build/flow/overview` — 플로우 에이전트 개요
-- `docs/build/flow/nodes/overview` — 노드 타입 개요
-- `docs/build/flow/nodes/begin-node` — 시작 노드
-- `docs/build/flow/nodes/conversation-node` — 대화 노드
-- `docs/build/flow/nodes/api-node` — API 노드
-- `docs/build/flow/nodes/condition-node` — 조건 노드
-- `docs/build/flow/nodes/extraction-node` — 추출 노드
-- `docs/build/flow/nodes/tool-node` — 도구 노드
-- `docs/build/flow/nodes/transfer-node` — 통화 전환 노드
-- `docs/build/flow/nodes/transfer-agent-node` — 에이전트 전환 노드
-- `docs/build/flow/nodes/end-node` — 종료 노드
-- `docs/build/flow/transitions` — 전환 조건
-- `docs/build/flow/advanced/global-node` — 글로벌 노드
+- `https://docs.tryvox.co/docs/build/flow/overview` — 플로우 에이전트 개요
+- `https://docs.tryvox.co/docs/build/flow/nodes/overview` — 노드 타입 개요
+- `https://docs.tryvox.co/docs/build/flow/nodes/begin-node` — 시작 노드
+- `https://docs.tryvox.co/docs/build/flow/nodes/conversation-node` — 대화 노드
+- `https://docs.tryvox.co/docs/build/flow/nodes/api-node` — API 노드
+- `https://docs.tryvox.co/docs/build/flow/nodes/condition-node` — 조건 노드
+- `https://docs.tryvox.co/docs/build/flow/nodes/extraction-node` — 추출 노드
+- `https://docs.tryvox.co/docs/build/flow/nodes/tool-node` — 도구 노드
+- `https://docs.tryvox.co/docs/build/flow/nodes/transfer-node` — 통화 전환 노드
+- `https://docs.tryvox.co/docs/build/flow/nodes/transfer-agent-node` — 에이전트 전환 노드
+- `https://docs.tryvox.co/docs/build/flow/nodes/end-node` — 종료 노드
+- `https://docs.tryvox.co/docs/build/flow/transitions` — 전환 조건
+- `https://docs.tryvox.co/docs/build/flow/advanced/global-node` — 글로벌 노드
 
 ### App URLs
 - `https://www.tryvox.co/flow/{agentId}` — 플로우 에이전트 에디터. **agent_id 를 그대로 쓴다 — 별도 flow_id 가 아니다.**

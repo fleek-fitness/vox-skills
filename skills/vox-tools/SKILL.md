@@ -41,7 +41,7 @@ MCP 서버 연결 설정(Claude, Cursor, ChatGPT 등)은 `vox-onboarding` 스킬
 - `get_agent`, `update_agent` — 도구 장착/해제 시 사용
 
 ### Docs (vox-docs)
-- `docs/build/tools` — 도구 관리 개요
+- `https://docs.tryvox.co/docs/build/tools` — 도구 관리 개요
 
 ### App URLs
 - `https://www.tryvox.co/agent/{agentId}` — 에이전트 상세 (Tools 탭)

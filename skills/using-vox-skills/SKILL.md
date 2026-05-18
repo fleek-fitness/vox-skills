@@ -26,6 +26,8 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 2. 검색 결과에서 관련 페이지를 찾으면 `get_page` tool로 전문 조회
 3. 페이지 내용 기반으로 답변
 
+**URL 형식 (중요):** 사용자에게 docs 페이지 링크를 전달할 때는 반드시 `/docs/` prefix를 포함한다. 형식: `https://docs.tryvox.co/docs/{path}` (예: `https://docs.tryvox.co/docs/start/pricing`, `https://docs.tryvox.co/docs/build/overview`). `/docs/` 없이 `https://docs.tryvox.co/{path}` 로 전달하면 404다.
+
 docs MCP는 router가 직접 처리하는 유일한 케이스다 — 단순 검색 후 전달이므로 domain skill 수준의 로직이 불필요하기 때문이다.
 
 ## Routing Rules

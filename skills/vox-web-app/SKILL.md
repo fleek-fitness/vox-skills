@@ -114,9 +114,9 @@ vox.ai 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/...`)에서 사
 - `list_calls`, `get_call` — 통화 기록/상세 조회
 
 ### Docs (vox-docs)
-- `docs/quickstart` — 빠른 시작 가이드
-- `docs/deploy/outbound/bulk-call` — 대량발신 가이드
-- `docs/monitor/call-logs` — 통화 기록 가이드
+- `https://docs.tryvox.co/docs/start/quickstart` — 빠른 시작 가이드
+- `https://docs.tryvox.co/docs/operate/deploy/outbound-batch` — 대량발신 가이드
+- `https://docs.tryvox.co/docs/operate/monitor/history` — 통화 기록 가이드
 
 ### App URLs
 - `https://www.tryvox.co` — 대시보드 홈
