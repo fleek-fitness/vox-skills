@@ -107,17 +107,6 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 | F4 | CRITICAL | 임의 fixture 값 사용 | `transferCall.transferTo`, `transferAgent.agent.agent_id`, `tool.tool_id`, `sendSms` 발신번호/첨부 key 같은 운영 리소스 값을 시나리오/API/MCP 조회 없이 임의로 만들지 않았는가. 실제 값이 없으면 해당 노드를 쓰지 않는다. |
 | F5 | WARN | warnings 미반영 | dry-run 응답의 `warnings` 또는 create / update 200 응답의 `result.message` 자동 보정 안내를 사용자에게 한 줄도 전달하지 않았는가. 자동 보정 사실은 다음 작업 때 사람이 다시 의도와 맞춰야 하므로 반드시 알린다. |
 
-### G. PROD-1599 regression checks
-
-plugin feedback 에서 발견된 회귀를 별도로 확인한다.
-
-| ID | 심각도 | 항목 | 판단 기준 |
-|----|--------|------|----------|
-| G1 | CRITICAL | STT locale 혼동 | 한국어 STT 가 `stt.languages:["ko-KR"]` 로 생성되지 않았는가. STT 는 `["ko"]`, voice locale 은 `voice.language:"ko-KR"` |
-| G2 | CRITICAL | responsiveness 임의 하향 | 사용자 요구나 기존 agent 설정 없이 `speech.responsiveness` 를 `1.0` 에서 `0.8` / `0.9` 등으로 낮추지 않았는가 |
-| G3 | WARN | node prompt 고봉밥 | 노드 프롬프트 요청에 전체 single prompt 템플릿을 출력하지 않고 해당 node 의 `data.firstMessage` / `data.prompt` / 전환 판단만 작성했는가 |
-| G4 | CRITICAL | condition fallback rename | 기존 condition node fallback `Else` 또는 동등한 기존 fallback label/id/sourceHandle 을 임의 변경하지 않았는가 |
-
 ## 출력 포맷
 
 ```
