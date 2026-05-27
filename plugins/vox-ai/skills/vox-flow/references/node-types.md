@@ -75,6 +75,7 @@ get_schema(namespace="flow-schema", schema_type="node-{type}")       # 그 type 
 - begin 이 아닌 node 에서 나가는 edge 의 `sourceHandle` 은 source node 의 `data.transitions[].id` 또는 `data.logicalTransitions[].id` 중 하나와 정확히 일치해야 한다.
 - `targetHandle` 은 `{targetNodeId}-target` 로 둔다.
 - fallback 은 자동으로 생긴다고 가정하지 않는다. JSON 을 보낼 때 필요한 fallback transition row 와 edge 를 모두 명시한다.
+- 기존 flow 수정 시 fallback transition 을 "더 좋은 이름"으로 정리하지 않는다. 기존 `id`, label/`condition`, `isFallback`, edge `sourceHandle` 을 보존하고, `Else` 같은 기존 editor 라벨도 사용자 요청 없이는 변경하지 않는다.
 - **transition `condition` 은 항상 의미 있는 한국어 문장으로 채운다 (LLM 이 라우팅 근거로 사용 + 에디터 분기 라벨로 그대로 노출).**
   - 빈 문자열, 공백, `null`, 또는 `condition` 필드 누락 금지. 백엔드는 통과시키지만 에디터에서 빈 칸으로 보이고, runtime priority evaluator 는 이 문장을 보고 분기를 선택하기 때문에 의미를 잃는다.
   - **`isFallback: true` 는 canonical 한국어 문구를 명시한다** (생략 금지):

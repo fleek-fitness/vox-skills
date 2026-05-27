@@ -61,6 +61,7 @@
 - vox MCP의 **OAuth-only** contract를 온보딩 문서에도 반영했다. `SKILL.md` Step 1, `quickstart-ko.md`, `references/mcp-vox-integration.md`에서 `Authorization: Bearer ${VOX_API_KEY}` / `bearer_token_env_var` 등 **제거된 API token 방식** 안내를 모두 걷어내고 클라이언트별 OAuth 경로만 남겼다. 서버가 받지 않는 방식을 가이드해 유저를 막다른 길로 보내는 문제를 제거한다.
 
 ### Fixed
+- `PROD-1599` plugin feedback 회귀 방지 규칙을 추가했다. `vox-agents` / `vox-flow` 가 agent data 를 만들 때 한국어 STT 는 `["ko"]`, voice locale 은 `ko-KR` 로 분리하고 `speech.responsiveness` 는 명시 요청 없이 `1.0` 에서 낮추지 않도록 했다. 또한 node prompt 요청이 single prompt 전체 템플릿으로 새지 않도록 `using-vox-skills` 라우팅과 flow conversation node 지침을 강화했고, 기존 condition node fallback(`Else` 등)의 label/id/sourceHandle 을 임의 변경하지 않도록 flow guide/review 체크를 추가했다.
 - Codex plugin package를 설치 cache 안에서 self-contained 하도록 고쳤다. Codex installer가 `plugins/vox-ai/.mcp.json` / `plugins/vox-ai/skills` symlink를 cache에 복사하지 않아 `vox` / `vox-docs` MCP 서버가 노출되지 않던 문제를 해결하고, 기존 `1.0.0` cache 재사용을 피하도록 plugin version을 `1.0.1`로 올렸다.
 - `vox-agents`의 agent data / variable reference를 현재 MCP surface와 맞췄다. top-level `prompt`나 `agent_type` shortcut을 가정하지 않고, agent `data` schema와 flow 변수 전달 규칙을 기준으로 설명한다.
 - `vox-agents` references의 변수 미주입 동작 기술을 실제 정책과 정합화했다. `voice-ai-playbook.md`(워크플로우/Variables 샘플/fallback 규칙), `voice-ai-prompt-template.md`(메타 가이드 + 템플릿 본문), `voice-ai-prompt-revision.md`(Pattern D), `voice-ai-prompt-diagnosis.md`(증상 6)에서 "비어있을 수 있음" 같은 표현을 "주입되지 않으면 `{{...}}`가 그대로 전달됨"으로 바꿨다. 이 문구들이 생성된 system prompt에 그대로 복사되어 런타임 LLM이 미주입 방어 로직을 엉뚱한 케이스(빈 값)에만 적용하던 문제를 제거한다. Mission 1 dry run 준비 중 사용자 제보로 발견.

@@ -65,6 +65,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B18 | WARN | condition 변수 소비 | condition 노드에서 참조하는 변수가 앞선 extraction/api 노드에서 실제로 생성되는가 |
 | B19 | WARN | api 응답 변수 정의 | api 노드에 응답 변수 추출 의도가 정의되어 있는가. JSON 작성 시 정확한 field shape 는 schema endpoint 결과를 따르는가 |
 | B20 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
+| B21 | CRITICAL | 기존 fallback 라벨 보존 | 기존 flow 수정에서 condition node fallback 의 `id`, label/`condition`, `isFallback`, edge `sourceHandle` 이 사용자 요청 없이 바뀌지 않았는가. 기존 `Else` 는 그대로 보존해야 함 |
 
 ### C. Flowchart ↔ 노드 설계 정합성
 
@@ -105,6 +106,17 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 | F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `tool_id` 를 가지는가. (누락 시 dry-run 차단) |
 | F4 | CRITICAL | 임의 fixture 값 사용 | `transferCall.transferTo`, `transferAgent.agent.agent_id`, `tool.tool_id`, `sendSms` 발신번호/첨부 key 같은 운영 리소스 값을 시나리오/API/MCP 조회 없이 임의로 만들지 않았는가. 실제 값이 없으면 해당 노드를 쓰지 않는다. |
 | F5 | WARN | warnings 미반영 | dry-run 응답의 `warnings` 또는 create / update 200 응답의 `result.message` 자동 보정 안내를 사용자에게 한 줄도 전달하지 않았는가. 자동 보정 사실은 다음 작업 때 사람이 다시 의도와 맞춰야 하므로 반드시 알린다. |
+
+### G. PROD-1599 regression checks
+
+plugin feedback 에서 발견된 회귀를 별도로 확인한다.
+
+| ID | 심각도 | 항목 | 판단 기준 |
+|----|--------|------|----------|
+| G1 | CRITICAL | STT locale 혼동 | 한국어 STT 가 `stt.languages:["ko-KR"]` 로 생성되지 않았는가. STT 는 `["ko"]`, voice locale 은 `voice.language:"ko-KR"` |
+| G2 | CRITICAL | responsiveness 임의 하향 | 사용자 요구나 기존 agent 설정 없이 `speech.responsiveness` 를 `1.0` 에서 `0.8` / `0.9` 등으로 낮추지 않았는가 |
+| G3 | WARN | node prompt 고봉밥 | 노드 프롬프트 요청에 전체 single prompt 템플릿을 출력하지 않고 해당 node 의 `data.firstMessage` / `data.prompt` / 전환 판단만 작성했는가 |
+| G4 | CRITICAL | condition fallback rename | 기존 condition node fallback `Else` 또는 동등한 기존 fallback label/id/sourceHandle 을 임의 변경하지 않았는가 |
 
 ## 출력 포맷
 

@@ -7,7 +7,7 @@ description: "Use whenever the user is building a vox.ai voice agent — writing
 
 vox.ai 프롬프트 에이전트(single prompt)를 설계하는 domain skill. 공통 음성 UX 규칙과 에이전트 생성/수정/진단/리팩터링을 담당한다.
 
-Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 handoff.
+Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 handoff. 사용자가 flow node, node prompt, condition_node, transition, fallback 을 언급하면 single prompt 를 작성하지 말고 `vox-flow` 로 handoff한다.
 
 ## Agent Type 판단 기준
 
@@ -43,6 +43,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 5. **최소 변경 리팩터링** — 기존 프롬프트의 필수 섹션/도구 계약/변수/에러처리를 삭제하면 런타임 장애가 발생한다.
 6. **진단 → 리팩터링 핸드오프**: diagnosis에 `failure_modes`와 `change_requests`가 반드시 포함, revision은 `change_requests`를 근거로만 변경한다 — 근거 없는 재설계는 기존 동작을 깨뜨린다.
 7. **MCP 실행 주의** — 유저가 "적용/업데이트"를 명시했을 때만 실행. builtInTools/toolIds가 전체 교체 방식이라 실수로 실행하면 기존 설정이 날아간다. `agent-data-reference.md` 참조.
+8. **agent.data 기본값 보존** — schema/default 를 읽은 뒤 필요한 필드만 보낸다. 한국어 STT 는 `stt.languages:["ko"]` 를 사용하고 `ko-KR` 은 `voice.language` 에만 쓴다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하며, "자연스러움" 명목으로 `0.8` / `0.9` 로 낮추지 않는다.
 
 ## Workflow
 

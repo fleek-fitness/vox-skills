@@ -35,6 +35,7 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 
 - `languages` 필수. `string[]` 형태 (예: `["ko"]`, `["ko", "en"]`).
 - `speed`: 단일 언어면 `"high"` | `"medium"` | `"low"`, 다국어(`languages.length >= 2`)면 `null`.
+- 한국어 단일 언어 STT 는 `["ko"]` 를 사용한다. `["ko-KR"]` 는 STT language 가 아니라 voice locale 과 혼동한 값이므로 쓰지 않는다.
 
 ### voice
 
@@ -61,6 +62,7 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 - `isAllowInterruption`: 사용자가 에이전트 발화 중 끊을 수 있는지. 기본 `true`.
 - `isAllowTurnDetection`: 턴 감지 활성화. 기본 `true`.
 - `responsiveness`: 0.0~2.0. 높을수록 빠르게 응답 시작. 기본 1.0.
+- `responsiveness` 는 latency 에 직접 영향을 주는 production default 다. 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움/안정성 개선을 추측해 `0.8` / `0.9` 로 낮추지 않는다.
 - `boostedKeywords`: `string[]` — STT가 더 잘 인식해야 할 키워드 (브랜드명, 전문용어).
 
 ### security

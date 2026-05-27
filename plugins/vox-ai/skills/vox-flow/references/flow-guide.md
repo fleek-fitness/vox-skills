@@ -139,6 +139,8 @@ condition 노드 또는 api 노드 응답 변수 분기에서 주로 쓴다.
 
 api / function / tool / sendSms 는 `"요청 실패 시"`, transferAgent / transferCall 은 `"에러 발생 시"`를 쓴다.
 
+기존 flow 를 수정할 때는 신규 canonical 문구로 정규화하지 않는다. 기존 fallback transition 의 `id`, `condition`/label/name, `isFallback`, 그리고 그 row 를 가리키는 edge `sourceHandle` 은 사용자 요청 없이 바꾸지 않는다. 특히 condition node 의 기존 fallback 이 `Else` 로 저장되어 있으면 `Else` 를 그대로 보존한다.
+
 ### Per-edge 패턴 정리
 
 - **begin → first node**: edge `sourceHandle` 은 `begin-source`.
