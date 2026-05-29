@@ -65,6 +65,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B18 | WARN | condition 변수 소비 | condition 노드에서 참조하는 변수가 앞선 extraction/api 노드에서 실제로 생성되는가 |
 | B19 | WARN | api 응답 변수 정의 | api 노드에 응답 변수 추출 의도가 정의되어 있는가. JSON 작성 시 정확한 field shape 는 schema endpoint 결과를 따르는가 |
 | B20 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
+| B21 | CRITICAL | 기존 fallback 라벨 보존 | 기존 flow 수정에서 condition node fallback 의 `id`, label/`condition`, `isFallback`, edge `sourceHandle` 이 사용자 요청 없이 바뀌지 않았는가. 기존 `Else` 는 그대로 보존해야 함 |
 
 ### C. Flowchart ↔ 노드 설계 정합성
 

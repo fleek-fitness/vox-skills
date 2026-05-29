@@ -100,6 +100,7 @@ generated conversation 의 `data.prompt` 에는 완료 시 아래 의미를 명�
 
 `vox-agents/references/voice-ai-prompt-template.md` 는 single prompt agent 전체를 위한 템플릿이다. flow conversation 노드에서는 전체 템플릿을 복사하지 말고, 현재 노드 범위로 줄인 `data.prompt` 를 작성한다.
 
+- 사용자가 "노드 프롬프트", "node prompt", "이 conversation node 의 prompt" 를 요청하면 산출물은 해당 노드의 `data.firstMessage` / `data.prompt` / 전환 판단만이다. 전체 agent system prompt, 도구 계약, 전역 대화 흐름을 고봉밥으로 출력하지 않는다.
 - `data.firstMessage`: 노드 진입 시 실제로 말할 첫 문장/질문 하나.
 - `data.prompt`: 첫 발화 이후에도 유지되는 비공개 지시문. 노드의 역할, 목표, 처리 규칙, 금지사항, 전환 판단을 적는다.
 - static 노드는 `data.prompt` 를 만들지 않는다. 정확한 고정 문구는 `data.staticSentence` 에만 둔다.
