@@ -22,8 +22,8 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 `vox-docs` MCP 서버(`https://docs.tryvox.co/mcp`)는 vox.ai 공식 문서 ~85페이지를 실시간 검색한다. 스킬이 커버하지 않는 영역(요금/빌링, SDK, 보안, 배포 상세, 모니터링, API reference 등)은 docs MCP로 직접 답변한다.
 
 **사용 방법:**
-1. `vox-docs` MCP의 `search` tool로 검색 (query 예: "pricing", "SDK javascript", "webhook", "SIP telephony")
-2. 검색 결과에서 관련 페이지를 찾으면 `get_page` tool로 전문 조회
+1. `vox-docs` MCP의 `search_vox_ai_docs` tool로 검색 (query 예: "pricing", "SDK javascript", "webhook", "SIP telephony")
+2. 전문이 필요하면 `query_docs_filesystem_vox_ai_docs` tool로 조회 — search가 돌려준 path에 `.mdx`를 붙여 `head`/`cat` (예: `cat /start/pricing.mdx`)
 3. 페이지 내용 기반으로 답변
 
 **URL 형식 (중요):** 사용자에게 docs 페이지 링크를 전달할 때는 반드시 `/docs/` prefix를 포함한다. 형식: `https://docs.tryvox.co/docs/{path}` (예: `https://docs.tryvox.co/docs/start/pricing`, `https://docs.tryvox.co/docs/build/overview`). `/docs/` 없이 `https://docs.tryvox.co/{path}` 로 전달하면 404다.

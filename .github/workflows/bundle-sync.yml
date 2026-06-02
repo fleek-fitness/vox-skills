@@ -1,0 +1,16 @@
+name: bundle-sync
+
+# Fail the build if the Codex bundle (plugins/vox-ai/) drifts from the canonical
+# top-level skills/ + .mcp.json, or if the two plugin manifests disagree on version.
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Codex bundle is in sync
+        run: bash scripts/check-bundle-sync.sh

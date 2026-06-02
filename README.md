@@ -118,4 +118,4 @@ vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI �
 | Name | URL | 역할 |
 |------|-----|------|
 | `vox` | `https://mcp.tryvox.co/mcp` | 플랫폼 도구 (에이전트, 통화, 조직 등) |
-| `vox-docs` | `https://docs.tryvox.co/mcp` | 공식 문서 검색 (search + get_page) |
+| `vox-docs` | `https://docs.tryvox.co/mcp` | 공식 문서 검색 (search_vox_ai_docs + query_docs_filesystem) |

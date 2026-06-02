@@ -109,8 +109,8 @@ LLM 에이전트가 사용자의 `{orgId}`를 모르는 경우:
 
 예:
 ```
-list_organizations 호출 → [{id: "7b9226c3-94a2-425c-a24d-a2d734627bd3", name: "My Org"}]
-딥링크: https://www.tryvox.co/dashboard/7b9226c3-94a2-425c-a24d-a2d734627bd3/numbers?new=1
+list_organizations 호출 → [{id: "00000000-0000-0000-0000-000000000000", name: "My Org"}]
+딥링크: https://www.tryvox.co/dashboard/00000000-0000-0000-0000-000000000000/numbers?new=1
 ```
 
 ---
