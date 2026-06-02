@@ -50,6 +50,9 @@
 
 ## Unreleased
 
+### Added
+- bundle drift / version-lockstep CI를 추가했다 (`scripts/check-bundle-sync.sh` + `.github/workflows/bundle-sync.yml`). Codex 번들(`plugins/vox-ai/`)이 루트 `skills/`·`.mcp.json`과 어긋나거나 두 매니페스트(`marketplace.json`·`plugin.json`) 버전이 불일치하면 CI가 실패한다. sync용 symlink 제거(47da8b6) 이후 수동 동기화에만 의존하던 drift를 자동 차단한다.
+
 ### Changed
 - `vox-flow` 에 `validate_flow_data` dry-run 워크플로우를 통합했다. SKILL.md Workflow 를 4단계로 확장(4단계: dry-run 검증)하고 Core Operating Rules #9(전송 전 dry-run)·#10(nested config default 는 백엔드가 채움)을 추가했으며, Response Handling 섹션을 신설해 응답별 처리 룰과 룰 ID 빠른 참조를 정리했다. references 도 정합화 — `flow-review.md` 섹션 F(dry-run + 식별자 필수), `execution-node-markdown.md` / `node-types.md` / `node-creation.md` 의 dry-run 단계 통합. 사용자 입장에서 (1) 차단 오류가 400/422 로 노출되는 일을 줄이고, (2) 자동 보정 사실이 빠짐없이 전달되도록 한다.
 - `vox-flow` references에 api 노드 실패 분기 설계 규칙을 추가했다. api 호출 실패 fallback edge가 곧바로 endCall로 흘러가면 사용자가 통화가 갑자기 끊긴 인상을 받기 때문에, 짧은 양해 안내 conversation 노드로 흡수한 뒤 마무리하도록 가이드한다. `execution-node-markdown.md`에 anti-pattern / 권장 JSON 예시를 두고, `node-examples.md`에 짝꿍 노드(API 실패 안내 conversation) 예시를 추가했으며, `flow-review.md`에는 통화 흐름 안전성 섹션 E를 신설해 E1 CRITICAL(api 실패 분기 + 안내 노드 흡수)와 E2 WARN(tool/sendSms 실패 흡수)을 두었다.
@@ -65,8 +68,13 @@
 - Codex plugin package를 설치 cache 안에서 self-contained 하도록 고쳤다. Codex installer가 `plugins/vox-ai/.mcp.json` / `plugins/vox-ai/skills` symlink를 cache에 복사하지 않아 `vox` / `vox-docs` MCP 서버가 노출되지 않던 문제를 해결하고, 기존 `1.0.0` cache 재사용을 피하도록 plugin version을 `1.0.1`로 올렸다.
 - `vox-agents`의 agent data / variable reference를 현재 MCP surface와 맞췄다. top-level `prompt`나 `agent_type` shortcut을 가정하지 않고, agent `data` schema와 flow 변수 전달 규칙을 기준으로 설명한다.
 - `vox-agents` references의 변수 미주입 동작 기술을 실제 정책과 정합화했다. `voice-ai-playbook.md`(워크플로우/Variables 샘플/fallback 규칙), `voice-ai-prompt-template.md`(메타 가이드 + 템플릿 본문), `voice-ai-prompt-revision.md`(Pattern D), `voice-ai-prompt-diagnosis.md`(증상 6)에서 "비어있을 수 있음" 같은 표현을 "주입되지 않으면 `{{...}}`가 그대로 전달됨"으로 바꿨다. 이 문구들이 생성된 system prompt에 그대로 복사되어 런타임 LLM이 미주입 방어 로직을 엉뚱한 케이스(빈 값)에만 적용하던 문제를 제거한다. Mission 1 dry run 준비 중 사용자 제보로 발견.
+- vox-docs MCP tool 이름을 실제 surface와 맞췄다. `using-vox-skills` SKILL.md(+Codex 번들 복사본)·`README.md`·`AGENTS.md`에서 `search`→`search_vox_ai_docs`, `get_page`→`query_docs_filesystem_vox_ai_docs`로 바꾸고, 2단계 안내도 실제 동작(`.mdx` 경로를 `head`/`cat`)에 맞게 다시 썼다. router가 존재하지 않는 tool 이름을 호출하도록 안내하던 문제를 제거한다.
+- `.claude-plugin/marketplace.json` 버전을 `1.0.0`→`1.0.1`로 올려 Codex `plugin.json`(1.0.1)과 일치시켰다. Claude/Codex 두 ecosystem이 같은 plugin에 다른 버전을 표기해 업데이트/지원 시 혼선을 주던 문제를 없앤다.
+- `AGENTS.md`의 vox MCP URL을 루트(`https://mcp.tryvox.co/`)에서 canonical `https://mcp.tryvox.co/mcp`로 보정했다(`.mcp.json`·README와 정합, CHANGELOG가 404로 지적했던 형태).
+- `vox-onboarding` Step 2의 `create_agent` 인자를 실제 MCP 도구 시그니처와 맞췄다. vox-mcp `tools/agents.py`의 `create_agent`는 `name`/`type`/`data`/`flow_data`만 받고 `agent_type`·top-level `prompt`는 없으므로, 없는 인자를 지시하던 것을 `type`+`data.prompt`(+`get_schema(agent-schema, agent-data-create)` 확인)로 바꿨다. 이미 정합화된 `vox-agents`와 일치한다.
 
 ### Docs
 - `README.md`의 Claude Code Plugin 섹션에 `/reload-plugins` 단계와 "첫 도구 호출 시 OAuth 로그인" 시점을 명시했다. 설치 직후 도구가 보이지 않는 상황을 줄이기 위함이다.
+- `vox-web-app/references/deep-links.md`의 `list_organizations` 예시 조직 UUID를 실재 식별자에서 명백한 placeholder(`00000000-0000-0000-0000-000000000000`)로 교체했다(공개 repo 노출 제거, Codex 번들 복사본 포함).
 - `references/mcp-vox-integration.md`, `references/quickstart-ko.md`, `README.md`의 MCP 서버 URL을 canonical `/mcp` 경로로 통일했다. `https://mcp.tryvox.co/`(root)는 404이고 실제 endpoint는 `/mcp`다.
 - `references/quickstart-ko.md`를 "Plugin 없이 MCP 수동 연결"에 집중하도록 재정리하고, 공개 MCP 도구 목록을 Phase 1 public surface(`PUBLIC_TOOL_NAMES`)와 정합화했다. campaign/telephone 번호 CRUD/eval 도구가 공개되어 있다는 오해를 제거했다.
