@@ -71,6 +71,7 @@
 - vox-docs MCP tool 이름을 실제 surface와 맞췄다. `using-vox-skills` SKILL.md(+Codex 번들 복사본)·`README.md`·`AGENTS.md`에서 `search`→`search_vox_ai_docs`, `get_page`→`query_docs_filesystem_vox_ai_docs`로 바꾸고, 2단계 안내도 실제 동작(`.mdx` 경로를 `head`/`cat`)에 맞게 다시 썼다. router가 존재하지 않는 tool 이름을 호출하도록 안내하던 문제를 제거한다.
 - `.claude-plugin/marketplace.json` 버전을 `1.0.0`→`1.0.1`로 올려 Codex `plugin.json`(1.0.1)과 일치시켰다. Claude/Codex 두 ecosystem이 같은 plugin에 다른 버전을 표기해 업데이트/지원 시 혼선을 주던 문제를 없앤다.
 - `AGENTS.md`의 vox MCP URL을 루트(`https://mcp.tryvox.co/`)에서 canonical `https://mcp.tryvox.co/mcp`로 보정했다(`.mcp.json`·README와 정합, CHANGELOG가 404로 지적했던 형태).
+- `vox-onboarding` Step 2의 `create_agent` 인자를 실제 MCP 도구 시그니처와 맞췄다. vox-mcp `tools/agents.py`의 `create_agent`는 `name`/`type`/`data`/`flow_data`만 받고 `agent_type`·top-level `prompt`는 없으므로, 없는 인자를 지시하던 것을 `type`+`data.prompt`(+`get_schema(agent-schema, agent-data-create)` 확인)로 바꿨다. 이미 정합화된 `vox-agents`와 일치한다.
 
 ### Docs
 - `README.md`의 Claude Code Plugin 섹션에 `/reload-plugins` 단계와 "첫 도구 호출 시 OAuth 로그인" 시점을 명시했다. 설치 직후 도구가 보이지 않는 상황을 줄이기 위함이다.
