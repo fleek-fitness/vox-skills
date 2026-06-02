@@ -28,7 +28,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 공통 reference (`vox-agents`에 위치):
 - **variable-system.md** — 변수 naming, 추출 설정, 렌더링 위치. **extraction/condition 변수 흐름을 설계할 때 읽기.**
 - **voice-ai-playbook.md** — 음성 UX 핵심 규칙. **새 flow 설계 시 가장 먼저 읽기.**
-- **default-agent-data.json** + **agent-data-reference.md** — agent.data 기본값 + MCP 동작 규칙. **MCP로 에이전트를 생성할 때 읽기.**
+- **default-agent-data.json** + **agent-data-reference.md** — agent.data 구조 예시(값은 복사하지 말 것 — override 안 하는 sub-schema는 OMIT, 기본값은 api-server가 채움) + MCP 동작 규칙. **MCP로 에이전트를 생성할 때 읽기.**
 - **ivr-navigation-best-practice.md** — IVR/DTMF 패턴. **ARS/IVR 통과 시나리오에서 읽기.**
 - **voice-ai-prompt-template.md** — 프롬프트 템플릿. **generated conversation 노드의 `data.prompt` 를 채울 때 checklist 로 참고하되, 전체 prompt 를 복사하지 않는다.**
 - **voice-ai-prompt-diagnosis.md** — 실패 사례 진단. **flow 에이전트가 이상하게 동작할 때 읽기.**
@@ -41,9 +41,9 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
 2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
-4. **dry-run 검증 (validate_flow_data)**: JSON 작성 직전에 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 JSON 을 만들고, MCP `validate_flow_data` 를 호출해 결과를 사용자에게 한두 줄로 요약한다. errors / warnings 처리는 [Response Handling](#response-handling) 을 따른다. errors 가 비었을 때에만 `create_agent` / `update_agent` 호출.
+4. **dry-run 검증 (validate_flow_data)**: JSON 작성 직전에 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 JSON 을 만들고, MCP `validate_flow_data` 를 호출해 결과를 사용자에게 한두 줄로 요약한다. errors / warnings 처리는 [Response Handling](#response-handling) 을 따른다. errors 가 비었을 때에만 `create_agent` / `update_agent` (또는 작은 구조 변경이면 `update_agent_partial`) 호출.
 
-사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지.
+사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지. 기존 flow 의 노드/엣지 몇 개만 손보는 경우는 전체 재작성 없이 [Incremental Editing](#incremental-editing) 으로 간다.
 
 ## Schema Fetching
 
@@ -144,22 +144,30 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 7. **conversation JSON 은 mode와 exit 조건을 빠뜨리지 않는다** — static 문구는 `promptType:"static"` + `staticSentence`, generated 대화는 `promptType:"dynamic"` + `prompt`/`firstMessage` 로 작성한다. 일반 `transitions[]` row 의 `condition` 은 빈 값/null/"None" 이 아니라 사용자가 그 노드를 벗어나도 되는 의미 있는 한국어 exit 조건이어야 한다. 조건 없는 row 는 자동 진행이 아니라 dead transition 이 된다.
 8. **검증/비교는 정답 데이터 출처가 있어야 한다** — 본인확인, 예약조회, 계약검증처럼 사용자의 답을 기존 데이터와 비교해야 하는 flow 는 먼저 정답값 출처를 정한다. API node 의 responseVariables 또는 통화 시작 전 주입된 preset dynamic variables 가 없으면 "일치 확인"이라고 말하거나 condition 으로 검증하지 않는다. 그런 경우는 정보 수집 flow 로 낮추거나, 조회 API 를 추가한다.
 9. **동일 인물/동일 대상 shortcut 을 명시한다** — "계약자와 학습자가 본인", "예약자와 방문자가 동일"처럼 앞에서 받은 답이 뒤 질문의 답을 결정하면 다시 묻지 않는다. extraction 에서 동일성 변수(`is_same_person` 등)를 만들고 condition 으로 재사용 path 와 추가질문 path 를 나눈다.
-10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다.
+10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, `update_agent` 의 `flow_data` 는 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. 노드/엣지 몇 개만 바꾸는 작은 구조 변경은 전체 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 ([Incremental Editing](#incremental-editing)).
 11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema(flow-data, minimal)` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
-12. **flow_data 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 본문의 `result.message` 에 자동 보정 안내 텍스트가 실려오므로, 그 내용을 사용자에게 그대로 전달한다 (차단 오류 사전 차단만 안 될 뿐).
+12. **flow_data 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 본문의 `result.message` 에 자동 보정 안내 텍스트가 실려오므로, 그 내용을 사용자에게 그대로 전달한다 (차단 오류 사전 차단만 안 될 뿐). `validate_flow_data` 가 차단 오류를 던질 때, 그것이 결정론적으로 고칠 수 있는 종류면 `autofix_flow_data(flow_data=...)` 로 한 번에 보정한 결과를 다시 검증할 수 있다 ([Response Handling](#response-handling)).
 13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge`, `message` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
 14. **외부 fixture 값은 만들지 않는다** — `transferCall` 은 실제 전화번호/SIP target 이 있을 때만 쓰고, `transferAgent` 는 실제 대상 agent UUID 가 있을 때만 쓴다. `tool` 은 `list_tools` 결과의 실제 id 를 사용한다. `sendSms` 의 발신번호/첨부 파일 key 처럼 운영 리소스가 필요한 값은 시나리오나 API가 제공하지 않으면 비워 두거나 해당 노드를 쓰지 않는다. placeholder 번호, 임의 UUID, 가짜 sender 를 넣지 않는다.
-15. **agent data latency/STT 기본값은 보존한다** — flow agent 생성/수정에서 `data` 를 같이 보낼 때도 `vox-agents/references/default-agent-data.json` 과 schema 를 기준으로 한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리한다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움을 추측해 낮추지 않는다.
+15. **agent data latency/STT 기본값은 보존한다** — flow agent 생성/수정에서 `data` 를 같이 보낼 때, override 하지 않는 sub-schema(`llm`/`voice` 등)는 OMIT 해 api-server 기본값을 그대로 받는다(기본값을 하드코딩하거나 복사하지 않는다). 명시 override 시 허용값은 `list_llm_models`/`list_voice_models`, shape 는 `get_schema(... detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리한다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움을 추측해 낮추지 않는다.
 
 ## Response Handling
 
-`validate_flow_data` / `create_agent` / `update_agent` 의 검증 결과를 어떻게 다루는지 정리.
+`validate_flow_data` / `autofix_flow_data` / `create_agent` / `update_agent` 의 검증 결과를 어떻게 다루는지 정리.
 
 ### `validate_flow_data` 응답
 
 - `valid: true` + `warnings: []` → 안전. 그대로 `create_agent` / `update_agent` 호출.
 - `valid: true` + `warnings: [...]` → 자동 보정이 적용되었거나 권장 사항이 있음. 사용자에게 한두 줄로 요약 후 진행 (예: "api 노드 X 에 실패 fallback 자동 추가됨"). 응답의 `fixed_flow_data` 가 있으면 그것을 그대로 보낸다.
-- `valid: false` → `errors[]` 의 각 항목 (`rule`, `node_id`, `message`, `suggestion`) 을 읽고 1회 수정 후 재검증. 같은 rule 이 다시 나오면 사용자에게 보고하고 멈춘다.
+- `valid: false` → `errors[]` 의 각 항목 (`rule`, `node_id`, `message`, `suggestion`) 을 읽고 1회 수정 후 재검증. 같은 rule 이 다시 나오면 사용자에게 보고하고 멈춘다. 결정론적으로 고칠 수 있는 오류가 섞여 있으면 손으로 고치는 대신 아래 `autofix_flow_data` 로 한 번에 보정한다.
+
+### `autofix_flow_data` 응답
+
+`autofix_flow_data(flow_data=..., apply_fixes?)` 는 결정론적으로 안전한 보정만 적용한다 (DB read-only). `apply_fixes` 없이 호출하면 무엇을 고칠지 preview 만 받고, `apply_fixes=true` 면 보정된 flow_data 를 돌려준다.
+
+- 보정 결과는 곧장 보내지 말고 `validate_flow_data` 로 다시 dry-run 해 `errors === []` 를 확인한다.
+- 보정으로도 안 풀리는 `errors` (식별자 누락, 정답값 출처 부재 등) 는 사용자/시나리오 입력이 필요한 것이므로 임의로 채우지 말고 보고한다.
+- 어떤 항목이 보정됐는지는 [validate_flow_data 응답](#validate_flow_data-응답) warnings 처리와 같은 톤으로 한두 줄 전달한다.
 
 ### `create_agent` / `update_agent` 422 / 400 응답
 
@@ -190,6 +198,27 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 - `add_skip_response_fallback` — `is_skip_user_response: true` 노드 fallback safety net 자동 추가
 - `add_condition_fallback` — condition 노드 fallback edge 자동 추가
 
+## Incremental Editing
+
+기존 flow 의 노드/엣지 몇 개만 손보는 경우는 `update_agent` 로 nodes/edges 전체를 다시 보내는 대신 `update_agent_partial` 의 ordered ops 를 쓴다. 전체 교체는 보내지 않은 노드를 삭제로 간주하므로, 작은 변경에서는 round-trip 으로 받은 전체 그래프를 그대로 들고 다녀야 하고 한 줄 오타가 다른 노드를 날릴 수 있다.
+
+```text
+update_agent_partial(agent_id="<UUID>", operations=[...], validate_only?)
+```
+
+- `operations[]` 는 순서대로 적용되는 구조 변경 ops 다 (`addNode` / `removeNode` / `updateNode` / `addEdge` / `removeEdge` 등). 한 호출이 **atomic** — 중간 op 가 실패하면 전부 롤백된다.
+- `validate_only=true` 면 적용하지 않고 dry-run 만 한다. ops 가 합쳐진 결과 그래프에 대한 검증 결과는 [Response Handling](#response-handling) 의 dry-run 룰과 같은 방식으로 다룬다.
+- 새 노드/엣지의 field·enum 은 여전히 schema 기준이다 — [Schema Fetching](#schema-fetching) 의 `flow-data` minimal 한 번으로 받은 $defs 를 op 의 노드 `data` shape 에 그대로 적용한다.
+
+### update_agent_partial vs update_agent
+
+| 상황 | 도구 |
+|------|------|
+| 노드 1~2개 추가/삭제, 한 노드의 prompt/transition 손보기, 엣지 한 줄 다시 잇기 | `update_agent_partial` (ordered ops) |
+| flow 전면 재설계, 노드 다수 교체, 새 flow 통째로 작성 | `update_agent` (full `flow_data` 교체) |
+
+판단이 애매하면: 직전 `get_agent` 그래프를 거의 그대로 두고 일부만 바꾸면 partial, 그래프를 새로 그리는 수준이면 full 교체.
+
 ## Ownership Boundary
 
 | Owns | Does Not Own |
@@ -204,13 +233,15 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 
 ### MCP Tools (vox.ai)
 - `create_agent` — flow 에이전트 생성 (`type: "flow"`)
-- `update_agent` — 에이전트 설정 수정
+- `update_agent` — 에이전트 설정 수정 (`flow_data` 는 전체 교체)
+- `update_agent_partial(agent_id, operations[], validate_only?)` — 작은 구조 변경용 ordered ops (atomic). 노드/엣지 몇 개만 바꿀 때 전체 교체 대신 사용 ([Incremental Editing](#incremental-editing)).
 - `get_agent` — 기존 에이전트 설정 확인 (flow_data 포함)
 - `list_agents` — 에이전트 목록
 - `get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal')` — **default 호출.** envelope + 모든 node type 의 `data` shape 가 한 응답에 들어온다. `flow_data` 구성 전 1회 호출.
 - `list_schemas(namespace='flow-schema', category='flow-node')` — narrow case 보조. 사용 가능한 node type 카탈로그 (`node-conversation`, `node-api`, ...). schema body 는 빠진 metadata only.
 - `get_schema(namespace='flow-schema', schema_type='node-{type}')` — narrow case 보조. 특정 node 의 `data` shape 만. 일반적으로는 위 `flow-data` 한 번으로 충분하므로 호출하지 않는다.
 - `validate_flow_data(flow_data=...)` — flow_data dry-run. 응답: `{valid, fixed_flow_data, warnings, errors}`. `create_agent` / `update_agent` 직전에 호출해 차단 오류를 사전 차단하고 자동 보정 결과를 사용자에게 전달한다.
+- `autofix_flow_data(flow_data=..., apply_fixes?)` — 결정론적으로 안전한 보정만 적용 (DB read-only). `apply_fixes` 없이 preview, `apply_fixes=true` 면 보정본 반환. 보정 후 `validate_flow_data` 로 재검증한다.
 
 ### Docs (vox.ai docs / vox-docs)
 - `https://docs.tryvox.co/docs/build/flow/overview` — 플로우 에이전트 개요

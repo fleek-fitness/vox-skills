@@ -47,7 +47,11 @@ get_schema(namespace="flow-schema", schema_type="node-{type}")       # 그 type 
 
 ## Dry-run before create / update
 
-`flow_data` 를 `create_agent` / `update_agent` 로 보내기 직전 호출 절차와 응답 처리는 SKILL.md 의 Core Operating Rules #9~#10 과 [Response Handling](../SKILL.md#response-handling) 을 따른다. 핵심만 짚으면: dry-run 응답의 `errors` 가 비었을 때만 보내고, dry-run `warnings` 와 create / update 200 응답의 `result.message` 자동 보정 안내는 사용자에게 전달한다.
+`flow_data` 를 `create_agent` / `update_agent` 로 보내기 직전 호출 절차와 응답 처리는 SKILL.md 의 Core Operating Rules 와 [Response Handling](../SKILL.md#response-handling) 을 따른다. 핵심만 짚으면: dry-run 응답의 `errors` 가 비었을 때만 보내고, dry-run `warnings` 와 create / update 200 응답의 `result.message` 자동 보정 안내는 사용자에게 전달한다. dry-run 의 `errors` 에 결정론적으로 고칠 수 있는 항목이 섞여 있으면 손으로 고치지 말고 `autofix_flow_data(flow_data=...)` 로 보정한 뒤 다시 dry-run 한다.
+
+## Incremental edit before full replace
+
+기존 flow 의 노드/엣지 몇 개만 바꾸는 경우는 `update_agent` 의 전체 `flow_data` 교체 대신 `update_agent_partial(agent_id, operations[], validate_only?)` 의 ordered ops (atomic) 를 쓴다. 전면 재설계 수준일 때만 full 교체. 자세한 판단 기준은 SKILL.md [Incremental Editing](../SKILL.md#incremental-editing).
 
 ## Node selection guide
 

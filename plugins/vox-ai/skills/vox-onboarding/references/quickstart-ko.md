@@ -79,11 +79,20 @@ Plugin을 설치한 경우에는 `/vox-ai:vox-onboarding`(Claude Code/Codex/Cowo
 | `list_calls` | 통화 기록 |
 | `get_call` | 통화 상세 |
 | `create_call` | 아웃바운드 콜 |
-| `list_built_in_tools` | 빌트인 도구 목록 |
-| `list_custom_tools` | 커스텀 도구 목록 |
-| `create_custom_tool` | 커스텀 도구 생성 |
+| `update_agent_partial` | flow 그래프 부분 수정 (구조 ops, dry-run 지원) |
+| `validate_flow_data` | flow_data 검증 (dry-run, fixed_flow_data 반환) |
+| `autofix_flow_data` | flow_data 자동 보정 (preview / apply) |
+| `list_tools` | 커스텀 도구(HTTP/API) 목록 |
+| `create_tool` | 커스텀 도구 생성 (HTTP/API) |
+| `get_tool` | 커스텀 도구 상세 |
+| `update_tool` | 커스텀 도구 수정 |
+| `delete_tool` | 커스텀 도구 삭제 |
 | `list_schemas` | public schema 목록 (agent / flow / tool 등) |
 | `get_schema` | 특정 schema body 조회 (namespace + schema_type) |
+| `list_knowledges` | 지식 베이스 목록 (read-only) |
+| `list_llm_models` | 허용 LLM 모델 목록 |
+| `list_voice_models` | 허용 음성 모델 목록 |
 | `list_telephone_numbers` | 보유 번호 조회 (read-only) |
+| `update_telephone_number_agent` | 번호에 인바운드/아웃바운드 에이전트 연결/해제 |
 
-번호 구매, 번호-에이전트 연결, 대량 발신 캠페인은 이 phase에서 공개 MCP 도구가 없다. 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/numbers`)에서 수행한다.
+번호 구매, 대량 발신 캠페인은 이 phase에서 공개 MCP 도구가 없다. 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/numbers`)에서 수행한다.

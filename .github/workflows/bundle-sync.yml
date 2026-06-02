@@ -1,7 +1,8 @@
-name: bundle-sync
+name: checks
 
 # Fail the build if the Codex bundle (plugins/vox-ai/) drifts from the canonical
-# top-level skills/ + .mcp.json, or if the two plugin manifests disagree on version.
+# top-level skills/ + .mcp.json, if the two plugin manifests disagree on version,
+# or if a skill references a vox MCP tool that does not exist (phantom tool).
 on:
   pull_request:
   push:
@@ -14,3 +15,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check Codex bundle is in sync
         run: bash scripts/check-bundle-sync.sh
+      - name: Check skill↔MCP tool conformance
+        run: bash scripts/check-skill-mcp-conformance.sh

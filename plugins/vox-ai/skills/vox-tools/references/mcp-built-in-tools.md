@@ -1,14 +1,17 @@
 # 빌트인 도구 레퍼런스
 
-빌트인 도구의 조회, 장착, 해제 및 타입별 파라미터 상세입니다.
+빌트인 도구(end_call, transfer_call, transfer_agent, send_sms, send_dtmf)의 장착, 해제 및 타입별 파라미터 상세입니다.
 
-## 조회: list_built_in_tools()
+빌트인 도구는 별도 생성/연결 엔드포인트가 없습니다. 에이전트 데이터 객체의 `data.builtInTools[]` 배열로 존재하며, 이 배열을 `create_agent` / `update_agent`로 통째로 보내서 장착·해제합니다.
+
+## payload 스키마 조회: list_schemas / get_schema
+
+각 빌트인 도구 item의 정확한 필드 구조는 스키마로 확인합니다.
 
 ```
-list_built_in_tools()
+list_schemas(namespace="tool-schema")
+get_schema(namespace="tool-schema", category="built_in")
 ```
-
-파라미터 없음. 플랫폼 제공 빌트인 도구 중 **active 상태**인 것만 반환합니다.
 
 ## 장착: update_agent(builtInTools=[...])
 
@@ -83,9 +86,7 @@ list_built_in_tools()
 | `transferAgentVersion` | 선택 | `null` | 특정 버전 (미지정 시 최신) |
 | `preserveChatContext` | 선택 | `false` | 대화 컨텍스트 유지 여부 |
 
-### send_sms (현재 비활성)
-
-> `is_active=false` 상태로 `list_built_in_tools()`에 노출되지 않으며 에이전트에 장착 불가. 향후 활성화될 수 있음.
+### send_sms
 
 통화 중 SMS를 발송합니다.
 
@@ -131,6 +132,8 @@ IVR 메뉴 탐색을 위한 DTMF 톤을 전송합니다.
 
 ## 해제: update_agent(builtInTools=[...])
 
+별도 해제 엔드포인트는 없습니다. 제거하려는 도구를 **제외한** 최종 배열을 `update_agent`로 다시 보내면 해당 도구가 빠집니다.
+
 ```
 update_agent(
   agent_id="agent-uuid",
@@ -139,5 +142,3 @@ update_agent(
   ]
 )
 ```
-
-제거하려는 도구를 제외한 최종 배열을 전달하면 해당 도구가 해제됩니다.

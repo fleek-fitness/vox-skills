@@ -8,25 +8,25 @@ vox.ai 에이전트는 두 종류의 도구를 사용합니다.
 
 | 구분 | 빌트인 도구 | 커스텀 도구 |
 |------|------------|------------|
-| 종류 | `end_call`, `transfer_call`, `transfer_agent`, `send_dtmf` (active 기준) | `api`, `mcp` |
+| 종류 | `end_call`, `transfer_call`, `transfer_agent`, `send_sms`, `send_dtmf` | HTTP/API |
 | 범위 | 플랫폼 전체 공통 | 조직(organization) 단위 |
-| 생성 | 불가 (플랫폼 제공) | `create_custom_tool()` |
+| 생성 | 불가 (플랫폼 제공) | `create_tool()` |
 | 에이전트 연결 | `update_agent(builtInTools=[...])` | `update_agent(toolIds=[...])` |
 
-- **빌트인 도구**: 플랫폼이 제공하는 기본 도구. 에이전트에 직접 설정(파라미터)을 지정하여 장착합니다.
-  - 상세: See [references/mcp-built-in-tools.md](mcp-built-in-tools.md)
-- **커스텀 도구**: 조직이 직접 만드는 도구. `api` 타입(HTTP 엔드포인트 호출)과 `mcp` 타입(외부 MCP 서버 연결)이 있습니다.
-  - 상세: See [references/mcp-custom-tools.md](mcp-custom-tools.md)
+- **빌트인 도구**: 플랫폼이 제공하는 기본 도구. 별도 생성/연결 엔드포인트 없이 `data.builtInTools[]` 배열로 에이전트에 직접 설정(파라미터)을 지정하여 장착합니다.
+  - 상세: See [mcp-built-in-tools.md](mcp-built-in-tools.md)
+- **커스텀 도구**: 조직이 직접 만드는 HTTP 엔드포인트 호출 도구. `create_tool()`로 만들고 `data.toolIds[]`로 연결합니다.
+  - 상세: See [mcp-custom-tools.md](mcp-custom-tools.md)
 - **에이전트 설정 데이터**(`agent.data`): `vox-agents` 스킬의 `references/agent-data-reference.md` 참조
 
 ## End-to-end 워크플로우
 
 에이전트에 빌트인 + 커스텀 도구를 모두 장착하는 전체 흐름입니다.
 
-### 1. 빌트인 도구 카탈로그 확인
+### 1. 빌트인 도구 payload 스키마 확인
 
 ```
-list_built_in_tools()
+get_schema(namespace="tool-schema", category="built_in")
 ```
 
 ### 2. 에이전트 생성
@@ -58,15 +58,13 @@ update_agent(
 ### 4. 커스텀 도구 생성 & 연결
 
 ```
-create_custom_tool(
-  name="check_order", tool_type="api",
-  data={
-    "apiConfiguration": {
-      "url": "https://api.example.com/orders",
-      "method": "GET",
-      "timeoutSeconds": 10
-    },
-    "parameters": {"type": "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]}
+create_tool(
+  name="check_order",
+  input_schema={"type": "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]},
+  api_configuration={
+    "url": "https://api.example.com/orders",
+    "method": "GET",
+    "timeout_seconds": 10
   },
   description="주문 상태 조회"
 )
@@ -101,4 +99,4 @@ get_agent(agent_id="agent-uuid")
 
 ### 커스텀 도구 삭제
 
-커스텀 도구 삭제: `delete_custom_tool(tool_id="uuid")` — 상세는 [mcp-custom-tools.md](mcp-custom-tools.md) 참조.
+커스텀 도구 삭제: `delete_tool(tool_id="uuid")` — 상세는 [mcp-custom-tools.md](mcp-custom-tools.md) 참조.

@@ -1,5 +1,7 @@
 {
-  "_comment": "Canonical agent defaults. Mirror in voxai/web AgentDefaultConfig.ts and voxai/api-server (app/api/v3/schemas/agent/defaults.py + class defaults in data.py).",
+  "_note": "ILLUSTRATIVE SHAPE ONLY — 복사해서 보낼 '기본값'이 아니다. agent.data 의 root 구조를 보여주는 예시일 뿐이고, 실제 기본값의 SSOT 는 api-server 다. create_agent 는 클라이언트가 생략한 필드를 서버에서 기본값으로 채운다.",
+  "_defaults": "기본값을 그대로 쓸 거면 해당 sub-schema(llm, voice 등)를 보내지 말고 OMIT 한다 — 서버가 채운다. 의도적으로 override 할 때만 보낸다.",
+  "_allowed_values": "llm.model 허용 목록은 list_llm_models, voice.id/provider/model 허용 목록은 list_voice_models 로 조회한다. 정확한 shape 는 get_schema(namespace=\"agent-schema\", schema_type=\"agent-data-create\" | \"agent-data-update\", detail=\"minimal\").",
 
   "prompt": {
     "prompt": "",
@@ -10,7 +12,8 @@
   },
 
   "llm": {
-    "model": "z-ai/glm-4.7",
+    "_omit_to_use_default": "model 은 list_llm_models 의 허용 값. 기본값을 쓸 거면 llm 전체를 보내지 않는다.",
+    "model": "[[list_llm_models 에서 선택]]",
     "temperature": 0.4
   },
 
@@ -20,9 +23,10 @@
   },
 
   "voice": {
-    "id": "4dd4630e-19e0-4243-bca0-676ff85119b7",
-    "provider": "cartesia",
-    "model": "sonic-3.5",
+    "_omit_to_use_default": "id/provider/model 은 list_voice_models 의 허용 값. 기본값을 쓸 거면 voice 전체를 보내지 않는다.",
+    "id": "[[list_voice_models 에서 선택]]",
+    "provider": "[[list_voice_models 에서 선택]]",
+    "model": "[[list_voice_models 에서 선택]]",
     "speed": 1,
     "volume": 1,
     "language": "ko-KR"

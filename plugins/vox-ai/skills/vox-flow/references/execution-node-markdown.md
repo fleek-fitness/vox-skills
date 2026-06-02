@@ -1,6 +1,6 @@
 # Execution node markdown
 
-이 문서는 conversation 외 노드의 **설계 markdown** 작성법을 다룬다. MCP/API `flow_data` JSON field 는 항상 `get_schema(namespace="flow-schema", schema_type="flow-data")` 결과를 따른다.
+이 문서는 conversation 외 노드의 **설계 markdown** 작성법을 다룬다. MCP/API `flow_data` JSON field 는 항상 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 따른다. api / transferCall / transferAgent / sendSms / tool 처럼 prose 가 load-bearing 인 무거운 노드는 SKILL.md [Schema Fetching](../SKILL.md#schema-fetching) 에 따라 그 type 만 standard 모드로 보강한다.
 
 ## Shared rules
 

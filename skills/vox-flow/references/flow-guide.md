@@ -6,17 +6,19 @@ vox.ai flow agent 의 구조와 설계 원칙을 이해하기 위한 가이드. 
 
 ## Schema-first workflow
 
-flow JSON 을 작성하거나 수정할 때는 먼저 현재 schema 를 가져온다.
+flow JSON 을 작성하거나 수정할 때는 먼저 현재 schema 를 가져온다. **default 는 `flow-data` minimal 한 번이다** — 이 한 응답에 envelope 과 모든 node type 의 `data` shape ($defs) 가 함께 들어온다.
 
 ```text
-get_schema(namespace="flow-schema", schema_type="flow-data")
+get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")
 ```
+
+`detail="minimal"` 을 명시한다. `detail` 을 빼면 더 큰 standard payload 가 와서 토큰만 늘어난다. 호출 패턴 (standard 보강이 필요한 무거운 node type, narrow case fallback) 은 SKILL.md [Schema Fetching](../SKILL.md#schema-fetching) 참조.
 
 agent `data` 도 같이 다루면 필요한 schema 를 별도로 가져온다.
 
 ```text
-get_schema(namespace="agent-schema", schema_type="agent-data-create")
-get_schema(namespace="agent-schema", schema_type="agent-data-update")
+get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")
+get_schema(namespace="agent-schema", schema_type="agent-data-update", detail="minimal")
 ```
 
 이 문서와 `node-types.md` 는 설계 원칙과 실수 방지용이다. 실제 payload 는 schema endpoint 응답을 기준으로 만들고, 전송 후 `get_agent` 로 round-trip 확인한다.
@@ -50,7 +52,7 @@ FlowData {
       "firstLine": "",
       "firstLineType": "aiFirstDynamic"
     }
-    // voice/llm/stt 등은 default-agent-data.json 참조 (vox-agents/references)
+    // voice/llm/stt 등 sub-schema는 override 안 하면 OMIT (서버가 기본값 채움); shape는 vox-agents/references/agent-data-reference.md 참조
   },
   "flow_data": { "nodes": [...], "edges": [...] }
 }
@@ -260,13 +262,13 @@ graph LR
 
 ## API / MCP 로 Flow 만들고 수정
 
-vox.ai MCP 와 v3 REST 모두 동일한 `flow_data` schema 를 받는다. **수정은 전체 교체 (full replacement)** — 기존 nodes / edges 일부만 patch 하는 모드는 없다. PATCH 시에도 nodes / edges 전체를 다시 보낸다.
+vox.ai MCP 와 v3 REST 모두 동일한 `flow_data` schema 를 받는다. `update_agent` 의 `flow_data` 는 **전체 교체 (full replacement)** — nodes / edges 전체를 다시 보내고, 빠뜨린 노드/엣지는 삭제로 간주된다. 노드/엣지 몇 개만 바꾸는 작은 구조 변경은 전체 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 (아래 [Incremental edit](#incremental-edit-작은-구조-변경)).
 
 작업 순서:
 
-1. `get_schema(namespace="flow-schema", schema_type="flow-data")` 로 현재 flow schema 를 확인한다.
-2. agent `data` 를 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create")` 또는 `agent-data-update` 를 확인한다.
-3. `create_agent(type="flow", data=..., flow_data=...)` 또는 `update_agent(flow_data=...)` 를 호출한다.
+1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 로 현재 flow schema 를 확인한다.
+2. agent `data` 를 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 를 확인한다.
+3. `create_agent(type="flow", data=..., flow_data=...)` 또는 `update_agent(flow_data=...)` 를 호출한다 (작은 변경이면 `update_agent_partial`).
 4. `get_agent` 로 다시 읽어 unknown field drop, enum mismatch, 누락 edge 를 확인한다.
 
 ### 생성 (REST 또는 MCP)
@@ -277,7 +279,7 @@ POST /v3/agents
 {
   "name": "My Flow Agent",
   "type": "flow",
-  "data": { ... },          // agent.data (vox-agents/references/default-agent-data.json)
+  "data": { ... },          // agent.data — shape는 vox-agents/references; override 안 하면 OMIT → 서버 기본값
   "flow_data": { "nodes": [...], "edges": [...] }
 }
 ```
@@ -311,6 +313,21 @@ mcp__vox__update_agent(
 ```
 
 전체 nodes / edges 다시 보내는 형태. 일부만 빼면 그 노드/엣지가 삭제된다.
+
+### Incremental edit (작은 구조 변경)
+
+노드/엣지 몇 개만 바꾸는 경우는 전체 교체 대신 ordered ops 로 보낸다. 한 호출이 atomic 이라 중간 op 가 실패하면 전부 롤백된다.
+
+vox.ai MCP:
+```
+mcp__vox__update_agent_partial(
+  agent_id="<UUID>",
+  operations=[ ... ],   # addNode / removeNode / updateNode / addEdge / removeEdge ... 순서대로 적용
+  validate_only=false   # true 면 적용 없이 dry-run (검증만)
+)
+```
+
+새 노드/엣지의 field·enum 은 여전히 schema 기준이다 — `flow-data` minimal 한 번으로 받은 $defs 를 op 의 노드 `data` 에 그대로 쓴다. 전체 재설계 수준이면 partial 대신 `update_agent` full 교체. 판단 기준은 SKILL.md [Incremental Editing](../SKILL.md#incremental-editing).
 
 ### 조회
 
