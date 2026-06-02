@@ -28,7 +28,14 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 
 **URL 형식 (중요):** 사용자에게 docs 페이지 링크를 전달할 때는 반드시 `/docs/` prefix를 포함한다. 형식: `https://docs.tryvox.co/docs/{path}` (예: `https://docs.tryvox.co/docs/start/pricing`, `https://docs.tryvox.co/docs/build/overview`). `/docs/` 없이 `https://docs.tryvox.co/{path}` 로 전달하면 404다.
 
-docs MCP는 router가 직접 처리하는 유일한 케이스다 — 단순 검색 후 전달이므로 domain skill 수준의 로직이 불필요하기 때문이다.
+docs MCP는 router가 직접 처리하는 검색 케이스다 — 단순 검색 후 전달이므로 domain skill 수준의 로직이 불필요하기 때문이다.
+
+## 스킬 없이 router가 직접 다루는 MCP 도구
+
+전용 domain skill이 없지만 단일 MCP 호출로 끝나는 두 경우는 router가 직접 처리한다.
+
+- **조직 전환** — 멀티 조직 계정에서 활성 조직을 바꿔야 하면 `list_organizations`로 소속 조직을 확인하고 `set_organization(organization_id)`로 세션 활성 조직을 전환한다. 다른 작업을 "다른 조직에서" 진행하라는 요청이면 먼저 전환한 뒤 해당 domain skill로 라우팅한다.
+- **지식 베이스 조회** — `list_knowledges`로 조직의 지식 베이스 목록을 조회한다. 조회 전용이며, 지식 베이스를 만들거나 에이전트에 연결하는 공개 도구는 없다(연결·관리는 웹 앱에서 — `vox-web-app` 참조).
 
 ## Routing Rules
 
@@ -54,6 +61,8 @@ docs MCP는 router가 직접 처리하는 유일한 케이스다 — 단순 검�
 | SDK 사용법, API reference | docs MCP | 문서 검색으로 충분 |
 | "캠페인 만들어줘", "대량발신 설정" | `vox-web-app` | 대량발신/캠페인 관리는 웹 앱 영역 |
 | "번호 구매 페이지 알려줘", "녹취 어디서 들어?" | `vox-web-app` | 페이지 경로/딥링크 안내 |
+| "조직 전환", "다른 organization 으로 작업", "멀티 조직 계정" | router 직접 (org 도구) | 세션 활성 조직 전환은 domain 로직이 아닌 단일 MCP 호출 |
+| "지식 베이스 뭐 있어?", "knowledge base 목록" | router 직접 (`list_knowledges`) | 지식 베이스 전용 스킬 없음 — 조회만 가능 |
 | 어떤 스킬에도 매핑 안 되는 vox.ai 질문 | docs MCP → `vox-onboarding` | docs 검색 먼저, 없으면 onboarding이 가장 넓은 안내 범위 |
 
 ## 복합 요청

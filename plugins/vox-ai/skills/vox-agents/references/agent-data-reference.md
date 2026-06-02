@@ -9,7 +9,7 @@ get_schema(namespace="agent-schema", schema_type="agent-data-create")
 get_schema(namespace="agent-schema", schema_type="agent-data-update")
 ```
 
-[default-agent-data.json](default-agent-data.json)은 기본 payload 예시와 seed 로만 사용한다. schema source 로 간주하지 않는다.
+[default-agent-data.json](default-agent-data.json)은 `agent.data` root 구조 예시(illustrative shape)일 뿐이다. 복사해서 보낼 "기본값"도 schema source 도 아니다. 기본값의 SSOT 는 api-server 이고, 생략한 sub-schema 는 서버가 기본값으로 채운다.
 
 ## Root 필수 필드
 
@@ -29,7 +29,7 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 
 ### llm
 
-- `model` 필수. 기본값 `z-ai/glm-4.7`.
+- `model` override 시 허용 값은 `list_llm_models` 로 조회한다. 기본 모델을 쓸 거면 `llm` 전체를 생략해 서버 기본값을 적용한다 (기본값 문자열을 하드코딩하지 않는다).
 
 ### stt
 
@@ -39,9 +39,9 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 
 ### voice
 
-- `provider`, `id` 필수.
-- `speed`: 발화 속도 (0.5~2.0). 기본 0.95.
-- `temperature`: 음성 변이. 기본 0.9.
+- `id` / `provider` / `model` override 시 허용 조합은 `list_voice_models` 로 조회한다. 기본 음성을 쓸 거면 `voice` 전체를 생략해 서버 기본값을 적용한다 (id/provider/model 값을 하드코딩하지 않는다).
+- `speed`: 발화 속도 (0.5~2.0).
+- `temperature`: 음성 변이.
 
 ### postCall
 

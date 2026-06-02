@@ -1,9 +1,9 @@
 ---
 name: vox-tools
-description: "Use whenever the user asks about vox.ai tool management — adding or removing built-in tools (end_call, transfer_call, transfer_agent, send_sms, send_dtmf), creating custom API or MCP tools, tool attachment/detachment workflow, or any question about managing tools on a vox agent. Trigger on 'end_call 추가해줘', 'custom tool 만들어줘', '도구 연결 어떻게 해', '빌트인 도구 목록', or any vox tool question."
+description: "Use whenever the user asks about vox.ai tool management — adding or removing built-in tools (end_call, transfer_call, transfer_agent, send_sms, send_dtmf), creating custom HTTP/API tools, tool attachment/detachment workflow, or any question about managing tools on a vox agent. Trigger on 'end_call 추가해줘', 'custom tool 만들어줘', '도구 연결 어떻게 해', '빌트인 도구 목록', or any vox tool question."
 ---
 
-# vox-tool
+# vox-tools
 
 vox.ai 에이전트의 도구 관리를 다루는 domain skill. 빌트인 도구와 커스텀 도구의 조회/생성/장착/해제를 안내한다.
 
@@ -11,7 +11,7 @@ vox.ai 에이전트의 도구 관리를 다루는 domain skill. 빌트인 도구
 
 - **mcp-tool-management.md** — 도구 관리 전체 워크플로우. **도구 장착/해제 작업 시 읽기.** See [references/mcp-tool-management.md](references/mcp-tool-management.md)
 - **mcp-built-in-tools.md** — 빌트인 도구 파라미터 상세 (end_call, transfer_call, transfer_agent, send_dtmf, send_sms). **빌트인 도구 설정 시 읽기.** See [references/mcp-built-in-tools.md](references/mcp-built-in-tools.md)
-- **mcp-custom-tools.md** — 커스텀 도구 생성/연결/삭제. **커스텀 도구 작업 시 읽기.** See [references/mcp-custom-tools.md](references/mcp-custom-tools.md)
+- **mcp-custom-tools.md** — 커스텀 도구(HTTP/API) 생성/연결/삭제. **커스텀 도구 작업 시 읽기.** See [references/mcp-custom-tools.md](references/mcp-custom-tools.md)
 
 MCP 서버 연결 설정(Claude, Cursor, ChatGPT 등)은 `vox-onboarding` 스킬이 담당한다.
 
@@ -27,18 +27,20 @@ MCP 서버 연결 설정(Claude, Cursor, ChatGPT 등)은 `vox-onboarding` 스킬
 | Owns | Does Not Own |
 |------|--------------|
 | built-in tools (end_call, transfer_call, transfer_agent, send_sms, send_dtmf) | prompt authoring |
-| custom tools (api, mcp type) | pricing |
+| custom tools (HTTP/API) | pricing |
 | tool management workflow | flow design |
 | tool naming rules | MCP server connection setup (→ vox-onboarding) |
 
 ## Related Resources
 
 ### MCP Tools (vox)
-- `list_built_in_tools` — 빌트인 도구 목록
-- `list_custom_tools` — 커스텀 도구 목록
-- `create_custom_tool` — 커스텀 도구 생성
-- `delete_custom_tool` — 커스텀 도구 삭제
-- `get_agent`, `update_agent` — 도구 장착/해제 시 사용
+- `list_tools` — 커스텀 도구 목록
+- `create_tool` — 커스텀 도구(HTTP/API) 생성
+- `get_tool` — 커스텀 도구 상세
+- `update_tool` — 커스텀 도구 수정
+- `delete_tool` — 커스텀 도구 삭제
+- `list_schemas`, `get_schema` — 빌트인 도구 payload 스키마 조회
+- `get_agent`, `update_agent` — 도구 장착/해제 시 사용 (`data.builtInTools[]`, `data.toolIds[]`)
 
 ### Docs (vox-docs)
 - `https://docs.tryvox.co/docs/build/tools` — 도구 관리 개요

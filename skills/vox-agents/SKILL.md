@@ -25,7 +25,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 ## References
 
 - **voice-ai-playbook.md** — 음성 UX 핵심 규칙, 트레이드오프 우선순위. **새 에이전트 설계 시 가장 먼저 읽기.** See [references/voice-ai-playbook.md](references/voice-ai-playbook.md)
-- **default-agent-data.json** + **agent-data-reference.md** — agent.data 기본값(JSON) + MCP 동작 규칙(md). **MCP로 에이전트를 생성·수정할 때 둘 다 읽기.** See [references/default-agent-data.json](references/default-agent-data.json), [references/agent-data-reference.md](references/agent-data-reference.md)
+- **default-agent-data.json** + **agent-data-reference.md** — agent.data root 구조 예시(JSON, 복사용 기본값 아님) + MCP 동작 규칙(md). **MCP로 에이전트를 생성·수정할 때 둘 다 읽기.** See [references/default-agent-data.json](references/default-agent-data.json), [references/agent-data-reference.md](references/agent-data-reference.md)
 - **ivr-navigation-best-practice.md** — IVR 메뉴 탐색, DTMF 전략, send_dtmf 프롬프팅. **에이전트가 ARS/IVR을 통과해야 하는 시나리오에서 읽기.** See [references/ivr-navigation-best-practice.md](references/ivr-navigation-best-practice.md)
 - **voice-ai-prompt-template.md** — 한국어 프롬프트 템플릿. **신규 프롬프트 작성 시 복사해 사용.** See [references/voice-ai-prompt-template.md](references/voice-ai-prompt-template.md)
 - **voice-ai-prompt-diagnosis.md** — 실패 사례 원인 진단. **에이전트가 이상하게 동작할 때 읽기.** See [references/voice-ai-prompt-diagnosis.md](references/voice-ai-prompt-diagnosis.md)
@@ -43,7 +43,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 5. **최소 변경 리팩터링** — 기존 프롬프트의 필수 섹션/도구 계약/변수/에러처리를 삭제하면 런타임 장애가 발생한다.
 6. **진단 → 리팩터링 핸드오프**: diagnosis에 `failure_modes`와 `change_requests`가 반드시 포함, revision은 `change_requests`를 근거로만 변경한다 — 근거 없는 재설계는 기존 동작을 깨뜨린다.
 7. **MCP 실행 주의** — 유저가 "적용/업데이트"를 명시했을 때만 실행. builtInTools/toolIds가 전체 교체 방식이라 실수로 실행하면 기존 설정이 날아간다. `agent-data-reference.md` 참조.
-8. **agent.data 기본값 보존** — schema/default 를 읽은 뒤 필요한 필드만 보낸다. 한국어 STT 는 `stt.languages:["ko"]` 를 사용하고 `ko-KR` 은 `voice.language` 에만 쓴다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하며, "자연스러움" 명목으로 `0.8` / `0.9` 로 낮추지 않는다.
+8. **기본값은 서버가 채운다** — 기본값의 SSOT 는 api-server 이고, get_schema 는 shape 만 주고 기본 *값* 은 주지 않는다. 의도적으로 override 하지 않는 sub-schema(특히 `llm`, `voice`)는 보내지 말고 OMIT 해 서버 기본값을 적용한다. override 할 때만 허용 값을 `list_llm_models` / `list_voice_models` 로 조회하고 shape 는 `get_schema(namespace="agent-schema", schema_type="agent-data-create" | "agent-data-update", detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]` 를 사용하고 `ko-KR` 은 `voice.language` 에만 쓴다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하며, "자연스러움" 명목으로 `0.8` / `0.9` 로 낮추지 않는다.
 
 ## Workflow
 
@@ -89,6 +89,8 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 - `get_agent` — 에이전트 상세 조회 (현재 prompt, 설정 확인)
 - `list_agents` — 에이전트 목록
 - `get_call` — 통화 로그 조회 (진단 시 transcript 확인)
+- `list_llm_models` — `llm.model` 허용 값 조회 (override 시)
+- `list_voice_models` — `voice.id` / `voice.provider` / `voice.model` 허용 값 조회 (override 시)
 - `get_schema(namespace='agent-schema', schema_type='agent-data-create')` — `create_agent.data` shape 확인
 - `get_schema(namespace='agent-schema', schema_type='agent-data-update')` — `update_agent.data` shape 확인
 - `get_schema(namespace='flow-schema', schema_type='flow-data')` — flow agent graph shape 확인 (필요 시 `vox-flow`로 handoff)

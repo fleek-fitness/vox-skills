@@ -45,7 +45,8 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 4. 확인 받으면 `create_agent` MCP 도구로 생성
    - name: 이름
    - type: "single_prompt" (기본값 — 생략 가능)
-   - data: { prompt: 생성된 프롬프트 } — 프롬프트/설정은 top-level이 아니라 `data` 안에 넣는다(camelCase). 정확한 형태는 `get_schema(namespace="agent-schema", schema_type="agent-data-create")`로 확인
+   - data: { prompt: 생성된 프롬프트 } — 프롬프트/설정은 top-level이 아니라 `data` 안에 넣는다(camelCase). 정확한 형태는 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")`로 확인
+   - llm/voice는 넣지 않는다 — `data.llm`/`data.voice`를 생략하면 서버가 기본값을 채운다. 사용자가 특정 음성·언어를 명시할 때만, 허용값을 `list_voice_models(language="ko-KR")`·`list_llm_models`로 조회해 지정한다.
 
 생성 성공 시에만 다음 단계로 진행.
 실패 시: 에러 내용을 보여주고 수정 후 재시도.
@@ -78,21 +79,19 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 "전화를 받는 에이전트도 설정할 수 있어요."
 (넘어가려면 "나중에 할게요"도 OK)
 
-공개 MCP에서는 번호에 인바운드 에이전트를 연결하는 도구가 노출되지 않는다. 이 단계는 웹 앱 UI에서 수행하므로, 아래 링크를 안내하고 사용자가 완료했다고 말하면 확인만 한다.
-
 1. `list_telephone_numbers` MCP 도구로 보유 번호 확인 (Step 3에서 이미 조회했으면 재사용)
-2. `list_organizations`로 현재 `organization_id`를 확인
-3. 번호 유무에 따라 안내:
-   - **번호가 있으면**: 아래 URL을 알려주고 "번호를 선택한 뒤 오른쪽 상세의 '인바운드 에이전트' 필드에 방금 만든 에이전트를 지정하세요"로 안내
-     ```
-     https://www.tryvox.co/dashboard/{organization_id}/numbers
-     ```
-   - **번호가 없으면**: 구매 다이얼로그가 자동으로 열리는 딥링크 안내
-     ```
-     https://www.tryvox.co/dashboard/{organization_id}/numbers?new=1
-     ```
-     구매 완료 후 위 번호 관리 페이지로 돌아가 인바운드 에이전트 필드를 지정한다.
-4. 사용자가 "연결했어요"라고 답하면 "이제 이 번호로 전화하면 방금 만든 에이전트가 받습니다"로 마무리한다.
+2. **번호가 있으면**: `update_telephone_number_agent` 도구로 바로 연결한다.
+   - 번호 row의 `id`를 그대로 `organization_telephone_number_id`로 사용
+   - `update_telephone_number_agent(organization_telephone_number_id=<id>, inbound_agent={ agent_id: <방금 만든 에이전트>, agent_version: "current" })`
+   - `agent_version`: `current`(기본)|`production`|`v{n}`
+   - 에이전트는 같은 조직 소속이어야 하고, 번호는 만료되지 않은 상태여야 한다
+   - 인바운드 연결을 해제하려면 `clear_inbound_agent=true` (단독 사용 — `inbound_agent`와 함께 보낼 수 없다)
+   - 연결 후 "이제 이 번호로 전화하면 방금 만든 에이전트가 받습니다"로 마무리한다.
+3. **번호가 없으면**: 번호 구매는 공개 MCP에 도구가 없으므로 웹 앱에서 진행한다. `list_organizations`로 `organization_id`를 확인한 뒤, 구매 다이얼로그가 자동으로 열리는 딥링크를 안내한다.
+   ```
+   https://www.tryvox.co/dashboard/{organization_id}/numbers?new=1
+   ```
+   구매 완료 후 "번호 샀어요"라고 하면 `list_telephone_numbers`를 다시 호출하고, 위 2번대로 `update_telephone_number_agent`로 연결한다.
 
 ### Step 5: 완료
 
@@ -124,8 +123,9 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 - `list_agents`, `create_agent` — 에이전트 조회/생성
 - `create_call` — 아웃바운드 콜 실행
 - `list_telephone_numbers` — 보유 번호 확인 (read-only)
+- `update_telephone_number_agent` — 번호에 인바운드 에이전트 연결/해제
 
-번호 구매와 인바운드 에이전트 연결은 공개 MCP에 도구가 없으므로 `https://www.tryvox.co/dashboard/{organizationId}/numbers`로 안내한다.
+번호 구매는 공개 MCP에 도구가 없으므로 `https://www.tryvox.co/dashboard/{organizationId}/numbers?new=1`로 안내한다.
 
 ### Docs (vox-docs)
 - `https://docs.tryvox.co/docs/start/quickstart` — 빠른 시작 가이드
