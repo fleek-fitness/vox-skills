@@ -102,6 +102,7 @@ get_schema(namespace="tool-schema", category="built_in")
 | `smsMessageType` | 선택 | `"static"` | `"static"` (고정) 또는 `"dynamic"` (AI 생성) |
 | `smsMessagePrompt` | 선택 | | dynamic: AI가 SMS 생성할 프롬프트 |
 | `smsMessageStaticSentence` | 선택 | | static: 발송할 고정 문장 |
+| `responseMode` | 선택 | `"wait"` | `"fire_and_forget"` 이면 발송 결과를 기다리지 않고 대화 진행 (늦은 결과는 대화에 미주입) |
 
 ### send_dtmf
 
