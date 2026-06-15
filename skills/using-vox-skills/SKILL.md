@@ -19,7 +19,7 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 
 ## Docs MCP 활용
 
-`vox-docs` MCP 서버(`https://docs.tryvox.co/mcp`)는 vox.ai 공식 문서 ~85페이지를 실시간 검색한다. 스킬이 커버하지 않는 영역(요금/빌링, SDK, 보안, 배포 상세, 모니터링, API reference 등)은 docs MCP로 직접 답변한다.
+`vox-docs` MCP 서버(`https://fleek.mintlify.app/mcp`)는 vox.ai 공식 문서 ~85페이지를 실시간 검색한다. 스킬이 커버하지 않는 영역(요금/빌링, SDK, 보안, 배포 상세, 모니터링, API reference 등)은 docs MCP로 직접 답변한다.
 
 **사용 방법:**
 1. `vox-docs` MCP의 `search_vox_ai_docs` tool로 검색 (query 예: "pricing", "SDK javascript", "webhook", "SIP telephony")

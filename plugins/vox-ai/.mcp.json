@@ -6,7 +6,7 @@
     },
     "vox-docs": {
       "type": "http",
-      "url": "https://docs.tryvox.co/mcp"
+      "url": "https://fleek.mintlify.app/mcp"
     }
   }
 }
