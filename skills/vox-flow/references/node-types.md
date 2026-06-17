@@ -101,7 +101,9 @@ get_schema(namespace="flow-schema", schema_type="node-{type}")       # 그 type 
 - `sendSms` 실패: 앞선 업무 API 가 성공했다면 fallback 은 "업무는 완료, 문자만 실패"를 말하는 endCall 로 보낸다. generic failure endCall 로 보내면 성공한 예약/등록/접수를 실패처럼 뒤집는다.
 - `endCall`: 종료 멘트가 필요한 경우 node data 의 종료 응답 필드를 schema 로 확인한다. 최종 one-shot 안내만 남았다면 별도 static conversation 대신 endCall 종료 멘트에 넣는 편이 반복을 줄인다.
 - `api`: 지원 HTTP method, auth, body, response variable shape 를 schema 결과에서 확인한다. 임의로 `PATCH` 등을 추가하지 않는다.
+- `api` / `sendSms`: `responseMode: "fire_and_forget"` (응답 비대기) 은 `responseVariables`·결과 기반 transition 과 조합하면 저장이 거부된다. 결과를 쓰지 않는 발송 전용 노드에만 쓴다.
 - `tool`: built-in tool 과 custom tool 을 섞지 않는다. custom tool 실행 node 와 agent `data.builtInTools` 설정은 별도 schema surface 다. **`tool_id` 누락 시 dry-run 차단**.
+- `tool`: `responseMode` 는 노드에 없다 — 참조한 custom tool 의 `response_mode` 설정을 그대로 상속하며, fire 도구는 결과 기반 transition 과 조합할 수 없다.
 - `tool`: `tool_id` 는 `list_tools` 결과에서 확인한 실제 id 만 사용한다. 임의 UUID 를 만들지 않는다.
 - `condition`: deterministic 분기는 `data.logicalTransitions[]`, fallback 은 `data.transitions[]` 에 둔다 (v3 저장 surface 는 `edge.condition` 을 사용하지 않는다).
 

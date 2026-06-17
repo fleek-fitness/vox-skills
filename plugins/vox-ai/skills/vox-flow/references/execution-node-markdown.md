@@ -169,6 +169,7 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
 - `api_configuration`, `response_variables`, `logical_transitions` (snake_case) 로 보내면 v3 가 거절한다.
 - `headers: [{"key": "...", "value": "..."}]` (배열) 로 보내면 거절된다 — 객체 매핑이다.
 - 응답 변수의 jsonPath 는 `$.found` 같은 mock 친화 키만 쓴다. 도메인 키 (`$.data.order_id`) 는 scenario_test mock 에 없어서 logical transition 이 항상 false 로 평가된다.
+- `responseMode: "fire_and_forget"` (응답 비대기) 과 `responseVariables`·`logicalTransitions` 조합은 저장이 거부된다 — fire 는 결과를 쓰지 않는 발송 전용이다.
 
 ## endCall
 
@@ -284,6 +285,7 @@ JSON 변환 시 실패 row 는 `{"condition":"에러 발생 시","isFallback":tr
 - SMS 실패 fallback 에서 이미 성공한 예약/등록/접수 결과를 실패로 뒤집지 않는다.
 - scenario_test 에서는 SMS 가 지원되지 않아 실패할 수 있으므로, fallback 멘트는 본 통화 안에서 접수번호/콜백 시간/확인 방법을 직접 안내하도록 쓴다.
 - 발신번호, 첨부 file key, 특정 템플릿 id 같은 운영 fixture 는 임의로 만들지 않는다. schema default 로 충분한 값은 비워 두고, 실제 값이 필요한 환경이면 사용자/운영자에게 받아서 넣는다.
+- `responseMode: "fire_and_forget"` 이면 발송 결과를 기다리지 않고 성공 전환으로 즉시 진행한다 — `요청 실패 시` fallback 은 실행되지 않으므로, 실패 안내가 필요한 흐름에는 쓰지 않는다.
 
 ## tool
 

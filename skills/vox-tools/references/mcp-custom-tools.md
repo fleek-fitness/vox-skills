@@ -56,7 +56,10 @@ create_tool(
 | `description` | 선택 | 도구 설명 |
 | `speak_during_execution` | 선택 | 실행 중 발화 설정 |
 | `allow_interruption_during_execution` | 선택 | 실행 중 인터럽트 허용 |
+| `response_mode` | 선택 | `"wait"` (기본, 응답 대기) 또는 `"fire_and_forget"` (요청만 보내고 진행) |
 | `organization_id` | 선택 | 미지정 시 기본 조직 사용 |
+
+`"fire_and_forget"` 은 늦게 도착한 응답을 대화에 주입하지 않으며, flow 의 응답 변수·결과 기반 transition 과 조합하면 저장이 거부됩니다. flow `tool` 노드는 이 설정을 그대로 상속합니다 (노드 오버라이드 없음).
 
 ### api_configuration
 
@@ -75,7 +78,7 @@ create_tool(
 update_tool(tool_id="tool-uuid", description="예약 상태 및 잔여석 조회")
 ```
 
-`tool_id`와 **변경할 필드만** 전달합니다.
+`tool_id`와 **변경할 필드만** 전달합니다. `response_mode` 를 `"wait"` → `"fire_and_forget"` 으로 바꿀 때, 이 도구를 결과 기반 transition 으로 참조 중인 flow 가 있으면 저장이 거부됩니다.
 
 ## 삭제: delete_tool(tool_id)
 
