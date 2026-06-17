@@ -9,8 +9,8 @@
 각 빌트인 도구 item의 정확한 필드 구조는 스키마로 확인합니다.
 
 ```
-list_schemas(namespace="tool-schema")
-get_schema(namespace="tool-schema", category="built_in")
+list_schemas(namespace="tool-schema", category="built_in", include_schema=true)
+get_schema(namespace="tool-schema", schema_type="transfer_agent")
 ```
 
 ## 장착: update_agent(builtInTools=[...])
@@ -71,10 +71,18 @@ get_schema(namespace="tool-schema", category="built_in")
 
 ### transfer_agent
 
-같은 조직 내 다른 vox 에이전트로 전환합니다.
+같은 조직 내 다른 vox.ai 에이전트로 전환합니다.
 
 ```json
-{"toolType": "transfer_agent", "name": "transfer_to_support", "transferAgentId": 123, "preserveChatContext": false}
+{
+  "toolType": "transfer_agent",
+  "name": "transfer_to_support",
+  "agent": {
+    "agent_id": "7f3e9c12-4a8b-4d5e-9f1a-2b3c4d5e6f7a",
+    "agent_version": "current"
+  },
+  "preserveChatContext": false
+}
 ```
 
 | 필드 | 필수 | 기본값 | 설명 |
@@ -82,9 +90,12 @@ get_schema(namespace="tool-schema", category="built_in")
 | `toolType` | 필수 | | `"transfer_agent"` |
 | `name` | 필수 | | 도구 이름 (고유) |
 | `description` | 선택 | | 호출 조건 설명 |
-| `transferAgentId` | 필수 | | 전환 대상 에이전트 ID (숫자) |
-| `transferAgentVersion` | 선택 | `null` | 특정 버전 (미지정 시 최신) |
+| `agent` | 필수 | | 전환 대상 에이전트 매핑 객체 |
+| `agent.agent_id` | 필수 | | 같은 조직의 전환 대상 에이전트 UUID |
+| `agent.agent_version` | 선택 | `"current"` | 전환 대상 버전 |
 | `preserveChatContext` | 선택 | `false` | 대화 컨텍스트 유지 여부 |
+
+MCP/v3에서는 기존 `transferAgentId` / `transferAgentVersion` 대신 `agent` 객체를 보냅니다.
 
 ### send_sms
 
