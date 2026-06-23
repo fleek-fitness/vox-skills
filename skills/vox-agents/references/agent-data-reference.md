@@ -100,6 +100,8 @@ vox agent set --agent <local-name> \
   --data presetDynamicVariables.customer_tier=premium \
   --data callSettings.callTimeoutInSeconds=600
 # specialized 설정은 agents/<local-name>/agent.json 직접 편집
+vox agent test init greeting_smoke --agent <local-name> --input "안녕하세요" --response-contains "안내"
+vox agent test validate greeting_smoke --agent <local-name> --json
 vox doctor --json
 vox agent doctor --agent <local-name> --json
 vox agent validate --agent <local-name> --json
@@ -111,6 +113,8 @@ vox agent promote v1 --agent <local-name> --yes
 ```
 
 `vox agent set` 값은 먼저 JSON으로 파싱된다. 숫자/boolean/null이 필요하면 그대로 쓰고, 문자열이 JSON으로 파싱되지 않으면 문자열로 저장된다. `@file`은 프로젝트 상대 경로의 파일 내용을 문자열로 읽어 `agent.data`에 넣는다. 예: 긴 시스템 프롬프트는 `prompts/support.md`에 두고 `--data prompt.prompt=@prompts/support.md`로 주입한다. `agent set`은 committed source만 수정하며 원격 반영은 항상 `vox doctor 또는 agent doctor -> validate -> diff -> push` 이후에 한다.
+
+`vox agent test init/validate`는 실제 chat/voice runtime을 실행하지 않는다. 테스트 의도와 response assertion을 `agents/<local-name>/tests/*.json`에 남겨 리뷰/CI/future `vox test` runner가 같은 artifact를 보게 하는 단계다.
 
 `agent version save`와 `agent promote`는 push 이후 릴리스 게이트다. 리뷰/승인 없이 자동 실행하지 말고, 사용자가 프로덕션 승격을 명시했거나 배포 승인 단계가 끝났을 때만 사용한다.
 
