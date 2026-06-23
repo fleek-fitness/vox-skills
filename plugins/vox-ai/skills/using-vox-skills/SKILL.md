@@ -50,6 +50,7 @@ vox agent explain /agent/data/prompt/prompt --agent <name> --json
 # stable agent.data 설정은 agent set으로, specialized 설정은 JSON 직접 편집
 vox agent set --agent <name> --data prompt.prompt=@prompts/support.md
 # edit agents/<name>/agent.json and related tools/** / knowledges/**
+vox doctor --json
 vox agent doctor --agent <name> --json
 vox agent validate --agent <name> --json
 vox agent diff --agent <name> --json

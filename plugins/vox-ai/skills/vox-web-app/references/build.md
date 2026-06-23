@@ -16,6 +16,7 @@ CLI 루프:
 ```bash
 vox agent pull <agent-id>
 # edit agents/<name>/agent.json, tools/**, knowledges/**
+vox doctor --json
 vox agent doctor --agent <name> --json
 vox agent validate --agent <name> --json
 vox agent diff --agent <name> --json

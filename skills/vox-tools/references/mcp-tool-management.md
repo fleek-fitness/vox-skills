@@ -48,7 +48,7 @@ vox tool status check_order --json
 
 CLI source에는 raw token/API key를 쓰지 말고 `${env:NAME}` 또는 `${secret:name}` 형태의 reference를 사용합니다. `vox tool validate`가 literal secret을 막고, `vox tool push`는 push 시점에만 secret reference를 해석합니다.
 
-빌트인 도구는 별도 tool resource가 아니라 agent data / flow node 설정입니다. durable 변경에서는 `vox agent pull` 후 `agents/<name>/agent.json`을 편집하고 `vox agent validate/diff/push`로 반영합니다.
+빌트인 도구는 별도 tool resource가 아니라 agent data / flow node 설정입니다. durable 변경에서는 `vox agent pull` 후 `agents/<name>/agent.json`을 편집하고 `vox doctor` 또는 `vox agent doctor` 후 `vox agent validate/diff/push`로 반영합니다.
 
 ### MCP direct workflow
 

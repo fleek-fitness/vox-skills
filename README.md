@@ -128,7 +128,7 @@ Codex/Claude Code 같은 코딩 에이전트는 파일 편집, shell 실행, git
 docs MCP: 공식 문서 검색
 vox MCP: 조직/스키마/리소스 조회와 one-off 실행
 vox skills: 설계 판단과 workflow routing
-vox CLI: agent/tool/knowledge를 파일로 편집하고 validate/diff/push하는 durable authoring
+vox CLI: agent/tool/knowledge를 파일로 편집하고 doctor/validate/diff/push하는 durable authoring
 ```
 
 경계 규칙:
@@ -149,6 +149,7 @@ vox agent explain /agent/data/prompt/prompt --agent <name> --json
 # stable agent.data 설정은 agent set으로, specialized 설정은 JSON 직접 편집
 vox agent set --agent <name> --data prompt.prompt=@prompts/support.md
 # edit agents/<name>/agent.json, tools/**, knowledges/**
+vox doctor --json
 vox agent doctor --agent <name> --json
 vox agent validate --agent <name> --json
 vox agent diff --agent <name> --json
