@@ -104,12 +104,13 @@ https://www.tryvox.co/dashboard/{orgId}/outbound/single?numberId={num_id}
 
 LLM 에이전트가 사용자의 `{orgId}`를 모르는 경우:
 
-1. **`list_organizations` MCP 도구 호출** → 현재 사용자가 속한 조직 목록과 UUID 반환
+1. **`list_organizations` MCP 도구 호출** → 현재 사용자가 속한 조직 목록, UUID, `is_main`, `parent_organization_id` 반환
 2. 사용자가 특정 조직을 선택하면 해당 UUID를 `{orgId}`에 대입
+3. 결제 수단·플랜·청구 내역 링크는 하위 워크스페이스(`is_main=false`)가 아니라 상위 워크스페이스(`parent_organization_id`) 기준으로 안내한다
 
 예:
 ```
-list_organizations 호출 → [{id: "00000000-0000-0000-0000-000000000000", name: "My Org"}]
+list_organizations 호출 → [{organization_id: "00000000-0000-0000-0000-000000000000", name: "My Org", is_main: true, parent_organization_id: null}]
 딥링크: https://www.tryvox.co/dashboard/00000000-0000-0000-0000-000000000000/numbers?new=1
 ```
 
