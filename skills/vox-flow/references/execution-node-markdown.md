@@ -81,7 +81,7 @@
 - method: [schema endpoint enum 확인]
 - url: [요청 URL. {{variable_name}} 사용 가능]
 - body: [필요 시]
-- auth: [필요 시]
+- auth: [필요 시. CLI에서는 `--auth-type Bearer|Basic --auth-credentials '${env:NAME}'` 또는 `${secret:name}` reference 사용]
 
 ### 응답 변수
 - [variable_name]: [JSONPath 표현식] — [설명]
@@ -142,6 +142,9 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
     "apiConfiguration": {
       "method": "POST",
       "url": "https://api.example.com/orders/lookup",
+      "authorizationEnabled": true,
+      "authType": "Bearer",
+      "authCredentials": "${env:CRM_TOKEN}",
       "headersEnabled": true,
       "headers": {"Content-Type": "application/json"},
       "bodyEnabled": true,
@@ -168,6 +171,8 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
 흔한 실수:
 - `api_configuration`, `response_variables`, `logical_transitions` (snake_case) 로 보내면 v3 가 거절한다.
 - `headers: [{"key": "...", "value": "..."}]` (배열) 로 보내면 거절된다 — 객체 매핑이다.
+- flow `api` node method 에 `PATCH` 를 쓰지 않는다. custom tool 의 `api_configuration.method` 는 `PATCH` 를 지원하지만, 현재 flow schema 의 API node enum 은 `GET` / `POST` / `PUT` / `DELETE` 다.
+- auth credential 을 raw token 으로 파일에 쓰지 않는다. 레포에 남길 CLI source 에서는 `${env:NAME}` 또는 `${secret:name}` reference 를 사용한다.
 - 응답 변수의 jsonPath 는 `$.found` 같은 mock 친화 키만 쓴다. 도메인 키 (`$.data.order_id`) 는 scenario_test mock 에 없어서 logical transition 이 항상 false 로 평가된다.
 - `responseMode: "fire_and_forget"` (응답 비대기) 과 `responseVariables`·`logicalTransitions` 조합은 저장이 거부된다 — fire 는 결과를 쓰지 않는 발송 전용이다.
 
