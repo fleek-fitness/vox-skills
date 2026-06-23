@@ -91,12 +91,20 @@ agent 설정 변경이 레포에 남아야 하거나 리뷰/롤백/CI가 필요�
 
 ```bash
 vox agent pull <agent-id> --agent <local-name>
-# edit agents/<local-name>/agent.json
+# prompt/firstLine/variables/callSettings/webhookSettings 같은 안정적인 dot-path는 agent set 사용
+vox agent set --agent <local-name> \
+  --data prompt.prompt=@prompts/support.md \
+  --data prompt.firstLine="안녕하세요. 무엇을 도와드릴까요?" \
+  --data presetDynamicVariables.customer_tier=premium \
+  --data callSettings.callTimeoutInSeconds=600
+# specialized 설정은 agents/<local-name>/agent.json 직접 편집
 vox agent doctor --agent <local-name> --json
 vox agent validate --agent <local-name> --json
 vox agent diff --agent <local-name> --json
 vox agent push --agent <local-name>
 ```
+
+`vox agent set` 값은 먼저 JSON으로 파싱된다. 숫자/boolean/null이 필요하면 그대로 쓰고, 문자열이 JSON으로 파싱되지 않으면 문자열로 저장된다. `@file`은 프로젝트 상대 경로의 파일 내용을 문자열로 읽어 `agent.data`에 넣는다. 예: 긴 시스템 프롬프트는 `prompts/support.md`에 두고 `--data prompt.prompt=@prompts/support.md`로 주입한다. `agent set`은 committed source만 수정하며 원격 반영은 항상 `doctor -> validate -> diff -> push` 이후에 한다.
 
 `agent.data` 안의 `toolIds`, `knowledgeIds`, flow node `toolId`, conversation node `knowledgeIds`처럼 organization-local ID가 필요한 필드는 committed source에 직접 쓰지 않는 것이 좋다. CLI 프로젝트에서는 local resource ref를 사용한다.
 

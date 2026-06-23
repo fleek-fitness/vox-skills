@@ -268,7 +268,7 @@ graph LR
 
 1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 로 현재 flow schema 를 확인한다.
 2. agent `data` 를 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 를 확인한다.
-3. 레포 관리 작업이면 `vox agent add/pull`, `vox agent flow ...` helper 또는 직접 JSON 편집으로 source를 수정한다.
+3. 레포 관리 작업이면 `vox agent add/pull`, graph 변경은 `vox agent flow ...` helper, agent-level `data` 변경은 `vox agent set`, 그 외 specialized field는 직접 JSON 편집으로 source를 수정한다.
 4. `vox agent doctor`, `vox agent validate`, `vox agent diff` 로 확인한 뒤 `vox agent push` 한다.
 5. one-off 원격 변경이면 `validate_flow_data` 후 `create_agent(type="flow", data=..., flow_data=...)` 또는 `update_agent(flow_data=...)` 를 호출한다 (작은 변경이면 `update_agent_partial`).
 6. `vox agent diff/status` 또는 `get_agent` 로 다시 읽어 unknown field drop, enum mismatch, 누락 edge 를 확인한다.
