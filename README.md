@@ -150,6 +150,8 @@ vox agent explain /agent/data/prompt/prompt --agent <name> --json
 vox agent set --agent <name> --data prompt.prompt=@prompts/support.md
 # edit agents/<name>/agent.json, tools/**, knowledges/**
 vox agent test init greeting_smoke --agent <name> --input "안녕하세요" --response-contains "안내"
+vox agent test list --agent <name> --json
+vox agent test show greeting_smoke --agent <name> --json
 vox agent test validate greeting_smoke --agent <name> --json
 vox doctor --json
 vox agent doctor --agent <name> --json
@@ -161,4 +163,4 @@ vox agent version save --agent <name> --description "reviewed release"
 vox agent promote v1 --agent <name> --yes
 ```
 
-`agent test init/validate`는 chat/voice runtime을 실행하지 않습니다. 레포에 남길 테스트 의도와 acceptance assertion을 `agents/<name>/tests/*.json`으로 먼저 고정해 PR 리뷰와 future `vox test` runner가 같은 파일을 보게 하는 용도입니다.
+`agent test init/list/show/validate`는 chat/voice runtime을 실행하지 않습니다. 레포에 남길 테스트 의도와 acceptance assertion을 `agents/<name>/tests/*.json`으로 먼저 고정하고, PR 리뷰와 코딩 에이전트 탐색에서 같은 파일을 보게 하는 용도입니다.

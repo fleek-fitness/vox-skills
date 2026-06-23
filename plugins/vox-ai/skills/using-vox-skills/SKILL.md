@@ -51,6 +51,8 @@ vox agent explain /agent/data/prompt/prompt --agent <name> --json
 vox agent set --agent <name> --data prompt.prompt=@prompts/support.md
 # edit agents/<name>/agent.json and related tools/** / knowledges/**
 vox agent test init greeting_smoke --agent <name> --input "안녕하세요" --response-contains "안내"
+vox agent test list --agent <name> --json
+vox agent test show greeting_smoke --agent <name> --json
 vox agent test validate greeting_smoke --agent <name> --json
 vox doctor --json
 vox agent doctor --agent <name> --json
@@ -62,7 +64,7 @@ vox agent version save --agent <name> --description "reviewed release"
 vox agent promote v1 --agent <name> --yes
 ```
 
-`agent test init/validate`는 runtime 테스트 실행이 아니라 local test spec authoring이다. 테스트 의도와 acceptance assertion이 레포에 남아야 할 때 사용하고, 실제 chat/voice 실행은 future `vox test` 또는 제품 API surface가 준비된 뒤로 둔다.
+`agent test init/list/show/validate`는 runtime 테스트 실행이 아니라 local test spec authoring/review이다. 테스트 의도와 acceptance assertion이 레포에 남아야 할 때 사용하고, `list/show --json`으로 코딩 에이전트가 경로/turn/assertion 수/validation 상태를 확인하게 한다. 실제 chat/voice 실행은 future `vox test` 또는 제품 API surface가 준비된 뒤로 둔다.
 
 Resource 변경은 같은 원칙을 따른다.
 
