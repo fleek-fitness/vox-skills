@@ -174,6 +174,7 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
 - `headers: [{"key": "...", "value": "..."}]` (배열) 로 보내면 거절된다 — 객체 매핑이다.
 - flow `api` node method 에 `PATCH` 를 쓰지 않는다. custom tool 의 `api_configuration.method` 는 `PATCH` 를 지원하지만, 현재 flow schema 의 API node enum 은 `GET` / `POST` / `PUT` / `DELETE` 다.
 - auth credential 이나 `authorization` / `x-api-key` 같은 민감 header 값을 raw token 으로 파일에 쓰지 않는다. 레포에 남길 CLI source 에서는 `${env:NAME}` 또는 `${secret:name}` reference 를 사용한다.
+- CLI `vox agent push`는 agent JSON의 raw API credential/literal secret을 dry-run 포함 거부하고, placeholder API URL은 실제 원격 저장 전에 거부한다.
 - 응답 변수의 jsonPath 는 `$.found` 같은 mock 친화 키만 쓴다. 도메인 키 (`$.data.order_id`) 는 scenario_test mock 에 없어서 logical transition 이 항상 false 로 평가된다.
 - `responseMode: "fire_and_forget"` (응답 비대기) 과 `responseVariables`·`logicalTransitions` 조합은 저장이 거부된다 — fire 는 결과를 쓰지 않는 발송 전용이다.
 
@@ -248,7 +249,7 @@ vox agent flow add-node api_lookup --type api \
 - 실패: 전환 실패 시 fallback edge로 진행. (JSON 변환 시 edge 명시)
 ```
 
-JSON 변환 시 `data.transferConfiguration.transferTo` 는 필수다. 이 값은 시나리오/운영자가 제공한 실제 전화번호 또는 SIP URI 여야 한다. 테스트 편의를 위해 임의 번호를 만들지 말고, 실제 target 이 없으면 transferCall 대신 endCall 안내나 callback 요청 flow 로 설계한다. 실패 row 는 `{"condition":"에러 발생 시","isFallback":true}` 로 만들고 `isSkipUserResponse` 를 붙이지 않는다. fallback row 에 skip flag 를 붙이면 editor 에서 source handle 이 숨겨져 선이 끊긴 것처럼 보일 수 있다.
+JSON 변환 시 `data.transferConfiguration.transferTo` 는 필수다. 이 값은 시나리오/운영자가 제공한 실제 전화번호 또는 SIP URI 여야 한다. 테스트 편의를 위해 임의 번호를 만들지 말고, 실제 target 이 없으면 transferCall 대신 endCall 안내나 callback 요청 flow 로 설계한다. CLI helper placeholder가 남으면 `vox agent doctor`가 경고하고 실제 `vox agent push`가 원격 저장 전에 거부한다. 실패 row 는 `{"condition":"에러 발생 시","isFallback":true}` 로 만들고 `isSkipUserResponse` 를 붙이지 않는다. fallback row 에 skip flag 를 붙이면 editor 에서 source handle 이 숨겨져 선이 끊긴 것처럼 보일 수 있다.
 
 CLI helper 로 만들 때는 기존 `--transfer-type` 이 전화/SIP 대상 타입이고, cold/warm 전환 방식은 `--transfer-mode` 다.
 
@@ -290,7 +291,7 @@ JSON 변환 시 실패 row 는 `{"condition":"에러 발생 시","isFallback":tr
 CLI helper 는 `--transfer-agent <agent_id>` 와 `--preserve-chat-context true|false` 를 지원한다.
 
 작성 규칙:
-- **`agent.agent_id` (UUID) 는 필수** — 누락 시 dry-run 이 차단한다. `agent_version` 도 함께 명시 권장: 미지정 시 latest 가 어떤 버전인지 알기 어려워 운영 추적이 힘들다.
+- **`agent.agent_id` (UUID) 는 필수** — 누락/placeholder 시 `vox agent doctor`가 경고하고 실제 `vox agent push`가 원격 저장 전에 거부한다. `agent_version` 도 함께 명시 권장: 미지정 시 latest 가 어떤 버전인지 알기 어려워 운영 추적이 힘들다.
 - 실제 대상 agent UUID 가 없으면 transferAgent 노드를 만들지 않는다. 임의 UUID 또는 숫자 placeholder 를 넣지 말고, `list_agents` / 기존 `get_agent` 컨텍스트 / 사용자 제공 값에서 확인된 agent 만 사용한다.
 - 과거 flat `agentId` 표현은 사용하지 않는다. 현재 schema 의 nested `agent.{agent_id, agent_version}` shape 를 따른다.
 
@@ -362,7 +363,7 @@ custom tool 실행 node 와 agent `data.builtInTools` 설정은 schema surface �
 ```
 
 작성 규칙:
-- **`tool_id` 는 필수** — 누락 시 dry-run 이 차단한다. 등록되지 않은 custom tool 을 가리키지 않도록 `list_tools` 결과의 ID 를 사용한다.
+- **`tool_id` 또는 CLI `toolRef` 는 필수** — 누락/placeholder 시 `vox agent doctor`가 경고하고 실제 `vox agent push`가 원격 저장 전에 거부한다. 등록되지 않은 custom tool 을 가리키지 않도록 `list_tools` 결과의 ID 를 쓰거나, CLI project에서는 `vox tool push/pull`로 binding을 만든 뒤 `toolRef`를 사용한다.
 - 임의 UUID 를 tool id 로 만들지 않는다. 필요한 custom tool 이 없으면 tool 노드가 아니라 api / conversation / endCall 로 설계를 바꾼다.
 - built-in tool (end_call, transfer_call, transfer_agent, send_sms, send_dtmf) 설정은 agent `data.builtInTools` schema surface 다 — tool 노드 안에 직접 넣지 않는다.
 

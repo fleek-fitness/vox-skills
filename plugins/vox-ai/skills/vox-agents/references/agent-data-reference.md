@@ -116,6 +116,8 @@ vox agent promote v1 --agent <local-name> --yes
 
 `vox agent set` 값은 먼저 JSON으로 파싱된다. 숫자/boolean/null이 필요하면 그대로 쓰고, 문자열이 JSON으로 파싱되지 않으면 문자열로 저장된다. `@file`은 프로젝트 상대 경로의 파일 내용을 문자열로 읽어 `agent.data`에 넣는다. 예: 긴 시스템 프롬프트는 `prompts/support.md`에 두고 `--data prompt.prompt=@prompts/support.md`로 주입한다. `agent set`은 committed source만 수정하며 원격 반영은 항상 `vox doctor 또는 agent doctor -> validate -> diff -> push` 이후에 한다.
 
+`vox agent push`는 마지막 안전망이다. agent JSON에 raw API credential/literal secret이 있으면 dry-run도 거부하고, placeholder API URL, helper가 만든 TODO 노드 텍스트/조건/SMS/transfer 대상, 비어 있는 tool/knowledge 참조가 남아 있으면 실제 원격 저장 전에 거부한다. 따라서 `vox agent push --dry-run --json`으로 payload를 검토한 뒤, 실제 push 전에 `vox agent doctor --json` 경고를 해소한다.
+
 `vox agent test init/list/show/validate`는 실제 chat/voice runtime을 실행하지 않는다. 테스트 의도와 response assertion을 `agents/<local-name>/tests/*.json`에 남기고, `list/show --json`으로 경로/turn/assertion 수/validation 상태를 리뷰한 뒤 CI/future `vox test` runner가 같은 artifact를 보게 하는 단계다.
 
 `agent version save`와 `agent promote`는 push 이후 릴리스 게이트다. 리뷰/승인 없이 자동 실행하지 말고, 사용자가 프로덕션 승격을 명시했거나 배포 승인 단계가 끝났을 때만 사용한다.
