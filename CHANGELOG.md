@@ -81,6 +81,7 @@
 - `quickstart-ko.md`의 공개 도구 표를 실제 24개 surface로 교정했다(phantom tool 제거 + `list_tools`/`create_tool`/`get_tool`/`update_tool`/`delete_tool`·`list_llm_models`/`list_voice_models`·`update_agent_partial`·`autofix_flow_data`·`list_knowledges` 반영). conformance CI가 잔존 phantom을 잡아 발견.
 
 ### Docs
+- `vox-tools/references/mcp-built-in-tools.md`의 `send_sms` 설명에 public REST SMS v3 API와의 boundary를 명시했다. `send_sms`는 에이전트 `data.builtInTools[]`에 장착하는 통화 중 빌트인 도구이고, 서버 자동화용 `POST /v3/sms` / `POST /v3/sms/batch` 및 Phase 1 MCP direct SMS tool과는 다른 surface임을 고정했다(Codex bundle 복사본 포함).
 - `README.md`의 Claude Code Plugin 섹션에 `/reload-plugins` 단계와 "첫 도구 호출 시 OAuth 로그인" 시점을 명시했다. 설치 직후 도구가 보이지 않는 상황을 줄이기 위함이다.
 - `vox-web-app/references/deep-links.md`의 `list_organizations` 예시 조직 UUID를 실재 식별자에서 명백한 placeholder(`00000000-0000-0000-0000-000000000000`)로 교체했다(공개 repo 노출 제거, Codex 번들 복사본 포함).
 - `references/mcp-vox-integration.md`, `references/quickstart-ko.md`, `README.md`의 MCP 서버 URL을 canonical `/mcp` 경로로 통일했다. `https://mcp.tryvox.co/`(root)는 404이고 실제 endpoint는 `/mcp`다.
