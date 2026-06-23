@@ -85,6 +85,9 @@ vox.ai 시스템 이벤트(통화 종료 등)를 외부로 전송하는 웹훅 �
 - **Organization webhook**: 조직 전체 이벤트
 - **Webhook key** 발급 (서명 검증용)
 - 테스트 발송 버튼으로 웹훅 수신 확인
+- **수신 문자 웹훅**: 워크스페이스 번호로 받은 SMS/MMS를 `sms_received` 이벤트로 전송하는 opt-in 토글
+  - 기본값은 꺼짐이며, 켠 이후 수신분부터 전송된다. 과거 수신분은 소급 발송되지 않는다.
+  - 페이로드는 `sms` 본문 키와 `attachments[].file_key`를 사용한다. 상세 스키마는 `/docs/operate/monitor/webhooks/schema`, HMAC 검증은 `/docs/operate/monitor/webhooks/organization` 기준으로 안내한다.
 
 > 에이전트 단위 웹훅은 에이전트 상세 > 오른쪽 패널 > 웹훅 설정에서 별도 관리 (build.md 1.3 참고)
 
