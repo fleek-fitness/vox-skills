@@ -142,6 +142,8 @@ vox CLI: agent/tool/knowledge를 파일로 편집하고 validate/diff/push하는
 
 ```bash
 vox agent pull <agent-id>
+# dashboard export JSON에서 시작하면:
+# vox agent import dashboard-export.json --agent <name>
 # edit agents/<name>/agent.json, tools/**, knowledges/**
 vox agent doctor --agent <name> --json
 vox agent validate --agent <name> --json

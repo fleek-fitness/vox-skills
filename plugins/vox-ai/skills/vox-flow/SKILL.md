@@ -163,6 +163,8 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 vox agent pull <agent-id> --agent <local-name>
 # 또는 새 flow면
 vox agent add <local-name> --template flow-basic
+# dashboard export JSON에서 시작하면:
+# vox agent import dashboard-export.json --agent <local-name>
 
 vox agent flow graph --agent <local-name> --format summary --json
 vox agent flow add-node <node-id> --agent <local-name> --type api --url https://api.example.com --method POST --json
