@@ -20,6 +20,13 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 
 스키마 전체는 `get_schema` 결과를 참조한다. 여기는 **LLM이 실수하기 쉬운 규칙만** 정리한다.
 
+### boolean/null contract
+
+- agent config boolean은 생략/`true`/`false`만 사용한다.
+- 기본값을 쓰려면 해당 boolean field를 생략한다. 명시적으로 끄려면 `false`, 켜려면 `true`를 보낸다.
+- `null`은 보내지 않는다. 특히 `webhookSettings.inboundCallWebhookSigningEnabled`는 default `false`인 non-null boolean이며, `null` 전송은 API validation error가 된다.
+- 이 규칙은 `create_agent`와 `update_agent`의 `data` 모두에 적용된다.
+
 ### prompt
 
 - `firstLineType` enum: `userFirst` | `aiFirstDynamic` | `aiFirstStatic`
