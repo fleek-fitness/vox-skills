@@ -7,6 +7,8 @@ description: "Getting started with vox.ai — create a voice AI agent, make an o
 
 vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화를 걸거나 받는 것을 도와주는 스킬.
 
+처음 체험하는 quickstart는 MCP direct 생성이 빠르다. 다만 사용자가 "레포에 남기기", "코드처럼 관리", "diff/리뷰/커밋/롤백/CI"를 언급하면 quickstart라도 `vox-agents` / `vox-flow`로 넘겨 `vox` CLI Agent-as-Code 루프를 사용하게 한다.
+
 ## 온보딩
 
 처음 사용하는 사용자를 자연스러운 대화로 안내한다. 사용자가 한 번에 정보를 주면 추가 질문 없이 바로 진행. 정보가 부족할 때만 가볍게 물어본다.
@@ -42,7 +44,9 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 1. 에이전트 이름 자동 생성 (업종 + 사용 사례 기반)
 2. 위 템플릿 기반으로 프롬프트 생성
 3. 사용자에게 이름과 프롬프트 요약을 보여주고 확인: "이렇게 만들까요?"
-4. 확인 받으면 `create_agent` MCP 도구로 생성
+4. 확인 받으면 변경 표면을 고른다.
+   - quickstart/one-off면 `create_agent` MCP 도구로 생성
+   - 레포에 남겨야 하면 `vox agent init` 또는 `vox agent add`로 local source를 만들고 `vox agent validate/diff/push` 루프를 사용하도록 `vox-agents`에 handoff
    - name: 이름
    - type: "single_prompt" (기본값 — 생략 가능)
    - data: { prompt: 생성된 프롬프트 } — 프롬프트/설정은 top-level이 아니라 `data` 안에 넣는다(camelCase). 정확한 형태는 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")`로 확인

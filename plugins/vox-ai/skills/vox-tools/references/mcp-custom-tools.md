@@ -2,6 +2,36 @@
 
 조직 단위 커스텀 도구(HTTP/API)의 조회, 생성, 수정, 삭제 및 에이전트 연결/해제입니다. 커스텀 도구는 HTTP 엔드포인트 호출 설정만 지원합니다 — MCP 타입 커스텀 도구 생성은 없습니다.
 
+## CLI-first 변경 루프
+
+custom tool 변경이 레포에 남아야 하거나 리뷰/롤백/CI가 필요하면 MCP `create_tool` / `update_tool`를 직접 호출하지 말고 CLI source를 수정합니다.
+
+```bash
+vox tool init check_reservation --url https://api.example.com/reservations --method GET
+# edit tools/check_reservation/tool.json
+vox tool validate check_reservation
+vox tool diff check_reservation --json
+vox tool push check_reservation
+```
+
+기존 remote tool을 레포로 가져올 때:
+
+```bash
+vox tool pull <tool-id> --tool check_reservation
+vox tool status check_reservation --json
+```
+
+agent에 연결할 때는 remote `tool_id`를 committed `agent.json`에 직접 쓰지 말고 local ref를 사용합니다.
+
+```bash
+vox agent attach tool <agent-name> check_reservation --node <tool-node-id>
+vox agent validate --agent <agent-name> --json
+vox agent diff --agent <agent-name> --json
+vox agent push --agent <agent-name>
+```
+
+MCP direct 방식은 빠른 one-off 생성/수정, 탐색, 또는 사용자가 원격 즉시 반영을 명시한 경우에 사용합니다.
+
 ## 조회: list_tools(organization_id)
 
 ```

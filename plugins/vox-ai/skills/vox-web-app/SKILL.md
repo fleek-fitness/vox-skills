@@ -105,6 +105,7 @@ vox.ai 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/...`)에서 사
 - **빌트인/커스텀 도구 관리** → `vox-tools`
 - **온보딩 플로우 전체** → `vox-onboarding`
 - **가격 정책 상세** → `vox-docs` MCP에서 pricing 검색
+- **레포에 남길 agent/tool/knowledge 변경** → `using-vox-skills` 라우터를 거쳐 `vox` CLI Agent-as-Code 루프(`pull/init -> edit files -> doctor/validate -> diff/status -> push`)로 넘긴다. 이 스킬은 화면 조작 안내와 UI-only 기능을 맡는다.
 
 ## Related Resources
 

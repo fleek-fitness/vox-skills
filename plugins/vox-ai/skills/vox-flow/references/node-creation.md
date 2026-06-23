@@ -105,5 +105,6 @@
 4. fallback/실패/else path 는 자동 생성된다고 가정하지 말고 `edges` 로 명시한다.
 5. `isSkipUserResponse:true` 는 extraction skip transition 처럼 사용자 발화를 기다리지 않는 것이 명확한 실행 row 에만 쓴다. static conversation → endCall/next row 와 fallback row 에는 붙이지 않는다.
 6. 업무 성공 뒤 SMS 실패 fallback 이 있으면, fallback target 이 generic failure 가 아니라 "업무는 완료, 문자만 실패" 종료 멘트인지 확인한다.
-7. `validate_flow_data(flow_data=...)` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `warnings` 는 사용자에게 한 줄로 전달한다. 결정론적으로 고칠 수 있는 `errors` 는 손으로 고치지 말고 `autofix_flow_data(flow_data=...)` 로 보정한 뒤 다시 dry-run 한다.
-8. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인한다. 응답 본문의 `result.message` 에 자동 보정 안내가 있으면 함께 전달한다. 기존 flow 의 노드/엣지 몇 개만 바꾸는 경우는 full 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 (SKILL.md [Incremental Editing](../SKILL.md#incremental-editing)).
+7. 레포에 남길 변경이면 CLI 경로를 우선한다: `agents/<name>/agent.json` 또는 `vox agent flow ...` helper로 수정 → `vox agent doctor` → `vox agent validate` → `vox agent diff` → `vox agent push`.
+8. MCP/API로 바로 반영하는 one-off이면 `validate_flow_data(flow_data=...)` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `warnings` 는 사용자에게 한 줄로 전달한다. 결정론적으로 고칠 수 있는 `errors` 는 손으로 고치지 말고 `autofix_flow_data(flow_data=...)` 로 보정한 뒤 다시 dry-run 한다.
+9. MCP/API `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인한다. 응답 본문의 `result.message` 에 자동 보정 안내가 있으면 함께 전달한다. 기존 flow 의 노드/엣지 몇 개만 바꾸는 원격 즉시 변경은 full 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 (SKILL.md [Incremental Editing](../SKILL.md#incremental-editing)).
