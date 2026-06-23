@@ -174,6 +174,9 @@ vox agent doctor --agent <local-name> --json
 vox agent validate --agent <local-name> --json
 vox agent diff --agent <local-name> --json
 vox agent push --agent <local-name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <local-name> --description "reviewed release"
+vox agent promote v1 --agent <local-name> --yes
 ```
 
 flow API node method enum 은 현재 서버 flow schema 기준 `GET` / `POST` / `PUT` / `DELETE` 다. custom tool 은 `PATCH` 를 지원하지만 flow `api` node 는 api-server schema 가 열리기 전까지 `PATCH` 를 쓰지 않는다. `authorization` / `x-api-key` 같은 민감 header 와 auth credential 은 raw token 을 파일에 쓰지 말고 `${env:NAME}` / `${secret:name}` reference 를 쓴다.

@@ -105,9 +105,14 @@ vox agent doctor --agent <local-name> --json
 vox agent validate --agent <local-name> --json
 vox agent diff --agent <local-name> --json
 vox agent push --agent <local-name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <local-name> --description "reviewed release"
+vox agent promote v1 --agent <local-name> --yes
 ```
 
 `vox agent set` 값은 먼저 JSON으로 파싱된다. 숫자/boolean/null이 필요하면 그대로 쓰고, 문자열이 JSON으로 파싱되지 않으면 문자열로 저장된다. `@file`은 프로젝트 상대 경로의 파일 내용을 문자열로 읽어 `agent.data`에 넣는다. 예: 긴 시스템 프롬프트는 `prompts/support.md`에 두고 `--data prompt.prompt=@prompts/support.md`로 주입한다. `agent set`은 committed source만 수정하며 원격 반영은 항상 `vox doctor 또는 agent doctor -> validate -> diff -> push` 이후에 한다.
+
+`agent version save`와 `agent promote`는 push 이후 릴리스 게이트다. 리뷰/승인 없이 자동 실행하지 말고, 사용자가 프로덕션 승격을 명시했거나 배포 승인 단계가 끝났을 때만 사용한다.
 
 `agent.data` 안의 `toolIds`, `knowledgeIds`, flow node `toolId`, conversation node `knowledgeIds`처럼 organization-local ID가 필요한 필드는 committed source에 직접 쓰지 않는 것이 좋다. CLI 프로젝트에서는 local resource ref를 사용한다.
 

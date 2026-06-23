@@ -28,6 +28,9 @@ vox agent attach tool <agent-name> check_reservation --node <tool-node-id>
 vox agent validate --agent <agent-name> --json
 vox agent diff --agent <agent-name> --json
 vox agent push --agent <agent-name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <agent-name> --description "reviewed release"
+vox agent promote v1 --agent <agent-name> --yes
 ```
 
 MCP direct 방식은 빠른 one-off 생성/수정, 탐색, 또는 사용자가 원격 즉시 반영을 명시한 경우에 사용합니다.

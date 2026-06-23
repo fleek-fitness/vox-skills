@@ -21,6 +21,9 @@ vox agent doctor --agent <name> --json
 vox agent validate --agent <name> --json
 vox agent diff --agent <name> --json
 vox agent push --agent <name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <name> --description "reviewed release"
+vox agent promote v1 --agent <name> --yes
 ```
 
 ---

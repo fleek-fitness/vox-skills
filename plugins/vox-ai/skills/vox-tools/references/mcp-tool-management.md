@@ -37,6 +37,9 @@ vox agent attach tool support check_order --node lookup_order
 vox agent validate --agent support --json
 vox agent diff --agent support --json
 vox agent push --agent support
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent support --description "reviewed release"
+vox agent promote v1 --agent support --yes
 ```
 
 기존 remote tool을 레포로 가져올 때:
@@ -48,7 +51,7 @@ vox tool status check_order --json
 
 CLI source에는 raw token/API key를 쓰지 말고 `${env:NAME}` 또는 `${secret:name}` 형태의 reference를 사용합니다. `vox tool validate`가 literal secret을 막고, `vox tool push`는 push 시점에만 secret reference를 해석합니다.
 
-빌트인 도구는 별도 tool resource가 아니라 agent data / flow node 설정입니다. durable 변경에서는 `vox agent pull` 후 `agents/<name>/agent.json`을 편집하고 `vox doctor` 또는 `vox agent doctor` 후 `vox agent validate/diff/push`로 반영합니다.
+빌트인 도구는 별도 tool resource가 아니라 agent data / flow node 설정입니다. durable 변경에서는 `vox agent pull` 후 `agents/<name>/agent.json`을 편집하고 `vox doctor` 또는 `vox agent doctor` 후 `vox agent validate/diff/push`로 반영합니다. 프로덕션 승격은 리뷰/승인이 끝난 뒤 `vox agent version save`와 `vox agent promote --yes`로 분리해 실행합니다.
 
 ### MCP direct workflow
 
