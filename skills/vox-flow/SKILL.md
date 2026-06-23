@@ -167,7 +167,7 @@ vox agent add <local-name> --template flow-basic
 # vox agent import dashboard-export.json --agent <local-name>
 
 vox agent flow graph --agent <local-name> --format summary --json
-vox agent flow add-node <node-id> --agent <local-name> --type api --url https://api.example.com --method POST --auth-type Bearer --auth-credentials '${env:CRM_TOKEN}' --json
+vox agent flow add-node <node-id> --agent <local-name> --type api --url https://api.example.com --method POST --auth-type Bearer --auth-credentials '${env:CRM_TOKEN}' --response-mode wait --json
 vox agent flow connect --agent <local-name> --from conversation --to <node-id> --condition "외부 조회가 필요할 때" --json
 vox agent doctor --agent <local-name> --json
 vox agent validate --agent <local-name> --json
@@ -175,7 +175,26 @@ vox agent diff --agent <local-name> --json
 vox agent push --agent <local-name>
 ```
 
-flow API node method enum 은 현재 서버 flow schema 기준 `GET` / `POST` / `PUT` / `DELETE` 다. custom tool 은 `PATCH` 를 지원하지만 flow `api` node 는 api-server schema 가 열리기 전까지 `PATCH` 를 쓰지 않는다.
+flow API node method enum 은 현재 서버 flow schema 기준 `GET` / `POST` / `PUT` / `DELETE` 다. custom tool 은 `PATCH` 를 지원하지만 flow `api` node 는 api-server schema 가 열리기 전까지 `PATCH` 를 쓰지 않는다. `authorization` / `x-api-key` 같은 민감 header 와 auth credential 은 raw token 을 파일에 쓰지 말고 `${env:NAME}` / `${secret:name}` reference 를 쓴다.
+
+대시보드 execution node 를 CLI 로 만들 때도 helper 를 우선 사용한다.
+
+```bash
+vox agent flow add-node notify_user --agent <local-name> --type sendSms \
+  --static-sentence "처리 결과를 문자로 안내드리겠습니다." \
+  --sms-title "처리 결과" \
+  --response-mode wait \
+  --json
+
+vox agent flow add-node transfer_support --agent <local-name> --type transferCall \
+  --transfer-type sip \
+  --transfer-to sip:support@example.com \
+  --transfer-mode warm \
+  --transfer-message-type static \
+  --warm-transfer-static-sentence "고객 문의 요약을 전달합니다." \
+  --displayed-caller-id agent \
+  --json
+```
 
 CLI 프로젝트에서는 custom tool과 knowledge를 org-local UUID 대신 local ref로 연결한다.
 
