@@ -144,6 +144,8 @@ vox CLI: agent/tool/knowledge를 파일로 편집하고 validate/diff/push하는
 vox agent pull <agent-id>
 # dashboard export JSON에서 시작하면:
 # vox agent import dashboard-export.json --agent <name>
+# JSON Pointer 기반으로 현재 field와 권장 helper를 확인
+vox agent explain /agent/data/prompt/prompt --agent <name> --json
 # stable agent.data 설정은 agent set으로, specialized 설정은 JSON 직접 편집
 vox agent set --agent <name> --data prompt.prompt=@prompts/support.md
 # edit agents/<name>/agent.json, tools/**, knowledges/**

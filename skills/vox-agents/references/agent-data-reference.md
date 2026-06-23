@@ -91,6 +91,8 @@ agent 설정 변경이 레포에 남아야 하거나 리뷰/롤백/CI가 필요�
 
 ```bash
 vox agent pull <agent-id> --agent <local-name>
+# 현재 source field와 권장 helper를 먼저 확인
+vox agent explain /agent/data/prompt/prompt --agent <local-name> --json
 # prompt/firstLine/variables/callSettings/webhookSettings 같은 안정적인 dot-path는 agent set 사용
 vox agent set --agent <local-name> \
   --data prompt.prompt=@prompts/support.md \
