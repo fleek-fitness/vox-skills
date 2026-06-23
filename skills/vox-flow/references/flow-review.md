@@ -76,14 +76,14 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | C3 | WARN | 전환조건 라벨 불일치 | flowchart edge 라벨과 노드 설계 transition conditions의 exit 상태명이 불일치 |
 | C4 | WARN | 분기 구조 불일치 | flowchart의 분기 수와 노드 설계의 exit 상태 수가 다른 경우 |
 
-### D. MCP/API JSON 준비도
+### D. CLI/MCP/API JSON 준비도
 
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
-| D1 | CRITICAL | schema endpoint 미확인 | MCP/API `flow_data` JSON 을 만들거나 수정하면서 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 확인하지 않은 경우. `detail="minimal"` 을 명시했는가 (생략 시 더 큰 standard payload) |
+| D1 | CRITICAL | schema endpoint 미확인 | CLI/MCP/API `flow_data` JSON 을 만들거나 수정하면서 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 확인하지 않은 경우. `detail="minimal"` 을 명시했는가 (생략 시 더 큰 standard payload) |
 | D2 | CRITICAL | 과거 field 복사 | `agentId`, `promptType`, `staticSentence`, node 내부 `transitions[]` 등 과거 데이터 형태를 schema 확인 없이 JSON field 로 사용 |
 | D3 | CRITICAL | fallback edge 누락 | 실패/else/default path 가 필요한데 `flow_data.edges` 에 명시하지 않고 자동 생성된다고 가정 |
-| D4 | WARN | round-trip 미확인 | `create_agent` / `update_agent` 후 `get_agent` 로 unknown field drop 여부를 확인하지 않음 |
+| D4 | WARN | round-trip 미확인 | CLI 경로에서 `vox agent diff/status`, MCP/API 경로에서 `get_agent` 로 unknown field drop 여부를 확인하지 않음 |
 | D5 | WARN | agent data schema 미확인 | agent `data` 를 함께 보냈는데 `agent-schema` create/update schema 를 확인하지 않음 |
 | D6 | WARN | 작은 변경에 full 교체 | 기존 flow 의 노드/엣지 몇 개만 바꾸는데 `update_agent` full `flow_data` 교체로 전체 그래프를 재전송하는가. 작은 구조 변경은 `update_agent_partial` ordered ops 가 안전 (SKILL.md [Incremental Editing](../SKILL.md#incremental-editing)) |
 
@@ -102,7 +102,7 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
-| F1 | CRITICAL | dry-run 미수행 | `flow_data` 를 `create_agent` / `update_agent` 로 보내기 전에 `validate_flow_data` 를 호출하지 않았는가. 이 단계가 없으면 차단 오류가 그대로 사용자에게 노출되고 자동 보정 결과도 안 보인다. 결정론적으로 고칠 수 있는 `errors` 는 손수정 대신 `autofix_flow_data` 로 보정 후 재검증했는가. |
+| F1 | CRITICAL | dry-run 미수행 | CLI 경로에서 `vox agent validate`를 실행하지 않았거나, MCP/API 경로에서 `flow_data` 를 `create_agent` / `update_agent` 로 보내기 전에 `validate_flow_data` 를 호출하지 않았는가. 이 단계가 없으면 차단 오류가 그대로 사용자에게 노출되고 자동 보정 결과도 안 보인다. 결정론적으로 고칠 수 있는 `errors` 는 손수정 대신 `autofix_flow_data` 로 보정 후 재검증했는가. |
 | F2 | CRITICAL | transferAgent 식별자 누락 | 모든 `transferAgent` 노드가 `agent.agent_id` (UUID) 를 가지는가. `agent_version` 도 함께 명시 권장. (누락 시 dry-run 차단) |
 | F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `tool_id` 를 가지는가. (누락 시 dry-run 차단) |
 | F4 | CRITICAL | 임의 fixture 값 사용 | `transferCall.transferTo`, `transferAgent.agent.agent_id`, `tool.tool_id`, `sendSms` 발신번호/첨부 key 같은 운영 리소스 값을 시나리오/API/MCP 조회 없이 임의로 만들지 않았는가. 실제 값이 없으면 해당 노드를 쓰지 않는다. |

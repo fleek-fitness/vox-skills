@@ -119,3 +119,32 @@ vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI �
 |------|-----|------|
 | `vox` | `https://mcp.tryvox.co/mcp` | 플랫폼 도구 (에이전트, 통화, 조직 등) |
 | `vox-docs` | `https://fleek.mintlify.app/mcp` | 공식 문서 검색 (search_vox_ai_docs + query_docs_filesystem) |
+
+## vox CLI와 함께 쓰는 방식
+
+Codex/Claude Code 같은 코딩 에이전트는 파일 편집, shell 실행, git diff/commit에 강합니다. 따라서 vox.ai 리소스를 레포에서 관리해야 하는 작업은 MCP 직접 update보다 `vox` CLI를 우선합니다.
+
+```text
+docs MCP: 공식 문서 검색
+vox MCP: 조직/스키마/리소스 조회와 one-off 실행
+vox skills: 설계 판단과 workflow routing
+vox CLI: agent/tool/knowledge를 파일로 편집하고 validate/diff/push하는 durable authoring
+```
+
+경계 규칙:
+
+```text
+조회거나 일회성이면 MCP.
+레포에 남아야 하거나 리뷰/롤백/CI가 필요하면 vox CLI.
+```
+
+대표 루프:
+
+```bash
+vox agent pull <agent-id>
+# edit agents/<name>/agent.json, tools/**, knowledges/**
+vox agent doctor --agent <name> --json
+vox agent validate --agent <name> --json
+vox agent diff --agent <name> --json
+vox agent push --agent <name>
+```

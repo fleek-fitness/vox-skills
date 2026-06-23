@@ -1,6 +1,6 @@
-# MCP 도구 관리 가이드
+# 도구 관리 가이드
 
-vox MCP 서버를 통해 에이전트에 도구를 조회/생성/장착/해제하는 방법을 다룹니다.
+vox.ai 에이전트에 도구를 조회/생성/장착/해제하는 방법을 다룹니다. 조회와 빠른 one-off 작업은 MCP가 적합하고, 레포에 남길 변경은 `vox` CLI의 tools-as-code / agent-as-code 루프를 우선합니다.
 
 ## 개요
 
@@ -20,6 +20,37 @@ vox.ai 에이전트는 두 종류의 도구를 사용합니다.
 - **에이전트 설정 데이터**(`agent.data`): `vox-agents` 스킬의 `references/agent-data-reference.md` 참조
 
 ## End-to-end 워크플로우
+
+### CLI-first durable workflow
+
+사용자가 레포, diff, 리뷰, PR, 롤백, CI, 커밋, agent-as-code를 언급하거나 코딩 에이전트가 유지보수할 변경이면 이 경로를 사용합니다.
+
+```bash
+vox tool init check_order --url https://api.example.com/orders --method GET
+# edit tools/check_order/tool.json
+vox tool validate check_order
+vox tool diff check_order --json
+vox tool push check_order
+
+vox agent pull <agent-id> --agent support
+vox agent attach tool support check_order --node lookup_order
+vox agent validate --agent support --json
+vox agent diff --agent support --json
+vox agent push --agent support
+```
+
+기존 remote tool을 레포로 가져올 때:
+
+```bash
+vox tool pull <tool-id> --tool check_order
+vox tool status check_order --json
+```
+
+CLI source에는 raw token/API key를 쓰지 말고 `${env:NAME}` 또는 `${secret:name}` 형태의 reference를 사용합니다. `vox tool validate`가 literal secret을 막고, `vox tool push`는 push 시점에만 secret reference를 해석합니다.
+
+빌트인 도구는 별도 tool resource가 아니라 agent data / flow node 설정입니다. durable 변경에서는 `vox agent pull` 후 `agents/<name>/agent.json`을 편집하고 `vox agent validate/diff/push`로 반영합니다.
+
+### MCP direct workflow
 
 에이전트에 빌트인 + 커스텀 도구를 모두 장착하는 전체 흐름입니다.
 

@@ -26,7 +26,7 @@ get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="mi
 get_schema(namespace="agent-schema", schema_type="agent-data-update", detail="minimal")
 ```
 
-schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data=...)` 또는 `update_agent(flow_data=...)` 를 호출한다. 전송 후 `get_agent` 로 다시 읽어, 보낸 field 가 silently drop 되지 않았는지 확인한다.
+schema 결과를 받은 뒤에만 CLI source를 수정하거나 `create_agent(type="flow", data=..., flow_data=...)` / `update_agent(flow_data=...)` 를 호출한다. 레포 관리 작업이면 `vox agent doctor/validate/diff/push`를 사용하고, MCP/API one-off 전송 후에는 `get_agent` 로 다시 읽어 보낸 field 가 silently drop 되지 않았는지 확인한다.
 
 ### Per-node fallback (narrow case 만)
 
@@ -112,5 +112,5 @@ get_schema(namespace="flow-schema", schema_type="node-{type}")       # 그 type 
 1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 를 호출했는가? (per-node 호출은 narrow case 가 아니면 생략)
 2. schema 결과에 없는 field 를 과거 문서나 UI 기억만으로 넣지 않았는가?
 3. fallback, failure, else path 를 필요한 `edges` 로 명시했는가?
-4. dry-run 절차 (`validate_flow_data` → `errors === []` 확인 → `warnings` 사용자 전달, create / update 후에는 `result.message` 도 전달) 를 거쳤는가? 자세한 응답 처리 룰은 SKILL.md [Response Handling](../SKILL.md#response-handling).
-5. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인했는가? 응답에서 사라진 field 가 있다면 schema 결과 기준으로 다시 작성했는가?
+4. CLI 경로면 `vox agent doctor` / `vox agent validate` / `vox agent diff` 절차를 거쳤는가? MCP/API 경로면 `validate_flow_data` → `errors === []` 확인 → `warnings` 사용자 전달, create / update 후 `result.message` 전달을 했는가? 자세한 응답 처리 룰은 SKILL.md [Response Handling](../SKILL.md#response-handling).
+5. CLI 경로면 `vox agent diff/status`, MCP/API 경로면 `get_agent` 로 round-trip 확인했는가? 응답에서 사라진 field 가 있다면 schema 결과 기준으로 다시 작성했는가?

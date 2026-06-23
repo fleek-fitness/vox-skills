@@ -1,6 +1,6 @@
 # agent.data Reference
 
-MCP `create_agent` / `update_agent` 사용 시 `agent.data`의 동작 규칙을 정리한 레퍼런스.
+MCP `create_agent` / `update_agent` 또는 `vox` CLI `agents/<name>/agent.json` 편집 시 `agent.data`의 동작 규칙을 정리한 레퍼런스.
 
 정확한 field, enum, required 여부는 MCP schema endpoint 가 authoritative 하다. 이 파일은 실수하기 쉬운 운영 규칙만 요약한다.
 
@@ -84,6 +84,26 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 list_schemas(namespace="tool-schema", category="built_in")
 get_schema(namespace="tool-schema", schema_type="<built-in-tool-schema>")
 ```
+
+## CLI-first 변경 루프
+
+agent 설정 변경이 레포에 남아야 하거나 리뷰/롤백/CI가 필요하면 MCP `update_agent`를 직접 호출하지 말고 CLI source를 수정한다.
+
+```bash
+vox agent pull <agent-id> --agent <local-name>
+# edit agents/<local-name>/agent.json
+vox agent doctor --agent <local-name> --json
+vox agent validate --agent <local-name> --json
+vox agent diff --agent <local-name> --json
+vox agent push --agent <local-name>
+```
+
+`agent.data` 안의 `toolIds`, `knowledgeIds`, flow node `toolId`, conversation node `knowledgeIds`처럼 organization-local ID가 필요한 필드는 committed source에 직접 쓰지 않는 것이 좋다. CLI 프로젝트에서는 local resource ref를 사용한다.
+
+- custom tool: `toolRef` / `toolRefs`를 사용하고 먼저 `vox tool push` 또는 `vox tool pull`로 binding을 만든다.
+- knowledge: `knowledgeRefs`를 사용하고 먼저 `vox knowledge push` 또는 `vox knowledge pull`로 binding을 만든다.
+
+`vox agent validate`, `vox agent diff`, `vox agent status`, `vox agent push`가 `.vox/project.json`의 binding을 보고 local ref를 실제 remote ID로 컴파일한다. 이렇게 해야 같은 repo source가 다른 workspace에서도 재바인딩 가능하고, org-local UUID가 git에 남지 않는다.
 
 ## MCP 동작 규칙
 
