@@ -131,6 +131,8 @@ vox agent push --agent <name>
 - 인증 (API key 등)
 - 노출할 MCP tool 이름
 
+> CLI 경계: `vox tool init/validate/push`가 관리하는 tools-as-code 리소스는 현재 public v3 `POST /v3/tools` 계약에 맞춘 HTTP/API 커스텀 도구만 지원한다. MCP 타입 도구는 대시보드 UI나 MCP one-off 작업으로 다루고, CLI 파일 리소스는 public v3 생성/조회/수정 계약이 열린 뒤 추가한다.
+
 > 도구 개념 설명, 이름 규칙, 빌트인 vs 커스텀 선택 기준 등은 `vox-tools` 스킬 참조.
 
 ---
