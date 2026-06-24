@@ -42,9 +42,12 @@ docs MCP는 router가 직접 처리하는 검색 케이스다 — 단순 검색 
 CLI-first 변경 루프:
 
 ```bash
+vox guide coding-agent --json
 vox agent pull <agent-id>
 # dashboard export JSON에서 시작하면:
 # vox agent import dashboard-export.json --agent <name>
+# flow 설계/수정이면 compressed offline guide를 먼저 확인
+vox guide flow --task "user can quit anytime or ask for a human" --json
 # JSON Pointer 기반으로 현재 field와 권장 helper를 확인
 vox agent explain /agent/data/prompt/prompt --agent <name> --json
 # stable agent.data 설정은 agent set으로, specialized 설정은 JSON 직접 편집
@@ -83,6 +86,10 @@ vox knowledge explain <local-name> /knowledge/documents/0/path --json
 vox knowledge status <local-name>
 vox knowledge push <local-name>
 ```
+
+`vox guide coding-agent`는 외부 Codex/Claude 세션이 README나 모노레포 없이도 surface split, 기본 Agent-as-Code 루프, repo instruction snippet을 바로 읽게 하는 bootstrap 명령이다. `vox --help`와 guide group help에도 이 명령이 hint로 노출된다.
+
+`vox guide flow`는 public skills/docs/schema에서 release-time 생성한 짧은 authoring pack을 offline으로 반환한다. 긴 문서 검색 전에 `--task` 또는 `--topic`으로 규칙, schema field, 권장 CLI helper, 금지 패턴, doctor code를 확인하고, 실제 durable 변경은 파일 편집과 `doctor -> validate -> diff -> push` 루프로 진행한다.
 
 `vox doctor` / `vox agent doctor` / `agent push` / `tool push`가 raw secret, placeholder/TODO authoring field, 비어 있는 tool/knowledge ref, 그리고 `fire_and_forget` custom tool의 결과 기반 flow transition을 막으면 그 출력을 수정 지시로 사용한다. `fire_and_forget` 도구 결과로 분기해야 하는 flow는 도구를 `wait`로 바꾸고, 결과를 쓰지 않는 발송/호출 전용 flow만 `fire_and_forget`을 유지한다.
 

@@ -141,9 +141,12 @@ vox CLI: agent/tool/knowledge를 파일로 편집하고 doctor/validate/diff/pus
 대표 루프:
 
 ```bash
+vox guide coding-agent --json
 vox agent pull <agent-id>
 # dashboard export JSON에서 시작하면:
 # vox agent import dashboard-export.json --agent <name>
+# flow 설계/수정이면 compressed offline guide를 먼저 확인
+vox guide flow --task "user can quit anytime or ask for a human" --json
 # JSON Pointer 기반으로 현재 field와 권장 helper를 확인
 vox agent explain /agent/data/prompt/prompt --agent <name> --json
 vox tool explain <tool-name> /tool/response_mode --json
@@ -168,5 +171,9 @@ vox agent promote v1 --agent <name> --yes
 ```
 
 `agent test init/list/show/validate`는 chat/voice runtime을 실행하지 않습니다. 레포에 남길 테스트 의도와 acceptance assertion을 `agents/<name>/tests/*.json`으로 먼저 고정하고, PR 리뷰와 코딩 에이전트 탐색에서 같은 파일을 보게 하는 용도입니다.
+
+`vox guide coding-agent`는 외부 Codex/Claude 세션이 README나 모노레포 없이도 surface split, 기본 Agent-as-Code 루프, repo instruction snippet을 바로 읽게 하는 bootstrap 명령입니다. `vox --help`와 guide group help에도 이 명령이 hint로 노출됩니다.
+
+`vox guide flow`는 public skills/docs/schema에서 release-time 생성한 짧은 authoring pack을 offline으로 반환합니다. 긴 문서 검색 전에 `--task` 또는 `--topic`으로 규칙, schema field, 권장 CLI helper, 금지 패턴, doctor code를 확인하고, 실제 durable 변경은 파일 편집과 `doctor -> validate -> diff -> push` 루프로 진행합니다.
 
 `vox doctor` / `vox agent doctor` / `agent push` / `tool push`는 raw secret, placeholder/TODO authoring field, 비어 있는 resource ref뿐 아니라 `fire_and_forget` custom tool의 결과를 flow transition 조건으로 분기하려는 케이스도 원격 저장 전에 막습니다. 이런 오류가 나오면 도구를 `response_mode: "wait"`로 바꾸거나, 결과를 읽지 않는 success/fallback branch로 flow를 단순화합니다.

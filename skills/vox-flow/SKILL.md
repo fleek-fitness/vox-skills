@@ -41,7 +41,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
 2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
-4. **구현 표면 선택 + dry-run 검증**: JSON 작성 직전에 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 JSON 을 만든다. 레포에 남길 변경이면 `vox` CLI source를 편집하고 `vox doctor` 또는 `vox agent doctor` 후 `validate/diff/push`로 간다. 빠른 one-off 또는 사용자가 원격 즉시 반영을 명시하면 MCP `validate_flow_data` 결과를 사용자에게 한두 줄로 요약하고, errors / warnings 처리는 [Response Handling](#response-handling) 을 따른 뒤 `create_agent` / `update_agent` (또는 작은 구조 변경이면 `update_agent_partial`) 를 호출한다.
+4. **구현 표면 선택 + dry-run 검증**: JSON 작성 직전에 CLI 경로면 `vox guide flow --task "<의도>" --json` 으로 compressed offline guide를 먼저 확인하고, MCP/API 경로면 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 JSON 을 만든다. 레포에 남길 변경이면 `vox` CLI source를 편집하고 `vox doctor` 또는 `vox agent doctor` 후 `validate/diff/push`로 간다. 빠른 one-off 또는 사용자가 원격 즉시 반영을 명시하면 MCP `validate_flow_data` 결과를 사용자에게 한두 줄로 요약하고, errors / warnings 처리는 [Response Handling](#response-handling) 을 따른 뒤 `create_agent` / `update_agent` (또는 작은 구조 변경이면 `update_agent_partial`) 를 호출한다.
 
 사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지. 기존 flow 의 노드/엣지 몇 개만 손보는 경우는 전체 재작성 없이 [Incremental Editing](#incremental-editing) 으로 간다.
 
@@ -166,6 +166,8 @@ vox agent add <local-name> --template flow-basic
 # dashboard export JSON에서 시작하면:
 # vox agent import dashboard-export.json --agent <local-name>
 
+vox guide coding-agent --json
+vox guide flow --task "user can quit anytime or ask for a human" --json
 vox agent flow graph --agent <local-name> --format summary --json
 vox agent flow add-node <node-id> --agent <local-name> --type api --url https://api.example.com --method POST --auth-type Bearer --auth-credentials '${env:CRM_TOKEN}' --response-mode wait --json
 vox agent flow connect --agent <local-name> --from conversation --to <node-id> --condition "외부 조회가 필요할 때" --json
