@@ -80,7 +80,7 @@ FlowNode {
 - **레이아웃은 가로 정렬 (horizontal layout) 이 기본이다.** flow 전체를 좌→우로 흐르게 두고 (`y` 는 0 근방으로 유지, `x` 는 320px 단위로 증가), 분기/병렬 경로만 위/아래 (`y±240`) 로 분기시킨다. 트리 모양으로 위→아래 쌓지 말 것 — vox.ai 에디터는 가로 흐름을 전제로 화면 폭을 잡는다.
   - 권장 spacing: 가로 step `x += 320`, 분기 spacing `y ± 240` (+ 아래쪽, - 위쪽).
   - 예시: `begin {x:0,y:0}` → `extraction {x:320,y:0}` → `api {x:640,y:0}` → 성공 `endCall {x:960,y:-120}`, 실패 `transferCall {x:960,y:120}`.
-- 모든 노드의 `data` 에는 공통 필드 `name?` (에디터 라벨) 과 `global?: GlobalConfig` (값이 있으면 global node — 어디서든 진입) 이 있다.
+- 실행 노드의 `data` 에는 공통 필드 `name?` (에디터 라벨) 과 `globalNodeSettings?: { isGlobalNode: boolean; transitionCondition?: string | null }` 이 있다. `isGlobalNode: true` 면 global node 로 어디서든 진입할 수 있다.
 
 ### FlowEdge
 
@@ -196,7 +196,7 @@ conversation → extraction → condition → api → conversation
 
 ### 3. Global 노드 활용
 
-"통화 종료 요청", "상담원 연결 요청" 같이 어디서든 발생할 수 있는 시나리오는 global node 로 설정한다. 모든 노드에 개별 전환을 추가하는 것보다 유지보수가 쉽다. 활성화 = `data.global` 에 `{enter_condition: "…"}` 를 넣는다 (값이 없으면 global 아님).
+"통화 종료 요청", "상담원 연결 요청" 같이 어디서든 발생할 수 있는 시나리오는 global node 로 설정한다. 모든 노드에 개별 전환을 추가하는 것보다 유지보수가 쉽다. 활성화 = `data.globalNodeSettings` 에 `{isGlobalNode: true, transitionCondition: "…"}` 를 넣는다. CLI authoring 에서는 `vox agent flow set-global --node <node-id> --condition "<조건>"` 또는 `vox agent flow add-node <node-id> --type endCall --global-condition "<조건>"` 을 우선 사용한다. `vox agent doctor` 는 여러 local exit/transfer transition 이 같은 target 으로 반복되면 `GLOBAL_NODE_CANDIDATE` 경고를 낸다.
 
 ### 4. Fallback 경로 확보
 
