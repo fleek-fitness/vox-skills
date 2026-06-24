@@ -168,6 +168,7 @@ vox agent add <local-name> --template flow-basic
 
 vox guide coding-agent --json
 vox guide flow --task "user can quit anytime or ask for a human" --json
+vox docs show docs/build/flow/advanced/global-node --json
 vox agent flow graph --agent <local-name> --format summary --json
 vox agent flow add-node <node-id> --agent <local-name> --type api --url https://api.example.com --method POST --auth-type Bearer --auth-credentials '${env:CRM_TOKEN}' --response-mode wait --json
 vox agent flow connect --agent <local-name> --from conversation --to <node-id> --condition "외부 조회가 필요할 때" --json

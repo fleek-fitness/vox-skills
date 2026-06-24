@@ -17,18 +17,19 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 | `vox-tools` | 빌트인/커스텀 도구 관리 | built-in tools, custom tools, tool workflow | prompt authoring, flow design |
 | `vox-web-app` | 웹 앱 UI 사용법, 딥링크, UI 전용 흐름(보이스 클론, CSV 업로드, 녹취 재생, 결제, 멤버 초대) | web app UI usage, navigation, deep links, UI-only flows, voice clone, CSV upload, call playback, billing, member management | prompt authoring, flow design, tool management |
 
-## Docs MCP 활용
+## Docs 조회
 
-`vox-docs` MCP 서버(`https://fleek.mintlify.app/mcp`)는 vox.ai 공식 문서 ~85페이지를 실시간 검색한다. 스킬이 커버하지 않는 영역(요금/빌링, SDK, 보안, 배포 상세, 모니터링, API reference 등)은 docs MCP로 직접 답변한다.
+코딩 에이전트가 `vox` CLI를 사용할 수 있으면 먼저 bundled offline docs index를 조회한다. 긴 문서나 live MCP 검색을 매번 열기 전에 빠르고 결정적인 후보 URL/source hash를 얻기 위해서다.
 
 **사용 방법:**
-1. `vox-docs` MCP의 `search_vox_ai_docs` tool로 검색 (query 예: "pricing", "SDK javascript", "webhook", "SIP telephony")
-2. 전문이 필요하면 `query_docs_filesystem_vox_ai_docs` tool로 조회 — search가 돌려준 path에 `.mdx`를 붙여 `head`/`cat` (예: `cat /start/pricing.mdx`)
-3. 페이지 내용 기반으로 답변
+1. CLI 가능 시 `vox docs search "<query>" --json`으로 검색 (query 예: "pricing", "SDK javascript", "webhook", "SIP telephony")
+2. 후보를 골라 `vox docs show <path> --json` 또는 `vox docs show <path> --section "<heading>" --json`으로 compressed excerpt와 public URL/source hash 확인
+3. 전문이나 최신 hosted 문서가 필요하면 `vox-docs` MCP의 `search_vox_ai_docs` / `query_docs_filesystem_vox_ai_docs` tool로 보강 — search가 돌려준 path에 `.mdx`를 붙여 `head`/`cat` (예: `cat /start/pricing.mdx`)
+4. 페이지 내용 기반으로 답변
 
 **URL 형식 (중요):** 사용자에게 docs 페이지 링크를 전달할 때는 반드시 `/docs/` prefix를 포함한다. 형식: `https://docs.tryvox.co/docs/{path}` (예: `https://docs.tryvox.co/docs/start/pricing`, `https://docs.tryvox.co/docs/build/overview`). `/docs/` 없이 `https://docs.tryvox.co/{path}` 로 전달하면 404다.
 
-docs MCP는 router가 직접 처리하는 검색 케이스다 — 단순 검색 후 전달이므로 domain skill 수준의 로직이 불필요하기 때문이다.
+docs 조회는 router가 직접 처리하는 검색 케이스다 — 단순 검색 후 전달이므로 domain skill 수준의 로직이 불필요하기 때문이다. 레포에 남을 변경과 연결되는 경우에는 docs 조회 후 해당 domain skill + CLI 루프로 라우팅한다.
 
 ## CLI / MCP 역할 분담
 
@@ -46,6 +47,7 @@ CLI-first 변경 루프:
 # vox init --json
 vox guide coding-agent --json
 vox skills show using-vox-skills --brief --json
+vox docs search "<topic>" --json
 vox agent pull <agent-id>
 # dashboard export JSON에서 시작하면:
 # vox agent import dashboard-export.json --agent <name>
@@ -94,6 +96,8 @@ vox knowledge push <local-name>
 
 `vox skills list/show`는 public `vox-skills`의 SKILL.md와 references를 CLI release 때 압축한 offline pack이다. 코딩 에이전트가 긴 skill markdown을 열기 전에 domain ownership, CLI-first 조건, 추천 명령, reference path/source hash를 빠르게 고르게 한다.
 
+`vox docs search/show`는 공식 docs repo를 CLI release 때 압축한 offline index다. 코딩 에이전트가 먼저 path/title/heading/excerpt/source hash를 빠르게 보고, 전체 MDX 전문이나 최신 hosted 확인이 필요한 경우에만 docs MCP로 넘어가게 한다.
+
 `vox guide flow`는 public skills/docs/schema에서 release-time 생성한 짧은 authoring pack을 offline으로 반환한다. 긴 문서 검색 전에 `--task` 또는 `--topic`으로 규칙, schema field, 권장 CLI helper, 금지 패턴, doctor code를 확인하고, 실제 durable 변경은 파일 편집과 `doctor -> validate -> diff -> push` 루프로 진행한다.
 
 `vox doctor` / `vox agent doctor` / `agent push` / `tool push`가 raw secret, placeholder/TODO authoring field, 비어 있는 tool/knowledge ref, 그리고 `fire_and_forget` custom tool의 결과 기반 flow transition을 막으면 그 출력을 수정 지시로 사용한다. `fire_and_forget` 도구 결과로 분기해야 하는 flow는 도구를 `wait`로 바꾸고, 결과를 쓰지 않는 발송/호출 전용 flow만 `fire_and_forget`을 유지한다.
@@ -128,14 +132,14 @@ MCP direct `create_agent` / `update_agent` / `create_tool` / `update_tool`은 �
 | "flow 설계해줘", "스크립트를 노드로 변환" | `vox-flow` | flow 전용 설계 작업 |
 | "node prompt 작성", "노드별 프롬프트", "condition_node 수정" | `vox-flow` | flow node 의 `data.prompt` / transition / fallback 보존은 flow 영역 |
 | "flow vs single prompt 뭐가 나아?" | `vox-agents` | 유형 판단은 agents가 소유, flow 결정 시 handoff |
-| 요금/빌링/플랜/크레딧 질문 | docs MCP | 실시간 pricing 페이지 검색 |
-| SDK 사용법, API reference | docs MCP | 문서 검색으로 충분 |
+| 요금/빌링/플랜/크레딧 질문 | CLI docs index → docs MCP | 먼저 `vox docs search/show`, 전문/최신성 필요 시 docs MCP |
+| SDK 사용법, API reference | CLI docs index → docs MCP | 먼저 compressed URL/source 확인, 전문 필요 시 docs MCP |
 | "캠페인 만들어줘", "대량발신 설정" | `vox-web-app` | 대량발신/캠페인 관리는 웹 앱 영역 |
 | "번호 구매 페이지 알려줘", "녹취 어디서 들어?" | `vox-web-app` | 페이지 경로/딥링크 안내 |
 | "조직 전환", "다른 organization 으로 작업", "멀티 조직 계정", "하위 워크스페이스" | router 직접 (org 도구) | 세션 활성 조직 전환은 domain 로직이 아닌 단일 MCP 호출. `is_main`/`parent_organization_id`로 main/sub 맥락을 확인 |
 | "지식 베이스 뭐 있어?", "knowledge base 목록" | router 직접 (`list_knowledges`) | 조회만이면 MCP가 적합 |
 | "레포에 agent 변경 남겨줘", "diff 보고 push", "코드처럼 관리" | 해당 domain skill + vox CLI | durable authoring은 CLI가 소유 |
-| 어떤 스킬에도 매핑 안 되는 vox.ai 질문 | docs MCP → `vox-onboarding` | docs 검색 먼저, 없으면 onboarding이 가장 넓은 안내 범위 |
+| 어떤 스킬에도 매핑 안 되는 vox.ai 질문 | CLI docs index → docs MCP → `vox-onboarding` | docs 검색 먼저, 없으면 onboarding이 가장 넓은 안내 범위 |
 
 ## 복합 요청
 

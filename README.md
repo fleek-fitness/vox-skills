@@ -125,7 +125,8 @@ vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI �
 Codex/Claude Code 같은 코딩 에이전트는 파일 편집, shell 실행, git diff/commit에 강합니다. 따라서 vox.ai 리소스를 레포에서 관리해야 하는 작업은 MCP 직접 update보다 `vox` CLI를 우선합니다.
 
 ```text
-docs MCP: 공식 문서 검색
+vox docs search/show: bundled offline 공식 문서 index 조회
+docs MCP: 전문/최신 hosted 문서 검색
 vox MCP: 조직/스키마/리소스 조회와 one-off 실행
 vox skills: 설계 판단과 workflow routing
 vox CLI: agent/tool/knowledge를 파일로 편집하고 doctor/validate/diff/push하는 durable authoring
@@ -145,6 +146,7 @@ vox CLI: agent/tool/knowledge를 파일로 편집하고 doctor/validate/diff/pus
 # vox init --json
 vox guide coding-agent --json
 vox skills show using-vox-skills --brief --json
+vox docs search "<topic>" --json
 vox agent pull <agent-id>
 # dashboard export JSON에서 시작하면:
 # vox agent import dashboard-export.json --agent <name>
@@ -178,6 +180,8 @@ vox agent promote v1 --agent <name> --yes
 `vox guide coding-agent`는 외부 Codex/Claude 세션이 README나 모노레포 없이도 surface split, 기본 Agent-as-Code 루프, repo instruction snippet을 바로 읽게 하는 bootstrap 명령입니다. `vox --help`와 guide group help에도 이 명령이 hint로 노출됩니다. 새 레포에서 `vox init` 또는 `vox agent init`을 실행하면 root `CLAUDE.md` / `AGENTS.md`를 덮어쓰지 않고 `.claude/skills/vox-ai/SKILL.md`와 `.codex/skills/vox-ai/SKILL.md`를 생성해 같은 bootstrap으로 연결합니다.
 
 `vox skills list/show`는 public `vox-skills`의 SKILL.md와 references를 CLI release 때 압축한 offline pack입니다. 코딩 에이전트가 긴 skill markdown을 열기 전에 domain ownership, CLI-first 조건, 추천 명령, reference path/source hash를 빠르게 고르게 합니다.
+
+`vox docs search/show`는 공식 docs repo를 CLI release 때 압축한 offline index입니다. 코딩 에이전트가 path/title/heading/excerpt/source hash를 먼저 보고, 전체 MDX 전문이나 최신 hosted 확인이 필요할 때만 docs MCP로 넘어가게 합니다.
 
 `vox guide flow`는 public skills/docs/schema에서 release-time 생성한 짧은 authoring pack을 offline으로 반환합니다. 긴 문서 검색 전에 `--task` 또는 `--topic`으로 규칙, schema field, 권장 CLI helper, 금지 패턴, doctor code를 확인하고, 실제 durable 변경은 파일 편집과 `doctor -> validate -> diff -> push` 루프로 진행합니다.
 
