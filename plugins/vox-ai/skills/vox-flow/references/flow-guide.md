@@ -34,7 +34,7 @@ FlowData {
 }
 ```
 
-현재 API/MCP 저장 surface 는 flow builder 와 같은 **camelCase** 필드를 사용한다. 클라이언트가 unknown 필드를 보내면 서버가 보정하거나 drop 할 수 있으므로, 보낸 뒤에는 반드시 `get_agent` 로 round-trip 결과를 확인한다.
+현재 CLI/API/MCP 저장 surface 는 flow builder 와 같은 **camelCase** 필드를 사용한다. 클라이언트가 unknown 필드를 보내면 서버가 보정하거나 drop 할 수 있으므로, 보낸 뒤에는 `vox agent diff/status` 또는 `get_agent` 로 round-trip 결과를 확인한다.
 
 > **주의 (자주 틀림)**: `apiConfiguration`, `responseVariables`, `extractionConfiguration`, `transferConfiguration`, `logicalTransitions`, `isSkipUserResponse`, `isFallback`, `staticSentence`, `firstMessage`, `firstLineType`, `promptType` 등은 모두 camelCase 다. snake_case (`api_configuration`, `response_variables`, `is_skip_user_response`, ...) 로 보내면 v3 서버가 거절하거나 unknown 으로 drop 한다.
 
@@ -80,7 +80,7 @@ FlowNode {
 - **레이아웃은 가로 정렬 (horizontal layout) 이 기본이다.** flow 전체를 좌→우로 흐르게 두고 (`y` 는 0 근방으로 유지, `x` 는 320px 단위로 증가), 분기/병렬 경로만 위/아래 (`y±240`) 로 분기시킨다. 트리 모양으로 위→아래 쌓지 말 것 — vox.ai 에디터는 가로 흐름을 전제로 화면 폭을 잡는다.
   - 권장 spacing: 가로 step `x += 320`, 분기 spacing `y ± 240` (+ 아래쪽, - 위쪽).
   - 예시: `begin {x:0,y:0}` → `extraction {x:320,y:0}` → `api {x:640,y:0}` → 성공 `endCall {x:960,y:-120}`, 실패 `transferCall {x:960,y:120}`.
-- 모든 노드의 `data` 에는 공통 필드 `name?` (에디터 라벨) 과 `global?: GlobalConfig` (값이 있으면 global node — 어디서든 진입) 이 있다.
+- 실행 노드의 `data` 에는 공통 필드 `name?` (에디터 라벨) 과 `globalNodeSettings?: { isGlobalNode: boolean; transitionCondition?: string | null }` 이 있다. `isGlobalNode: true` 면 global node 로 어디서든 진입할 수 있다.
 
 ### FlowEdge
 
@@ -196,7 +196,7 @@ conversation → extraction → condition → api → conversation
 
 ### 3. Global 노드 활용
 
-"통화 종료 요청", "상담원 연결 요청" 같이 어디서든 발생할 수 있는 시나리오는 global node 로 설정한다. 모든 노드에 개별 전환을 추가하는 것보다 유지보수가 쉽다. 활성화 = `data.global` 에 `{enter_condition: "…"}` 를 넣는다 (값이 없으면 global 아님).
+"통화 종료 요청", "상담원 연결 요청" 같이 어디서든 발생할 수 있는 시나리오는 global node 로 설정한다. 모든 노드에 개별 전환을 추가하는 것보다 유지보수가 쉽다. 활성화 = `data.globalNodeSettings` 에 `{isGlobalNode: true, transitionCondition: "…"}` 를 넣는다. CLI authoring 에서는 `vox agent flow set-global --node <node-id> --condition "<조건>"` 또는 `vox agent flow add-node <node-id> --type endCall --global-condition "<조건>"` 을 우선 사용한다. `vox agent doctor` 는 여러 local exit/transfer transition 이 같은 target 으로 반복되면 `GLOBAL_NODE_CANDIDATE` 경고를 낸다.
 
 ### 4. Fallback 경로 확보
 
@@ -260,16 +260,18 @@ graph LR
 
 통화 전환 실패 시 fallback edge 로 콜백 안내 SMS 를 시도할 수 있다. SMS 가 실패하면 endCall 종료 멘트에서 "문자는 실패했지만 콜백 접수/예상 연락 시간은 본 통화로 안내"를 직접 말하고 종료한다. 같은 static 안내 conversation 을 반복시키지 않는다.
 
-## API / MCP 로 Flow 만들고 수정
+## CLI / API / MCP 로 Flow 만들고 수정
 
-vox.ai MCP 와 v3 REST 모두 동일한 `flow_data` schema 를 받는다. `update_agent` 의 `flow_data` 는 **전체 교체 (full replacement)** — nodes / edges 전체를 다시 보내고, 빠뜨린 노드/엣지는 삭제로 간주된다. 노드/엣지 몇 개만 바꾸는 작은 구조 변경은 전체 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 (아래 [Incremental edit](#incremental-edit-작은-구조-변경)).
+레포에 남길 변경이면 `vox` CLI 프로젝트의 `agents/<name>/agent.json`을 durable source로 사용한다. 빠른 one-off 원격 변경이면 vox.ai MCP 와 v3 REST 모두 동일한 `flow_data` schema 를 받는다. MCP/API `update_agent` 의 `flow_data` 는 **전체 교체 (full replacement)** — nodes / edges 전체를 다시 보내고, 빠뜨린 노드/엣지는 삭제로 간주된다. 노드/엣지 몇 개만 바꾸는 작은 원격 즉시 변경은 전체 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 (아래 [Incremental edit](#incremental-edit-작은-구조-변경)).
 
 작업 순서:
 
 1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 로 현재 flow schema 를 확인한다.
 2. agent `data` 를 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 를 확인한다.
-3. `create_agent(type="flow", data=..., flow_data=...)` 또는 `update_agent(flow_data=...)` 를 호출한다 (작은 변경이면 `update_agent_partial`).
-4. `get_agent` 로 다시 읽어 unknown field drop, enum mismatch, 누락 edge 를 확인한다.
+3. 레포 관리 작업이면 `vox agent add/pull`, 모르는 JSON Pointer는 `vox agent explain`, graph 변경은 `vox agent flow ...` helper, agent-level `data` 변경은 `vox agent set`, 그 외 specialized field는 직접 JSON 편집으로 source를 수정한다.
+4. `vox doctor` 또는 `vox agent doctor`, `vox agent validate`, `vox agent status --all --offline`, `vox agent diff --all --offline --check`, focused `vox agent diff` 로 확인한 뒤 `vox agent push` 한다.
+5. one-off 원격 변경이면 `validate_flow_data` 후 `create_agent(type="flow", data=..., flow_data=...)` 또는 `update_agent(flow_data=...)` 를 호출한다 (작은 변경이면 `update_agent_partial`).
+6. `vox agent diff/status` 또는 `get_agent` 로 다시 읽어 unknown field drop, enum mismatch, 누락 edge 를 확인한다. 여러 agent가 있는 CLI 프로젝트에서는 `vox agent status --all --offline`과 `vox agent diff --all --offline --check`로 project-wide 상태를 먼저 훑는다.
 
 ### 생성 (REST 또는 MCP)
 

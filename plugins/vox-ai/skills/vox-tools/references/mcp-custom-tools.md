@@ -2,6 +2,44 @@
 
 조직 단위 커스텀 도구(HTTP/API)의 조회, 생성, 수정, 삭제 및 에이전트 연결/해제입니다. 커스텀 도구는 HTTP 엔드포인트 호출 설정만 지원합니다 — MCP 타입 커스텀 도구 생성은 없습니다.
 
+## CLI-first 변경 루프
+
+custom tool 변경이 레포에 남아야 하거나 리뷰/롤백/CI가 필요하면 MCP `create_tool` / `update_tool`를 직접 호출하지 말고 CLI source를 수정합니다.
+
+```bash
+vox tool init check_reservation --url https://api.example.com/reservations --method GET
+# edit tools/check_reservation/tool.json
+vox tool validate check_reservation
+vox tool explain check_reservation /tool/input_schema --json
+vox tool diff check_reservation --json
+vox tool push check_reservation
+```
+
+`tool init`이 만든 TODO 설명은 실제 호출 조건과 파라미터 의미로 바꿉니다. `tool validate`는 placeholder URL뿐 아니라 tool description과 input schema property description의 TODO도 warning으로 보여주며, 실제 `tool push`는 이런 placeholder authoring field가 남아 있으면 원격 저장 전에 거부합니다. 또한 `response_mode: "fire_and_forget"`인 로컬 tool을 flow tool node가 결과 기반 transition 조건으로 사용 중이면 `tool push`가 막습니다. 서버가 placeholder 설명을 받아도, coding agent와 runtime agent는 이 설명을 보고 어떤 도구를 언제 호출할지 판단합니다.
+
+기존 remote tool을 레포로 가져올 때:
+
+```bash
+vox tool pull <tool-id> --tool check_reservation
+vox tool status check_reservation --json
+```
+
+agent에 연결할 때는 remote `tool_id`를 committed `agent.json`에 직접 쓰지 말고 local ref를 사용합니다.
+
+```bash
+vox agent attach tool <agent-name> check_reservation --node <tool-node-id>
+vox agent validate --agent <agent-name> --json
+vox agent status --all --offline --json
+vox agent diff --all --offline --check --json
+vox agent diff --agent <agent-name> --json
+vox agent push --agent <agent-name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <agent-name> --description "reviewed release"
+vox agent promote v1 --agent <agent-name> --yes
+```
+
+MCP direct 방식은 빠른 one-off 생성/수정, 탐색, 또는 사용자가 원격 즉시 반영을 명시한 경우에 사용합니다.
+
 ## 조회: list_tools(organization_id)
 
 ```

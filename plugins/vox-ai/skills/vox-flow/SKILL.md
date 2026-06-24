@@ -41,7 +41,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
 2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
-4. **dry-run 검증 (validate_flow_data)**: JSON 작성 직전에 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 JSON 을 만들고, MCP `validate_flow_data` 를 호출해 결과를 사용자에게 한두 줄로 요약한다. errors / warnings 처리는 [Response Handling](#response-handling) 을 따른다. errors 가 비었을 때에만 `create_agent` / `update_agent` (또는 작은 구조 변경이면 `update_agent_partial`) 호출.
+4. **구현 표면 선택 + dry-run 검증**: JSON 작성 직전에 CLI 경로면 `vox guide flow --task "<의도>" --json` 으로 compressed offline guide를 먼저 확인하고, MCP/API 경로면 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 JSON 을 만든다. 레포에 남길 변경이면 `vox` CLI source를 편집하고 `vox doctor` 또는 `vox agent doctor` 후 `validate/diff/push`로 간다. 빠른 one-off 또는 사용자가 원격 즉시 반영을 명시하면 MCP `validate_flow_data` 결과를 사용자에게 한두 줄로 요약하고, errors / warnings 처리는 [Response Handling](#response-handling) 을 따른 뒤 `create_agent` / `update_agent` (또는 작은 구조 변경이면 `update_agent_partial`) 를 호출한다.
 
 사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지. 기존 flow 의 노드/엣지 몇 개만 손보는 경우는 전체 재작성 없이 [Incremental Editing](#incremental-editing) 으로 간다.
 
@@ -144,16 +144,77 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 7. **conversation JSON 은 mode와 exit 조건을 빠뜨리지 않는다** — static 문구는 `promptType:"static"` + `staticSentence`, generated 대화는 `promptType:"dynamic"` + `prompt`/`firstMessage` 로 작성한다. 일반 `transitions[]` row 의 `condition` 은 빈 값/null/"None" 이 아니라 사용자가 그 노드를 벗어나도 되는 의미 있는 한국어 exit 조건이어야 한다. 조건 없는 row 는 자동 진행이 아니라 dead transition 이 된다.
 8. **검증/비교는 정답 데이터 출처가 있어야 한다** — 본인확인, 예약조회, 계약검증처럼 사용자의 답을 기존 데이터와 비교해야 하는 flow 는 먼저 정답값 출처를 정한다. API node 의 responseVariables 또는 통화 시작 전 주입된 preset dynamic variables 가 없으면 "일치 확인"이라고 말하거나 condition 으로 검증하지 않는다. 그런 경우는 정보 수집 flow 로 낮추거나, 조회 API 를 추가한다.
 9. **동일 인물/동일 대상 shortcut 을 명시한다** — "계약자와 학습자가 본인", "예약자와 방문자가 동일"처럼 앞에서 받은 답이 뒤 질문의 답을 결정하면 다시 묻지 않는다. extraction 에서 동일성 변수(`is_same_person` 등)를 만들고 condition 으로 재사용 path 와 추가질문 path 를 나눈다.
-10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, `update_agent` 의 `flow_data` 는 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. 노드/엣지 몇 개만 바꾸는 작은 구조 변경은 전체 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 ([Incremental Editing](#incremental-editing)).
+10. **산출물 경로는 세 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) `vox` CLI 프로젝트의 committed `agents/<name>/agent.json`, (c) v3 REST API 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. 레포/리뷰/롤백/CI가 필요하면 (b)가 기본이다. JSON surface 는 schema endpoint 가 authoritative 하며, MCP/API `update_agent` 의 `flow_data` 는 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. 노드/엣지 몇 개만 바꾸는 작은 원격 즉시 변경은 전체 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 ([Incremental Editing](#incremental-editing)).
 11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema(flow-data, minimal)` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
-12. **flow_data 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 본문의 `result.message` 에 자동 보정 안내 텍스트가 실려오므로, 그 내용을 사용자에게 그대로 전달한다 (차단 오류 사전 차단만 안 될 뿐). `validate_flow_data` 가 차단 오류를 던질 때, 그것이 결정론적으로 고칠 수 있는 종류면 `autofix_flow_data(flow_data=...)` 로 한 번에 보정한 결과를 다시 검증할 수 있다 ([Response Handling](#response-handling)).
+12. **전송 전 dry-run 먼저** — CLI 경로에서는 `vox agent validate`가 서버 flow validator를 호출하고, `vox doctor` / `vox agent doctor`가 로컬 authoring 위험을 먼저 잡는다. `vox agent push`는 literal secret이 있으면 dry-run도 거부하고, placeholder API URL, helper TODO 텍스트/조건/SMS/transfer 대상, 비어 있는 tool/knowledge 참조, `fire_and_forget` custom tool의 결과 기반 transition이 남아 있으면 실제 원격 저장 전에 거부한다. MCP/API 경로에서는 `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 본문의 `result.message` 에 자동 보정 안내 텍스트가 실려오므로, 그 내용을 사용자에게 그대로 전달한다 (차단 오류 사전 차단만 안 될 뿐). `validate_flow_data` 가 차단 오류를 던질 때, 그것이 결정론적으로 고칠 수 있는 종류면 `autofix_flow_data(flow_data=...)` 로 한 번에 보정한 결과를 다시 검증할 수 있다 ([Response Handling](#response-handling)).
 13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge`, `message` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
 14. **외부 fixture 값은 만들지 않는다** — `transferCall` 은 실제 전화번호/SIP target 이 있을 때만 쓰고, `transferAgent` 는 실제 대상 agent UUID 가 있을 때만 쓴다. `tool` 은 `list_tools` 결과의 실제 id 를 사용한다. `sendSms` 의 발신번호/첨부 파일 key 처럼 운영 리소스가 필요한 값은 시나리오나 API가 제공하지 않으면 비워 두거나 해당 노드를 쓰지 않는다. placeholder 번호, 임의 UUID, 가짜 sender 를 넣지 않는다.
-15. **agent data latency/STT 기본값은 보존한다** — flow agent 생성/수정에서 `data` 를 같이 보낼 때, override 하지 않는 sub-schema(`llm`/`voice` 등)는 OMIT 해 api-server 기본값을 그대로 받는다(기본값을 하드코딩하거나 복사하지 않는다). 명시 override 시 허용값은 `list_llm_models`/`list_voice_models`, shape 는 `get_schema(... detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리한다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움을 추측해 낮추지 않는다.
+15. **agent data latency/STT 기본값은 보존한다** — flow agent 생성/수정에서 `data` 를 같이 보낼 때, override 하지 않는 sub-schema(`llm`/`voice` 등)는 OMIT 해 api-server 기본값을 그대로 받는다(기본값을 하드코딩하거나 복사하지 않는다). CLI 프로젝트에서 prompt, 변수, callSettings, webhookSettings 같은 agent-level 설정을 레포에 남길 때는 `vox agent set --data <path=value>`를 우선 사용하고, 너무 specialized 한 필드는 JSON을 직접 편집한다. 명시 override 시 허용값은 `list_llm_models`/`list_voice_models`, shape 는 `get_schema(... detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리한다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움을 추측해 낮추지 않는다.
 
 ## Response Handling
 
 `validate_flow_data` / `autofix_flow_data` / `create_agent` / `update_agent` 의 검증 결과를 어떻게 다루는지 정리.
+
+## CLI Agent-as-Code Flow
+
+사용자가 레포에서 flow agent를 관리하거나 diff/review/rollback을 원하면 MCP direct update 대신 CLI 루프를 사용한다.
+
+```bash
+vox agent pull <agent-id> --agent <local-name>
+# 또는 새 flow면
+vox agent add <local-name> --template flow-basic
+# dashboard export JSON에서 시작하면:
+# vox agent import dashboard-export.json --agent <local-name>
+
+vox guide coding-agent --json
+vox guide flow --task "user can quit anytime or ask for a human" --json
+vox docs show docs/build/flow/advanced/global-node --json
+vox agent flow graph --agent <local-name> --format summary --json
+vox agent flow add-node <node-id> --agent <local-name> --type api --url https://api.example.com --method POST --auth-type Bearer --auth-credentials '${env:CRM_TOKEN}' --response-mode wait --json
+vox agent flow connect --agent <local-name> --from conversation --to <node-id> --condition "외부 조회가 필요할 때" --json
+vox doctor --json
+vox agent doctor --agent <local-name> --json
+vox agent validate --agent <local-name> --json
+vox agent status --all --offline --json
+vox agent diff --all --offline --check --json
+vox agent diff --agent <local-name> --json
+vox agent push --agent <local-name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <local-name> --description "reviewed release"
+vox agent promote v1 --agent <local-name> --yes
+```
+
+flow API node method enum 은 현재 서버 flow schema 기준 `GET` / `POST` / `PUT` / `DELETE` 다. custom tool 은 `PATCH` 를 지원하지만 flow `api` node 는 api-server schema 가 열리기 전까지 `PATCH` 를 쓰지 않는다. `authorization` / `x-api-key` 같은 민감 header 와 auth credential 은 raw token 을 파일에 쓰지 말고 `${env:NAME}` / `${secret:name}` reference 를 쓴다.
+
+대시보드 execution node 를 CLI 로 만들 때도 helper 를 우선 사용한다.
+
+```bash
+vox agent flow add-node notify_user --agent <local-name> --type sendSms \
+  --static-sentence "처리 결과를 문자로 안내드리겠습니다." \
+  --sms-title "처리 결과" \
+  --response-mode wait \
+  --json
+
+vox agent flow add-node transfer_support --agent <local-name> --type transferCall \
+  --transfer-type sip \
+  --transfer-to sip:support@example.com \
+  --transfer-mode warm \
+  --transfer-message-type static \
+  --warm-transfer-static-sentence "고객 문의 요약을 전달합니다." \
+  --displayed-caller-id agent \
+  --json
+```
+
+CLI 프로젝트에서는 custom tool과 knowledge를 org-local UUID 대신 local ref로 연결한다.
+
+```bash
+vox tool push <tool-name>
+vox knowledge push <knowledge-name>
+vox agent attach tool <agent-name> <tool-name> --node <tool-node-id>
+vox agent attach knowledge <agent-name> <knowledge-name> --node <conversation-node-id>
+```
+
+이 경로는 committed `agent.json`, `tools/<name>/tool.json`, `knowledges/<name>/knowledge.json`을 durable truth로 만들고, `.vox/project.json`의 binding을 통해 `toolRef` / `knowledgeRefs`를 실제 remote ID로 컴파일한다.
 
 ### `validate_flow_data` 응답
 

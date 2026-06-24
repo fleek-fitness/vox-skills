@@ -119,3 +119,70 @@ vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI �
 |------|-----|------|
 | `vox` | `https://mcp.tryvox.co/mcp` | 플랫폼 도구 (에이전트, 통화, 조직 등) |
 | `vox-docs` | `https://fleek.mintlify.app/mcp` | 공식 문서 검색 (search_vox_ai_docs + query_docs_filesystem) |
+
+## vox CLI와 함께 쓰는 방식
+
+Codex/Claude Code 같은 코딩 에이전트는 파일 편집, shell 실행, git diff/commit에 강합니다. 따라서 vox.ai 리소스를 레포에서 관리해야 하는 작업은 MCP 직접 update보다 `vox` CLI를 우선합니다.
+
+```text
+vox docs search/show: bundled offline 공식 문서 index 조회
+docs MCP: 전문/최신 hosted 문서 검색
+vox MCP: 조직/스키마/리소스 조회와 one-off 실행
+vox skills: 설계 판단과 workflow routing
+vox CLI: agent/tool/knowledge를 파일로 편집하고 doctor/validate/diff/push하는 durable authoring
+```
+
+경계 규칙:
+
+```text
+조회거나 일회성이면 MCP.
+레포에 남아야 하거나 리뷰/롤백/CI가 필요하면 vox CLI.
+```
+
+대표 루프:
+
+```bash
+# 새 레포면 먼저 local Claude/Codex skill bootstrap까지 생성
+# vox init --json
+vox guide coding-agent --json
+vox skills show using-vox-skills --brief --json
+vox docs search "<topic>" --json
+vox agent pull <agent-id>
+# dashboard export JSON에서 시작하면:
+# vox agent import dashboard-export.json --agent <name>
+# flow 설계/수정이면 compressed offline guide를 먼저 확인
+vox guide flow --task "user can quit anytime or ask for a human" --json
+# JSON Pointer 기반으로 현재 field와 권장 helper를 확인
+vox agent explain /agent/data/prompt/prompt --agent <name> --json
+vox tool explain <tool-name> /tool/response_mode --json
+vox knowledge explain <knowledge-name> /knowledge/documents/0/path --json
+# stable agent.data 설정은 agent set으로, specialized 설정은 JSON 직접 편집
+vox agent set --agent <name> --data prompt.prompt=@prompts/support.md
+# edit agents/<name>/agent.json, tools/**, knowledges/**
+vox agent test init greeting_smoke --agent <name> --input "안녕하세요" --response-contains "안내"
+vox agent test list --agent <name> --json
+vox agent test show greeting_smoke --agent <name> --json
+vox agent test validate greeting_smoke --agent <name> --json
+vox doctor --json
+vox agent doctor --agent <name> --json
+vox agent validate --agent <name> --json
+vox agent status --all --offline --json
+vox agent diff --all --offline --check --json
+vox agent diff --agent <name> --json
+vox agent push --agent <name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <name> --description "reviewed release"
+vox agent promote v1 --agent <name> --yes
+```
+
+`agent test init/list/show/validate`는 chat/voice runtime을 실행하지 않습니다. 레포에 남길 테스트 의도와 acceptance assertion을 `agents/<name>/tests/*.json`으로 먼저 고정하고, PR 리뷰와 코딩 에이전트 탐색에서 같은 파일을 보게 하는 용도입니다.
+
+`vox guide coding-agent`는 외부 Codex/Claude 세션이 README나 모노레포 없이도 surface split, 기본 Agent-as-Code 루프, repo instruction snippet을 바로 읽게 하는 bootstrap 명령입니다. `vox --help`와 guide group help에도 이 명령이 hint로 노출됩니다. 새 레포에서 `vox init` 또는 `vox agent init`을 실행하면 root `CLAUDE.md` / `AGENTS.md`를 덮어쓰지 않고 `.claude/skills/vox-ai/SKILL.md`와 `.codex/skills/vox-ai/SKILL.md`를 생성해 같은 bootstrap으로 연결합니다.
+
+`vox skills list/show`는 public `vox-skills`의 SKILL.md와 references를 CLI release 때 압축한 offline pack입니다. 코딩 에이전트가 긴 skill markdown을 열기 전에 domain ownership, CLI-first 조건, 추천 명령, reference path/source hash를 빠르게 고르게 합니다.
+
+`vox docs search/show`는 공식 docs repo를 CLI release 때 압축한 offline index입니다. 코딩 에이전트가 path/title/heading/excerpt/source hash를 먼저 보고, 전체 MDX 전문이나 최신 hosted 확인이 필요할 때만 docs MCP로 넘어가게 합니다.
+
+`vox guide flow`는 public skills/docs/schema에서 release-time 생성한 짧은 authoring pack을 offline으로 반환합니다. 긴 문서 검색 전에 `--task` 또는 `--topic`으로 규칙, schema field, 권장 CLI helper, 금지 패턴, doctor code를 확인하고, 실제 durable 변경은 파일 편집과 `doctor -> validate -> diff -> push` 루프로 진행합니다.
+
+`vox doctor` / `vox agent doctor` / `agent push` / `tool push`는 raw secret, placeholder/TODO authoring field, 비어 있는 resource ref뿐 아니라 `fire_and_forget` custom tool의 결과를 flow transition 조건으로 분기하려는 케이스도 원격 저장 전에 막습니다. 이런 오류가 나오면 도구를 `response_mode: "wait"`로 바꾸거나, 결과를 읽지 않는 success/fallback branch로 flow를 단순화합니다.

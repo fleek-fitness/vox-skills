@@ -2,6 +2,32 @@
 
 vox.ai 웹 앱의 **구축** 그룹은 에이전트의 재료를 만드는 곳이다. 에이전트, 보이스, 도구, 지식 베이스 4가지 페이지를 포함한다.
 
+## Dashboard / CLI 경계
+
+대시보드는 사람이 화면에서 빠르게 만들고 확인하는 표면이다. 사용자가 레포, diff, 리뷰, 롤백, CI, 커밋, 또는 coding agent 유지보수를 언급하면 이 문서의 UI 안내를 그대로 따라가게 하지 말고 `vox` CLI의 Agent-as-Code 루프로 넘긴다.
+
+```text
+UI 조작 / 화면 위치 / 보이스 클론 / CSV 업로드 / 녹취 재생 -> dashboard
+repo-owned agent/tool/knowledge 변경 -> vox CLI
+```
+
+CLI 루프:
+
+```bash
+vox agent pull <agent-id>
+# edit agents/<name>/agent.json, tools/**, knowledges/**
+vox doctor --json
+vox agent doctor --agent <name> --json
+vox agent validate --agent <name> --json
+vox agent status --all --offline --json
+vox agent diff --all --offline --check --json
+vox agent diff --agent <name> --json
+vox agent push --agent <name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <name> --description "reviewed release"
+vox agent promote v1 --agent <name> --yes
+```
+
 ---
 
 ## 1. 에이전트 (`/dashboard/{orgId}/agents`)
@@ -110,6 +136,8 @@ vox.ai 웹 앱의 **구축** 그룹은 에이전트의 재료를 만드는 곳�
 - MCP 서버 URL
 - 인증 (API key 등)
 - 노출할 MCP tool 이름
+
+> CLI 경계: `vox tool init/validate/push`가 관리하는 tools-as-code 리소스는 현재 public v3 `POST /v3/tools` 계약에 맞춘 HTTP/API 커스텀 도구만 지원한다. MCP 타입 도구는 대시보드 UI나 MCP one-off 작업으로 다루고, CLI 파일 리소스는 public v3 생성/조회/수정 계약이 열린 뒤 추가한다.
 
 > 도구 개념 설명, 이름 규칙, 빌트인 vs 커스텀 선택 기준 등은 `vox-tools` 스킬 참조.
 

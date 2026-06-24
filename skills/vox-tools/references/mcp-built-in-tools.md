@@ -101,6 +101,8 @@ MCP/v3에서는 기존 `transferAgentId` / `transferAgentVersion` 대신 `agent`
 
 통화 중 SMS를 발송합니다.
 
+`send_sms`는 에이전트 `data.builtInTools[]`에 장착하는 **통화 중 빌트인 도구**입니다. 서버에서 문자 발송을 자동화하는 public REST SMS v3 API(`POST /v3/sms`, `POST /v3/sms/batch`)와 다른 surface입니다. REST API 기반 단건/대량 문자 발송을 안내해야 할 때는 공식 SMS API 문서를 사용하고, 이 빌트인 도구를 REST API나 standalone MCP SMS 도구처럼 설명하지 않습니다. Phase 1 vox MCP는 SMS v3 direct send/batch/status tool을 노출하지 않습니다.
+
 ```json
 {"toolType": "send_sms", "name": "send_confirmation", "smsMessageType": "static", "smsMessageStaticSentence": "예약이 확정되었습니다."}
 ```

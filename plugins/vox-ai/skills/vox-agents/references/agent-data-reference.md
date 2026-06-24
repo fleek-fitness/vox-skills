@@ -1,6 +1,6 @@
 # agent.data Reference
 
-MCP `create_agent` / `update_agent` 사용 시 `agent.data`의 동작 규칙을 정리한 레퍼런스.
+MCP `create_agent` / `update_agent` 또는 `vox` CLI `agents/<name>/agent.json` 편집 시 `agent.data`의 동작 규칙을 정리한 레퍼런스.
 
 정확한 field, enum, required 여부는 MCP schema endpoint 가 authoritative 하다. 이 파일은 실수하기 쉬운 운영 규칙만 요약한다.
 
@@ -19,6 +19,13 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 ## 필드별 핵심 규칙
 
 스키마 전체는 `get_schema` 결과를 참조한다. 여기는 **LLM이 실수하기 쉬운 규칙만** 정리한다.
+
+### boolean/null contract
+
+- agent config boolean은 생략/`true`/`false`만 사용한다.
+- 기본값을 쓰려면 해당 boolean field를 생략한다. 명시적으로 끄려면 `false`, 켜려면 `true`를 보낸다.
+- `null`은 보내지 않는다. 특히 `webhookSettings.inboundCallWebhookSigningEnabled`는 default `false`인 non-null boolean이며, `null` 전송은 API validation error가 된다.
+- 이 규칙은 `create_agent`와 `update_agent`의 `data` 모두에 적용된다.
 
 ### prompt
 
@@ -77,6 +84,54 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 list_schemas(namespace="tool-schema", category="built_in")
 get_schema(namespace="tool-schema", schema_type="<built-in-tool-schema>")
 ```
+
+## CLI-first 변경 루프
+
+agent 설정 변경이 레포에 남아야 하거나 리뷰/롤백/CI가 필요하면 MCP `update_agent`를 직접 호출하지 말고 CLI source를 수정한다.
+
+```bash
+vox agent pull <agent-id> --agent <local-name>
+# 현재 source field와 권장 helper를 먼저 확인
+vox agent explain /agent/data/prompt/prompt --agent <local-name> --json
+# prompt/firstLine/variables/callSettings/webhookSettings 같은 안정적인 dot-path는 agent set 사용
+vox agent set --agent <local-name> \
+  --data prompt.prompt=@prompts/support.md \
+  --data prompt.firstLine="안녕하세요. 무엇을 도와드릴까요?" \
+  --data presetDynamicVariables.customer_tier=premium \
+  --data callSettings.callTimeoutInSeconds=600
+# specialized 설정은 agents/<local-name>/agent.json 직접 편집
+vox agent test init greeting_smoke --agent <local-name> --input "안녕하세요" --response-contains "안내"
+vox agent test list --agent <local-name> --json
+vox agent test show greeting_smoke --agent <local-name> --json
+vox agent test validate greeting_smoke --agent <local-name> --json
+vox doctor --json
+vox agent doctor --agent <local-name> --json
+vox agent validate --agent <local-name> --json
+vox agent status --all --offline --json
+vox agent diff --all --offline --check --json
+vox agent diff --agent <local-name> --json
+vox agent push --agent <local-name>
+# 프로덕션 승격까지 요청받은 경우에만:
+vox agent version save --agent <local-name> --description "reviewed release"
+vox agent promote v1 --agent <local-name> --yes
+```
+
+`vox agent set` 값은 먼저 JSON으로 파싱된다. 숫자/boolean/null이 필요하면 그대로 쓰고, 문자열이 JSON으로 파싱되지 않으면 문자열로 저장된다. `@file`은 프로젝트 상대 경로의 파일 내용을 문자열로 읽어 `agent.data`에 넣는다. 예: 긴 시스템 프롬프트는 `prompts/support.md`에 두고 `--data prompt.prompt=@prompts/support.md`로 주입한다. `agent set`은 committed source만 수정하며 원격 반영은 항상 `vox doctor 또는 agent doctor -> validate -> diff -> push` 이후에 한다.
+
+`vox agent push`는 마지막 안전망이다. agent JSON에 raw API credential/literal secret이 있으면 dry-run도 거부하고, placeholder API URL, helper가 만든 TODO 노드 텍스트/조건/SMS/transfer 대상, 비어 있는 tool/knowledge 참조, `fire_and_forget` custom tool의 결과 기반 flow transition이 남아 있으면 실제 원격 저장 전에 거부한다. 따라서 `vox agent push --dry-run --json`으로 payload를 검토한 뒤, 실제 push 전에 `vox agent doctor --json` 경고를 해소한다.
+
+`vox agent test init/list/show/validate`는 실제 chat/voice runtime을 실행하지 않는다. 테스트 의도와 response assertion을 `agents/<local-name>/tests/*.json`에 남기고, `list/show --json`으로 경로/turn/assertion 수/validation 상태를 리뷰한 뒤 CI/future `vox test` runner가 같은 artifact를 보게 하는 단계다.
+
+`agent version save`와 `agent promote`는 push 이후 릴리스 게이트다. 리뷰/승인 없이 자동 실행하지 말고, 사용자가 프로덕션 승격을 명시했거나 배포 승인 단계가 끝났을 때만 사용한다.
+
+`agent.data` 안의 `toolIds`, `knowledgeIds`, flow node `toolId`, conversation node `knowledgeIds`처럼 organization-local ID가 필요한 필드는 committed source에 직접 쓰지 않는 것이 좋다. CLI 프로젝트에서는 local resource ref를 사용한다.
+
+- custom tool: `toolRef` / `toolRefs`를 사용하고 먼저 `vox tool push` 또는 `vox tool pull`로 binding을 만든다.
+- knowledge: `knowledgeRefs`를 사용하고 먼저 `vox knowledge push` 또는 `vox knowledge pull`로 binding을 만든다.
+
+resource source를 함께 편집할 때는 `vox tool explain <local-name> /tool/input_schema --json` 또는 `vox knowledge explain <local-name> /knowledge/documents/0/path --json`으로 해당 JSON field의 의미와 다음 검증 명령을 먼저 확인한다.
+
+`vox agent validate`, `vox agent diff`, `vox agent status`, `vox agent push`가 `.vox/project.json`의 binding을 보고 local ref를 실제 remote ID로 컴파일한다. 이렇게 해야 같은 repo source가 다른 workspace에서도 재바인딩 가능하고, org-local UUID가 git에 남지 않는다.
 
 ## MCP 동작 규칙
 
