@@ -172,6 +172,7 @@ vox agent flow connect --agent <local-name> --from conversation --to <node-id> -
 vox doctor --json
 vox agent doctor --agent <local-name> --json
 vox agent validate --agent <local-name> --json
+vox agent status --all --offline --json
 vox agent diff --agent <local-name> --json
 vox agent push --agent <local-name>
 # 프로덕션 승격까지 요청받은 경우에만:

@@ -29,6 +29,7 @@ agent에 연결할 때는 remote `tool_id`를 committed `agent.json`에 직접 �
 ```bash
 vox agent attach tool <agent-name> check_reservation --node <tool-node-id>
 vox agent validate --agent <agent-name> --json
+vox agent status --all --offline --json
 vox agent diff --agent <agent-name> --json
 vox agent push --agent <agent-name>
 # 프로덕션 승격까지 요청받은 경우에만:

@@ -35,6 +35,7 @@ vox tool push check_order
 vox agent pull <agent-id> --agent support
 vox agent attach tool support check_order --node lookup_order
 vox agent validate --agent support --json
+vox agent status --all --offline --json
 vox agent diff --agent support --json
 vox agent push --agent support
 # 프로덕션 승격까지 요청받은 경우에만:

@@ -19,6 +19,7 @@ vox agent pull <agent-id>
 vox doctor --json
 vox agent doctor --agent <name> --json
 vox agent validate --agent <name> --json
+vox agent status --all --offline --json
 vox agent diff --agent <name> --json
 vox agent push --agent <name>
 # 프로덕션 승격까지 요청받은 경우에만:
