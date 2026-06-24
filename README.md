@@ -144,6 +144,7 @@ vox CLI: agent/tool/knowledge를 파일로 편집하고 doctor/validate/diff/pus
 # 새 레포면 먼저 local Claude/Codex skill bootstrap까지 생성
 # vox init --json
 vox guide coding-agent --json
+vox skills show using-vox-skills --brief --json
 vox agent pull <agent-id>
 # dashboard export JSON에서 시작하면:
 # vox agent import dashboard-export.json --agent <name>
@@ -175,6 +176,8 @@ vox agent promote v1 --agent <name> --yes
 `agent test init/list/show/validate`는 chat/voice runtime을 실행하지 않습니다. 레포에 남길 테스트 의도와 acceptance assertion을 `agents/<name>/tests/*.json`으로 먼저 고정하고, PR 리뷰와 코딩 에이전트 탐색에서 같은 파일을 보게 하는 용도입니다.
 
 `vox guide coding-agent`는 외부 Codex/Claude 세션이 README나 모노레포 없이도 surface split, 기본 Agent-as-Code 루프, repo instruction snippet을 바로 읽게 하는 bootstrap 명령입니다. `vox --help`와 guide group help에도 이 명령이 hint로 노출됩니다. 새 레포에서 `vox init` 또는 `vox agent init`을 실행하면 root `CLAUDE.md` / `AGENTS.md`를 덮어쓰지 않고 `.claude/skills/vox-ai/SKILL.md`와 `.codex/skills/vox-ai/SKILL.md`를 생성해 같은 bootstrap으로 연결합니다.
+
+`vox skills list/show`는 public `vox-skills`의 SKILL.md와 references를 CLI release 때 압축한 offline pack입니다. 코딩 에이전트가 긴 skill markdown을 열기 전에 domain ownership, CLI-first 조건, 추천 명령, reference path/source hash를 빠르게 고르게 합니다.
 
 `vox guide flow`는 public skills/docs/schema에서 release-time 생성한 짧은 authoring pack을 offline으로 반환합니다. 긴 문서 검색 전에 `--task` 또는 `--topic`으로 규칙, schema field, 권장 CLI helper, 금지 패턴, doctor code를 확인하고, 실제 durable 변경은 파일 편집과 `doctor -> validate -> diff -> push` 루프로 진행합니다.
 
