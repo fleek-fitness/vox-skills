@@ -132,7 +132,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 - `vox agent doctor` — 특정 agent 중심 authoring 위험 점검
 - `vox agent validate` — local + server-backed 검증
 - `vox agent diff` / `vox agent status` — 리뷰 가능한 변경/드리프트 확인
-- `vox agent push` — 검증된 source를 remote에 반영. raw secret은 dry-run 포함 거부하고, placeholder/TODO flow helper 값과 비어 있는 tool/knowledge 참조는 실제 저장 전에 거부
+- `vox agent push` — 검증된 source를 remote에 반영. raw secret은 dry-run 포함 거부하고, placeholder/TODO flow helper 값, 비어 있는 tool/knowledge 참조, `fire_and_forget` tool 결과 기반 flow transition은 실제 저장 전에 거부
 
 ### Docs (vox-docs search)
 - `https://docs.tryvox.co/docs/build/overview` — 에이전트 빌드 개요

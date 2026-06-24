@@ -14,7 +14,7 @@ vox tool diff check_reservation --json
 vox tool push check_reservation
 ```
 
-`tool init`이 만든 TODO 설명은 실제 호출 조건과 파라미터 의미로 바꿉니다. `tool validate`는 placeholder URL뿐 아니라 tool description과 input schema property description의 TODO도 warning으로 보여주며, 실제 `tool push`는 이런 placeholder authoring field가 남아 있으면 원격 저장 전에 거부합니다. 서버가 placeholder 설명을 받아도, coding agent와 runtime agent는 이 설명을 보고 어떤 도구를 언제 호출할지 판단합니다.
+`tool init`이 만든 TODO 설명은 실제 호출 조건과 파라미터 의미로 바꿉니다. `tool validate`는 placeholder URL뿐 아니라 tool description과 input schema property description의 TODO도 warning으로 보여주며, 실제 `tool push`는 이런 placeholder authoring field가 남아 있으면 원격 저장 전에 거부합니다. 또한 `response_mode: "fire_and_forget"`인 로컬 tool을 flow tool node가 결과 기반 transition 조건으로 사용 중이면 `tool push`가 막습니다. 서버가 placeholder 설명을 받아도, coding agent와 runtime agent는 이 설명을 보고 어떤 도구를 언제 호출할지 판단합니다.
 
 기존 remote tool을 레포로 가져올 때:
 

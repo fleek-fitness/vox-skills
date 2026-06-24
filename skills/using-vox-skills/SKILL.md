@@ -80,6 +80,8 @@ vox knowledge status <local-name>
 vox knowledge push <local-name>
 ```
 
+`vox doctor` / `vox agent doctor` / `agent push` / `tool push`가 raw secret, placeholder/TODO authoring field, 비어 있는 tool/knowledge ref, 그리고 `fire_and_forget` custom tool의 결과 기반 flow transition을 막으면 그 출력을 수정 지시로 사용한다. `fire_and_forget` 도구 결과로 분기해야 하는 flow는 도구를 `wait`로 바꾸고, 결과를 쓰지 않는 발송/호출 전용 flow만 `fire_and_forget`을 유지한다.
+
 MCP direct `create_agent` / `update_agent` / `create_tool` / `update_tool`은 빠른 one-off, 온보딩, 탐색, 또는 사용자가 명시적으로 원격 즉시 반영을 원할 때 사용한다. 사용자가 "레포", "코드처럼", "diff 보여줘", "PR/리뷰", "롤백 가능하게", "커밋", "CI"를 언급하면 CLI 루프로 라우팅한다.
 
 ## 스킬 없이 router가 직접 다루는 MCP 도구

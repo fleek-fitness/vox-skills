@@ -164,3 +164,5 @@ vox agent promote v1 --agent <name> --yes
 ```
 
 `agent test init/list/show/validate`는 chat/voice runtime을 실행하지 않습니다. 레포에 남길 테스트 의도와 acceptance assertion을 `agents/<name>/tests/*.json`으로 먼저 고정하고, PR 리뷰와 코딩 에이전트 탐색에서 같은 파일을 보게 하는 용도입니다.
+
+`vox doctor` / `vox agent doctor` / `agent push` / `tool push`는 raw secret, placeholder/TODO authoring field, 비어 있는 resource ref뿐 아니라 `fire_and_forget` custom tool의 결과를 flow transition 조건으로 분기하려는 케이스도 원격 저장 전에 막습니다. 이런 오류가 나오면 도구를 `response_mode: "wait"`로 바꾸거나, 결과를 읽지 않는 success/fallback branch로 flow를 단순화합니다.
