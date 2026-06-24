@@ -127,6 +127,8 @@ vox agent promote v1 --agent <local-name> --yes
 - custom tool: `toolRef` / `toolRefs`를 사용하고 먼저 `vox tool push` 또는 `vox tool pull`로 binding을 만든다.
 - knowledge: `knowledgeRefs`를 사용하고 먼저 `vox knowledge push` 또는 `vox knowledge pull`로 binding을 만든다.
 
+resource source를 함께 편집할 때는 `vox tool explain <local-name> /tool/input_schema --json` 또는 `vox knowledge explain <local-name> /knowledge/documents/0/path --json`으로 해당 JSON field의 의미와 다음 검증 명령을 먼저 확인한다.
+
 `vox agent validate`, `vox agent diff`, `vox agent status`, `vox agent push`가 `.vox/project.json`의 binding을 보고 local ref를 실제 remote ID로 컴파일한다. 이렇게 해야 같은 repo source가 다른 workspace에서도 재바인딩 가능하고, org-local UUID가 git에 남지 않는다.
 
 ## MCP 동작 규칙

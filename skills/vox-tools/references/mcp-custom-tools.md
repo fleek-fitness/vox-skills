@@ -10,6 +10,7 @@ custom tool 변경이 레포에 남아야 하거나 리뷰/롤백/CI가 필요�
 vox tool init check_reservation --url https://api.example.com/reservations --method GET
 # edit tools/check_reservation/tool.json
 vox tool validate check_reservation
+vox tool explain check_reservation /tool/input_schema --json
 vox tool diff check_reservation --json
 vox tool push check_reservation
 ```

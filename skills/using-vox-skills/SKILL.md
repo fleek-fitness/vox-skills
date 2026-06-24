@@ -71,11 +71,13 @@ Resource 변경은 같은 원칙을 따른다.
 ```bash
 vox tool pull <tool-id> --tool <local-name>
 vox tool validate <local-name>
+vox tool explain <local-name> /tool/response_mode --json
 vox tool diff <local-name>
 vox tool push <local-name>
 
 vox knowledge pull <knowledge-id> --knowledge <local-name> --allow-incomplete
 vox knowledge validate <local-name>
+vox knowledge explain <local-name> /knowledge/documents/0/path --json
 vox knowledge status <local-name>
 vox knowledge push <local-name>
 ```

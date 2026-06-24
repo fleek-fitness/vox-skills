@@ -146,6 +146,8 @@ vox agent pull <agent-id>
 # vox agent import dashboard-export.json --agent <name>
 # JSON Pointer 기반으로 현재 field와 권장 helper를 확인
 vox agent explain /agent/data/prompt/prompt --agent <name> --json
+vox tool explain <tool-name> /tool/response_mode --json
+vox knowledge explain <knowledge-name> /knowledge/documents/0/path --json
 # stable agent.data 설정은 agent set으로, specialized 설정은 JSON 직접 편집
 vox agent set --agent <name> --data prompt.prompt=@prompts/support.md
 # edit agents/<name>/agent.json, tools/**, knowledges/**

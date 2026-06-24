@@ -45,7 +45,7 @@ MCP 서버 연결 설정(Claude, Cursor, ChatGPT 등)은 `vox-onboarding` 스킬
 
 ### CLI Commands (vox)
 - `vox tool init` / `vox tool pull` — custom HTTP tool source 생성/가져오기
-- `vox tool validate` / `vox tool diff` / `vox tool status` / `vox tool push` — tools-as-code 변경 루프. `tool push`는 placeholder 설명/URL과 `fire_and_forget` 도구의 결과 기반 flow transition 사용을 원격 저장 전에 거부한다.
+- `vox tool validate` / `vox tool explain` / `vox tool diff` / `vox tool status` / `vox tool push` — tools-as-code 변경 루프. `tool explain`은 JSON Pointer field의 의미와 관련 검증 명령을 보여주고, `tool push`는 placeholder 설명/URL과 `fire_and_forget` 도구의 결과 기반 flow transition 사용을 원격 저장 전에 거부한다.
 - `vox agent attach tool <agent> <tool> --node <tool-node-id>` — flow tool node에 local `toolRef` 기록
 - `vox agent validate` / `vox agent diff` / `vox agent push` — tool ref를 실제 remote tool ID로 컴파일해 agent 반영
 
