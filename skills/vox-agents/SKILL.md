@@ -42,7 +42,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 4. **런타임 발화 vs 개발 산출물 구분** — "기본 1–2문장" 같은 장문 방지 규칙은 에이전트의 **런타임 발화**에만 적용된다. 개발 산출물(시스템 프롬프트, 진단 YAML, 패치 노트)은 필요한 만큼 길어도 된다. 이 구분이 없으면 LLM이 voice UX 규칙을 개발 output에까지 적용해서, 프롬프트의 가드레일/도구 섹션을 지나치게 축약하는 실패가 발생한다.
 5. **최소 변경 리팩터링** — 기존 프롬프트의 필수 섹션/도구 계약/변수/에러처리를 삭제하면 런타임 장애가 발생한다.
 6. **진단 → 리팩터링 핸드오프**: diagnosis에 `failure_modes`와 `change_requests`가 반드시 포함, revision은 `change_requests`를 근거로만 변경한다 — 근거 없는 재설계는 기존 동작을 깨뜨린다.
-7. **변경 표면 선택** — 조회·스키마 확인·one-off 생성은 MCP가 적합하다. 그러나 사용자가 레포, 코드, diff, 리뷰, PR, 롤백, CI, 커밋, 또는 "agent-as-code" 맥락을 언급하면 `vox` CLI 루프로 변경한다. 코딩 에이전트가 durable 변경을 해야 할 때 기본 경로는 `vox agent pull/init/add/import -> agent explain/agent set 또는 edit agents/<name>/agent.json -> tool/knowledge source를 함께 고칠 때는 tool explain / knowledge explain -> agent test init/list/show/validate(테스트 의도를 레포에 남길 때) -> vox doctor 또는 agent doctor -> validate -> agent status --all --offline으로 project-wide 상태 스캔 -> diff/status -> push` 이다. 프로덕션 승격은 push 이후 별도 승인 단계로 `agent version save -> agent promote --yes`를 사용한다.
+7. **변경 표면 선택** — 조회·스키마 확인·one-off 생성은 MCP가 적합하다. 그러나 사용자가 레포, 코드, diff, 리뷰, PR, 롤백, CI, 커밋, 또는 "agent-as-code" 맥락을 언급하면 `vox` CLI 루프로 변경한다. 코딩 에이전트가 durable 변경을 해야 할 때 기본 경로는 `vox agent pull/init/add/import -> agent explain/agent set 또는 edit agents/<name>/agent.json -> tool/knowledge source를 함께 고칠 때는 tool explain / knowledge explain -> agent test init/list/show/validate(테스트 의도를 레포에 남길 때) -> vox doctor 또는 agent doctor -> validate -> agent status --all --offline으로 project-wide 상태 스캔 -> agent diff --all --offline --check로 project-wide diff gate -> focused diff/status -> push` 이다. 프로덕션 승격은 push 이후 별도 승인 단계로 `agent version save -> agent promote --yes`를 사용한다.
 8. **MCP 실행 주의** — 유저가 "적용/업데이트"를 명시했을 때만 실행. builtInTools/toolIds가 전체 교체 방식이라 실수로 실행하면 기존 설정이 날아간다. `agent-data-reference.md` 참조. durable 변경에서는 MCP `update_agent` 대신 CLI 파일 편집과 `vox agent push`를 사용한다.
 9. **기본값은 서버가 채운다** — 기본값의 SSOT 는 api-server 이고, get_schema 는 shape 만 주고 기본 *값* 은 주지 않는다. 의도적으로 override 하지 않는 sub-schema(특히 `llm`, `voice`)는 보내지 말고 OMIT 해 서버 기본값을 적용한다. override 할 때만 허용 값을 `list_llm_models` / `list_voice_models` 로 조회하고 shape 는 `get_schema(namespace="agent-schema", schema_type="agent-data-create" | "agent-data-update", detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]` 를 사용하고 `ko-KR` 은 `voice.language` 에만 쓴다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하며, "자연스러움" 명목으로 `0.8` / `0.9` 로 낮추지 않는다.
 
@@ -76,6 +76,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
    vox agent doctor --agent <local-name> --json
    vox agent validate --agent <local-name> --json
    vox agent status --all --offline --json
+   vox agent diff --all --offline --check --json
    vox agent diff --agent <local-name> --json
    vox agent push --agent <local-name>
    # 프로덕션 승격까지 요청받은 경우에만:
