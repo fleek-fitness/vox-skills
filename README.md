@@ -117,6 +117,7 @@ Codex/Claude Code가 vox CLI를 이용해 agent/tool/knowledge를 코드처럼 �
 
 - `vox init`, `vox sync`, `vox agent pull/validate/diff/status/push/delete`
 - repo/git 기반 Agent-as-Code 루프, CI/리뷰/롤백, `vox chat` smoke
+- prod 기본값과 내부 dev profile 선택 규칙
 - MCP는 조회/일회성, CLI는 durable authoring으로 나누는 운영 규칙
 - `skills/vox-cli/SKILL.md`
 

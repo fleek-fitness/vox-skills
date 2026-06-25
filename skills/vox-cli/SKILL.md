@@ -1,6 +1,6 @@
 ---
 name: vox-cli
-description: "Use whenever a user wants to install, test, or use the vox CLI; manage vox.ai agents/tools/knowledge as code; run Agent-as-Code workflows; use vox init, vox sync, vox agent pull/validate/diff/status/push/delete, vox doctor, vox chat, Homebrew/npm installs, CI, PR review, rollback, or git-backed authoring. Prefer this skill for Codex/Claude Code sessions where vox.ai changes should be file-based, reviewable, deterministic, and driven through shell commands with --json."
+description: "Use whenever a user wants to install, test, or use the vox CLI; manage vox.ai agents/tools/knowledge as code; run Agent-as-Code workflows; select prod/dev CLI profiles; use vox init, vox sync, vox agent pull/validate/diff/status/push/delete, vox doctor, vox chat, Homebrew/npm installs, CI, PR review, rollback, or git-backed authoring. Prefer this skill for Codex/Claude Code sessions where vox.ai changes should be file-based, reviewable, deterministic, and driven through shell commands with --json."
 ---
 
 # vox-cli
@@ -40,6 +40,33 @@ npm install -g @vox-ai/cli
 ```
 
 After install, rerun `vox --version` and `vox guide coding-agent --json`.
+
+## Environment Selection
+
+Default to production. Do not switch to dev just because the user is internal or because a command supports `--profile`.
+
+Use the dev profile only when the user explicitly says they want dev, development, 개발 서버, 개발 환경, staging-like internal testing, or gives a dev workspace/org id. In that case, create or use a separate `dev` profile and pass it through every live command.
+
+```bash
+VOX_AUTH_ISSUER=https://xnpknkzxxuyfokbrzbil.supabase.co/auth/v1 \
+VOX_API_BASE_URL=https://dev-client-api.tryvox.co \
+VOX_MCP_URL=https://vox-mcp-develop.fly.dev/mcp \
+vox auth login --profile dev --json
+
+vox auth whoami --profile dev --json
+vox sync status --profile dev --org <dev-organization-id> --json
+```
+
+If the user did not provide a dev organization id, run `vox auth whoami --profile dev --json` and ask them which returned organization to use before any live mutation. Once selected, keep using `--profile dev --org <dev-organization-id>` for `sync`, `agent`, `tool`, `knowledge`, `mcp`, and `chat` commands.
+
+For dev chat smoke, also select the development LiveKit runtime:
+
+```bash
+VOX_INTERNAL_LIVEKIT_ENV=development \
+vox chat --profile dev --org <dev-organization-id> --agent <agent> --input "안녕하세요" --json
+```
+
+For production, use the default profile unless the user named a different profile. Do not carry dev environment variables into production commands.
 
 ## Project Bootstrap
 
