@@ -1,6 +1,6 @@
 ---
 name: using-vox-skills
-description: "Use FIRST — before any other vox skill — when a user asks anything related to vox.ai: voice agent creation, prompt writing, flow design, tool setup, pricing, MCP connection, web app usage, testing, deployment, or general platform questions. Always route through this skill instead of calling vox domain skills directly. Trigger on '프롬프트 작성해줘', '요금이 얼마예요', 'MCP 연결', 'flow 설계', '도구 추가', '웹 앱 안내', '에이전트 만들어줘', '전화 걸어줘', '음성 AI', '통화 기록', '대량발신', or any vox.ai-related request."
+description: "Use FIRST — before any other vox skill — when a user asks anything related to vox.ai: voice agent creation, prompt writing, flow design, tool setup, CLI/Agent-as-Code, pricing, MCP connection, web app usage, testing, deployment, or general platform questions. Always route through this skill instead of calling vox domain skills directly. Trigger on '프롬프트 작성해줘', '요금이 얼마예요', 'MCP 연결', 'CLI', 'vox init', 'flow 설계', '도구 추가', '웹 앱 안내', '에이전트 만들어줘', '전화 걸어줘', '음성 AI', '통화 기록', '대량발신', or any vox.ai-related request."
 ---
 
 # using-vox-skills
@@ -16,6 +16,7 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 | `vox-flow` | flow 설계/노드 변환/리뷰, 노드별 프롬프트, condition_node 설정, 스크립트 시각화, 변수 시스템 | flow design, node conversion, node-scoped prompt, variable system, flow sketch, flow review | single-prompt authoring, tool management |
 | `vox-tools` | 빌트인/커스텀 도구 관리 | built-in tools, custom tools, tool workflow | prompt authoring, flow design |
 | `vox-web-app` | 웹 앱 UI 사용법, 딥링크, UI 전용 흐름(보이스 클론, CSV 업로드, 녹취 재생, 결제, 멤버 초대) | web app UI usage, navigation, deep links, UI-only flows, voice clone, CSV upload, call playback, billing, member management | prompt authoring, flow design, tool management |
+| `vox-cli` | CLI 설치/사용, Agent-as-Code, repo/git 기반 작업, sync/import, validate/diff/status/push/delete, chat smoke, CI/rollback | CLI operating contract, durable authoring workflow, shell command sequence, safety gates | domain-specific prompt/flow/tool design |
 
 ## Docs MCP 활용
 
@@ -29,6 +30,17 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 **URL 형식 (중요):** 사용자에게 docs 페이지 링크를 전달할 때는 반드시 `/docs/` prefix를 포함한다. 형식: `https://docs.tryvox.co/docs/{path}` (예: `https://docs.tryvox.co/docs/start/pricing`, `https://docs.tryvox.co/docs/build/overview`). `/docs/` 없이 `https://docs.tryvox.co/{path}` 로 전달하면 404다.
 
 docs MCP는 router가 직접 처리하는 검색 케이스다 — 단순 검색 후 전달이므로 domain skill 수준의 로직이 불필요하기 때문이다.
+
+## CLI / MCP 역할 분담
+
+Codex/Claude Code 같은 코딩 에이전트가 vox.ai 리소스를 레포에서 관리해야 하면 `vox-cli`를 primary로 사용한다. domain 설계가 필요하면 `vox-cli`가 작업 루프를 잡고 `vox-agents` / `vox-flow` / `vox-tools`를 보조로 참조한다.
+
+```text
+조회 / 스키마 / 일회성 실행 -> MCP
+레포에 남길 변경 / 리뷰 / 롤백 / CI -> vox CLI
+```
+
+사용자가 "레포", "코드처럼", "diff 보여줘", "PR/리뷰", "롤백", "커밋", "CI", "sync", "import", "push 전 검증", "Claude/Codex가 CLI 쓰게"를 언급하면 `vox-cli`로 라우팅한다.
 
 ## 스킬 없이 router가 직접 다루는 MCP 도구
 
@@ -63,6 +75,9 @@ docs MCP는 router가 직접 처리하는 검색 케이스다 — 단순 검색 
 | "번호 구매 페이지 알려줘", "녹취 어디서 들어?" | `vox-web-app` | 페이지 경로/딥링크 안내 |
 | "조직 전환", "다른 organization 으로 작업", "멀티 조직 계정" | router 직접 (org 도구) | 세션 활성 조직 전환은 domain 로직이 아닌 단일 MCP 호출 |
 | "지식 베이스 뭐 있어?", "knowledge base 목록" | router 직접 (`list_knowledges`) | 지식 베이스 전용 스킬 없음 — 조회만 가능 |
+| "CLI 설치", "vox init", "sync import/status", "agent pull/validate/diff/status/push/delete" | `vox-cli` | shell + file + git 기반 Agent-as-Code 작업 |
+| "레포에 agent 변경 남겨줘", "diff 보고 push", "코드처럼 관리", "PR/리뷰/롤백 가능하게" | `vox-cli` + 해당 domain skill | durable authoring은 CLI가 소유, domain 설계는 해당 skill이 보조 |
+| "Codex/Claude가 vox CLI 잘 쓰게", "AI-first CLI", "새 세션 워킹 프랙티스" | `vox-cli` | 코딩 에이전트용 CLI operating contract |
 | 어떤 스킬에도 매핑 안 되는 vox.ai 질문 | docs MCP → `vox-onboarding` | docs 검색 먼저, 없으면 onboarding이 가장 넓은 안내 범위 |
 
 ## 복합 요청
