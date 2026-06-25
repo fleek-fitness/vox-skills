@@ -40,12 +40,29 @@ else
   echo "  ok ($claude_v)"
 fi
 
+echo "→ Claude marketplace skills cover skills/"
+expected_skills="$(mktemp)"
+claude_skills="$(mktemp)"
+find skills -mindepth 1 -maxdepth 1 -type d -print \
+  | sed 's#^#./#' \
+  | sort >"$expected_skills"
+jq -r '.plugins[] | select(.name == "vox-ai") | .skills[]' .claude-plugin/marketplace.json \
+  | sort >"$claude_skills"
+if ! diff -u "$expected_skills" "$claude_skills"; then
+  echo "  ✗ Claude marketplace skill list drift"
+  fail=1
+else
+  echo "  ok"
+fi
+rm -f "$expected_skills" "$claude_skills"
+
 if [ "$fail" -ne 0 ]; then
   cat >&2 <<'EOF'
 
 Bundle sync check FAILED. To reconcile:
   rsync -a --delete skills/ plugins/vox-ai/skills/
   cp .mcp.json plugins/vox-ai/.mcp.json
+  # ensure .claude-plugin/marketplace.json plugins[0].skills lists every ./skills/<name>
   # and set both manifests to the same version
 EOF
   exit 1
