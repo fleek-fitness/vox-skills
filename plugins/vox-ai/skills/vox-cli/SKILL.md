@@ -47,10 +47,12 @@ Default to production. Do not switch to dev just because the user is internal or
 
 Use the dev profile only when the user explicitly says they want dev, development, 개발 서버, 개발 환경, staging-like internal testing, or gives a dev workspace/org id. In that case, create or use a separate `dev` profile and pass it through every live command.
 
+Do not hardcode internal dev endpoints in public files. Use values supplied by the user's internal docs, environment, or teammate. If those values are not available in the session, ask for them before logging in.
+
 ```bash
-VOX_AUTH_ISSUER=https://xnpknkzxxuyfokbrzbil.supabase.co/auth/v1 \
-VOX_API_BASE_URL=https://dev-client-api.tryvox.co \
-VOX_MCP_URL=https://vox-mcp-develop.fly.dev/mcp \
+VOX_AUTH_ISSUER="$VOX_DEV_AUTH_ISSUER" \
+VOX_API_BASE_URL="$VOX_DEV_API_BASE_URL" \
+VOX_MCP_URL="$VOX_DEV_MCP_URL" \
 vox auth login --profile dev --json
 
 vox auth whoami --profile dev --json
