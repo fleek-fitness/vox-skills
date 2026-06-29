@@ -38,7 +38,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | A3 | CRITICAL | condition 앞에 extraction/api 없음 | condition은 이미 추출된 변수를 비교. 변수 생성 노드 없이 condition 사용하면 오류 |
 | A4 | WARN | 필수 예외 분기 누락 | 오대상(본인아님/관리사무소아님), 통화거절 등 OB콜 기본 예외 |
 | A5 | WARN | 불필요한 분기 추가 | 원본 스크립트에 없는 분기를 임의 추가 |
-| A6 | INFO | 레이아웃 | happy path 위→아래 일직선, 거절/예외 오른쪽 배치 |
+| A6 | INFO | 레이아웃 | happy path 좌→우 일직선, 거절/예외 위아래 분기 |
 | A7 | INFO | 엣지 라벨 | 2~5단어 이내 키워드 |
 
 ### B. 노드 상세 설계
@@ -65,7 +65,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B18 | WARN | condition 변수 소비 | condition 노드에서 참조하는 변수가 앞선 extraction/api 노드에서 실제로 생성되는가 |
 | B19 | WARN | api 응답 변수 정의 | api 노드에 응답 변수 추출 의도가 정의되어 있는가. JSON 작성 시 정확한 field shape 는 schema endpoint 결과를 따르는가 |
 | B20 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
-| B21 | CRITICAL | 기존 fallback 라벨 보존 | 기존 flow 수정에서 condition node fallback 의 `id`, label/`condition`, `isFallback`, edge `sourceHandle` 이 사용자 요청 없이 바뀌지 않았는가. 기존 `Else` 는 그대로 보존해야 함 |
+| B21 | CRITICAL | 기존 edge 보존 | 기존 flow 수정에서 사용자 요청 없이 기존 node id / edge id / edge condition 이 정규화되거나 바뀌지 않았는가 |
 
 ### C. Flowchart ↔ 노드 설계 정합성
 
@@ -80,12 +80,12 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
-| D1 | CRITICAL | schema endpoint 미확인 | MCP/API `flow_data` JSON 을 만들거나 수정하면서 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 확인하지 않은 경우. `detail="minimal"` 을 명시했는가 (생략 시 더 큰 standard payload) |
-| D2 | CRITICAL | 과거 field 복사 | `agentId`, `promptType`, `staticSentence`, node 내부 `transitions[]` 등 과거 데이터 형태를 schema 확인 없이 JSON field 로 사용 |
-| D3 | CRITICAL | fallback edge 누락 | 실패/else/default path 가 필요한데 `flow_data.edges` 에 명시하지 않고 자동 생성된다고 가정 |
+| D1 | CRITICAL | schema endpoint 미확인 | MCP/API `flow` JSON 을 만들거나 수정하면서 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 확인하지 않은 경우. `detail="minimal"` 을 명시했는가 (생략 시 더 큰 standard payload) |
+| D2 | CRITICAL | legacy builder routing key 사용 | public `flow` node `data` 에 `transitions` / `logicalTransitions` / `globalNodeSettings` 를 넣거나 edge 에 `sourceHandle` / `targetHandle` / `type:"custom"` 을 넣음 |
+| D3 | CRITICAL | fallback edge 누락 | 실패/else/default path 가 필요한데 `flow.edges` 에 명시하지 않고 자동 생성된다고 가정 |
 | D4 | WARN | round-trip 미확인 | `create_agent` / `update_agent` 후 `get_agent` 로 unknown field drop 여부를 확인하지 않음 |
 | D5 | WARN | agent data schema 미확인 | agent `data` 를 함께 보냈는데 `agent-schema` create/update schema 를 확인하지 않음 |
-| D6 | WARN | 작은 변경에 full 교체 | 기존 flow 의 노드/엣지 몇 개만 바꾸는데 `update_agent` full `flow_data` 교체로 전체 그래프를 재전송하는가. 작은 구조 변경은 `update_agent_partial` ordered ops 가 안전 (SKILL.md [Incremental Editing](../SKILL.md#incremental-editing)) |
+| D6 | WARN | legacy partial helper 사용 | 새 flow 작성/수정인데 `update_agent_partial` 또는 `flow_data` 를 사용하려는가. legacy builder payload 유지보수일 때만 허용 |
 
 ### E. 통화 흐름 안전성 (silent termination 방지)
 
@@ -98,15 +98,15 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 
 ### F. dry-run + 식별자 필수 필드
 
-`validate_flow_data` 가 차단/경고로 잡는 항목들을 LLM 자체 점검에서도 한 번 잡아준다. dry-run 까지 가지 않고도 빠르게 자가 진단 가능.
+`validate_flow` 가 차단/주의로 잡는 항목들을 LLM 자체 점검에서도 한 번 잡아준다. dry-run 까지 가지 않고도 빠르게 자가 진단 가능.
 
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
-| F1 | CRITICAL | dry-run 미수행 | `flow_data` 를 `create_agent` / `update_agent` 로 보내기 전에 `validate_flow_data` 를 호출하지 않았는가. 이 단계가 없으면 차단 오류가 그대로 사용자에게 노출되고 자동 보정 결과도 안 보인다. 결정론적으로 고칠 수 있는 `errors` 는 손수정 대신 `autofix_flow_data` 로 보정 후 재검증했는가. |
+| F1 | CRITICAL | dry-run 미수행 | `flow` 를 `create_agent` / `update_agent` 로 보내기 전에 `validate_flow(flow=..., level="all")` 를 호출하지 않았는가. 이 단계가 없으면 blocking error 가 그대로 사용자에게 노출된다. |
 | F2 | CRITICAL | transferAgent 식별자 누락 | 모든 `transferAgent` 노드가 `agent.agent_id` (UUID) 를 가지는가. `agent_version` 도 함께 명시 권장. (누락 시 dry-run 차단) |
-| F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `tool_id` 를 가지는가. (누락 시 dry-run 차단) |
-| F4 | CRITICAL | 임의 fixture 값 사용 | `transferCall.transferTo`, `transferAgent.agent.agent_id`, `tool.tool_id`, `sendSms` 발신번호/첨부 key 같은 운영 리소스 값을 시나리오/API/MCP 조회 없이 임의로 만들지 않았는가. 실제 값이 없으면 해당 노드를 쓰지 않는다. |
-| F5 | WARN | warnings 미반영 | dry-run 응답의 `warnings` 또는 create / update 200 응답의 `result.message` 자동 보정 안내를 사용자에게 한 줄도 전달하지 않았는가. 자동 보정 사실은 다음 작업 때 사람이 다시 의도와 맞춰야 하므로 반드시 알린다. |
+| F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `toolId` 를 가지는가. (누락 시 dry-run 차단) |
+| F4 | CRITICAL | 임의 fixture 값 사용 | `transferCall.transferTo`, `transferAgent.agent.agent_id`, `tool.toolId`, `sendSms` 발신번호/첨부 key 같은 운영 리소스 값을 시나리오/API/MCP 조회 없이 임의로 만들지 않았는가. 실제 값이 없으면 해당 노드를 쓰지 않는다. |
+| F5 | WARN | advisories 미반영 | dry-run 응답의 `advisories` 를 사용자에게 한 줄도 전달하지 않았는가. runtime 주의 항목은 저장을 막지 않아도 운영자가 알아야 한다. |
 
 ## 출력 포맷
 
@@ -138,7 +138,7 @@ CRITICAL이 없고 WARN이 경미하면 "통과"로 판정. 각 항목은 1~2문
 | CRITICAL A1~A5 (flowchart 구조 문제) | 1단계(flow-sketch) 수정 후 2단계 재작업 | 전체 재리뷰 |
 | CRITICAL B1~B3, B16~B17, C1~C2 (노드 설계/정합성 문제) | 해당 노드만 2단계 재작업 | 해당 항목 + 정합성(C) 재리뷰 |
 | CRITICAL E1 (api 실패 분기 누락/오설계) | 해당 api 노드의 실패 edge target 을 안내 conversation 으로 변경 | 해당 노드 + 안내 노드 재확인 |
-| CRITICAL F1 (dry-run 미수행) | `validate_flow_data` 호출 후 `errors` 처리 (결정론적 오류는 `autofix_flow_data` 보정 후 재검증), `warnings` 사용자 전달 | 응답 처리 결과 재확인 |
+| CRITICAL F1 (dry-run 미수행) | `validate_flow(flow=..., level="all")` 호출 후 `errors` 처리, `advisories` 사용자 전달 | 응답 처리 결과 재확인 |
 | CRITICAL F2~F4 (transferAgent / tool 식별자 누락, 임의 fixture 값) | 실제 조회/사용자 제공 값으로 교체하거나 해당 노드를 제거한 뒤 dry-run 재실행 | 해당 노드 + dry-run 응답 재확인 |
 | WARN | 해당 항목만 수정 | 수정 항목에 대해서만 재확인 |
 

@@ -82,15 +82,15 @@ get_schema(namespace="tool-schema", schema_type="<built-in-tool-schema>")
 
 ### create_agent
 
-- 현재 MCP 입력은 `name`, `type`, `data`, `flow_data` 기준이다.
+- 현재 MCP 입력은 `name`, `type`, `data`, `flow`, `flow_data` 기준이다.
 - `type`: `"single_prompt"` | `"flow"` (기본 `"single_prompt"`).
 - top-level `prompt`, `agent_type`, `llm`, `voice` shortcut 을 가정하지 않는다. 설정은 `data` object 안에 넣는다.
-- `flow` agent 를 실사용 가능한 상태로 만들 때는 `flow_data` 를 함께 보낸다. 단순 shell agent 생성 여부는 API/MCP contract 를 확인한다.
+- `flow` agent 를 실사용 가능한 상태로 만들 때는 public `flow` 를 함께 보낸다. `flow_data` 는 legacy builder payload 이므로 새 작성에는 쓰지 않는다. 단순 shell agent 생성 여부는 API/MCP contract 를 확인한다.
 - `data` 를 작성하기 전에 `get_schema(namespace="agent-schema", schema_type="agent-data-create")` 를 호출한다.
 
 ### update_agent
 
-현재 MCP 입력은 `agent_id`, `name`, `data`, `flow_data` 기준이다. agent 설정 변경은 top-level shortcut 이 아니라 `data` 안의 sub-schema 로 보낸다.
+현재 MCP 입력은 `agent_id`, `name`, `data`, `flow`, `flow_data` 기준이다. agent 설정 변경은 top-level shortcut 이 아니라 `data` 안의 sub-schema 로 보낸다. flow graph 수정은 새 작성 경로에서는 `flow` 를 사용하고, `flow_data` 는 legacy builder payload 유지보수 때만 쓴다.
 
 동작:
 1. 기존 `agent.data`를 읽음

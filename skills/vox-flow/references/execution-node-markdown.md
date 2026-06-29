@@ -1,13 +1,14 @@
 # Execution node markdown
 
-이 문서는 conversation 외 노드의 **설계 markdown** 작성법을 다룬다. MCP/API `flow_data` JSON field 는 항상 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 따른다. api / transferCall / transferAgent / sendSms / tool 처럼 prose 가 load-bearing 인 무거운 노드는 SKILL.md [Schema Fetching](../SKILL.md#schema-fetching) 에 따라 그 type 만 standard 모드로 보강한다.
+이 문서는 conversation 외 노드의 **설계 markdown** 작성법을 다룬다. MCP/API `flow` JSON field 는 항상 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 따른다. api / transferCall / transferAgent / sendSms / tool 처럼 prose 가 load-bearing 인 무거운 노드는 SKILL.md [Schema Fetching](../SKILL.md#schema-fetching) 에 따라 그 type 만 standard 모드로 보강한다.
 
 ## Shared rules
 
 - 실패, else, fallback path 가 필요하면 markdown 에 의도를 쓰고 JSON 변환 시 `edges` 로 명시한다.
-- 과거 field 이름(`agentId`, `promptType`, `staticSentence`, node 내부 `transitions[]`)을 JSON field 로 복사하지 않는다.
+- public `flow` 에 legacy builder routing key 를 넣지 않는다: node `data.transitions`, `data.logicalTransitions`, `data.globalNodeSettings`, edge `sourceHandle`, `targetHandle`, `type:"custom"`.
+- node 실행 설정 필드(`promptType`, `staticSentence`, `apiConfiguration`, `responseVariables`, `transferConfiguration`, `agent`, `toolId` 등)는 schema endpoint 결과를 따른다. 일부는 camelCase 이므로 기억으로 snake_case 변환하지 않는다.
 - 각 노드는 `## name / ## content / ## transition conditions` 구조를 유지한다.
-- nested config default 채우기 / dry-run 호출 / 응답 처리는 SKILL.md 의 Core Operating Rules #9~#10 과 [Response Handling](../SKILL.md#response-handling) 을 따른다 — 식별자 (`url`, `agent.agent_id`, `tool_id`) 만 책임지고 채우고 나머지 nested 필드는 백엔드 보충을 신뢰한다.
+- nested config default 채우기 / dry-run 호출 / 응답 처리는 SKILL.md 의 Core Operating Rules 와 [Response Handling](../SKILL.md#response-handling) 을 따른다 — 식별자 (`url`, `agent.agent_id`, `toolId`) 만 책임지고 채우고 나머지 nested 필드는 백엔드 보충을 신뢰한다.
 
 ## extraction
 
@@ -26,7 +27,7 @@
   ex) [기대 출력 예시]
 
 ## transition conditions
-(조건 없이 다음 노드로 진행. JSON 변환 시 현재 schema 의 skip/edge field 를 확인하고 edge 를 명시.)
+(조건 없이 다음 노드로 진행. JSON 변환 시 현재 schema 의 edge condition / skip_user_response field 를 확인하고 edge 를 명시.)
 ```
 
 작성 규칙:
@@ -53,7 +54,7 @@
 - default → [결과 라벨]
 
 ## transition conditions
-(변수 기반 분기. JSON 변환 시 edge condition union 과 operator enum 을 schema endpoint 로 확인한다.)
+(변수 기반 분기. JSON 변환 시 `edge.condition:{type:"logic", equations:[...], operator:"&&"|"||"}` shape 와 operator enum 을 schema endpoint 로 확인한다.)
 ```
 
 작성 규칙:
@@ -87,7 +88,7 @@
 - [variable_name]: [JSONPath 표현식] — [설명]
 
 ## transition conditions
-- 성공: API 응답 정상 수신 시 다음 노드로 진행. ai-edge 또는 logic-edge — 응답 변수 (`{{response_var}}`) 가 채워졌는지 기준으로 판단.
+- 성공: API 응답 정상 수신 시 다음 노드로 진행. 보통 다음 condition 노드에서 응답 변수 (`{{response_var}}`) 를 비교한다.
 - 실패: API 호출 실패 시 [실패 안내 노드]로 진행. fallback edge. **endCall 직행 금지** — 사용자에게 사정 안내 후 재시도 또는 정중한 마무리.
 ```
 
@@ -130,7 +131,7 @@
 
 ### JSON shape (api 노드)
 
-api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-Foo": "bar" }`) 이지 배열이 아니다. body 가 있으면 `bodyEnabled: true`, headers 가 있으면 `headersEnabled: true` 를 같이 둔다 (없는 키는 보내지 않는다).
+api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`{ "X-Foo": "bar" }`) 이지 배열이 아니다. body 가 있으면 `bodyEnabled: true`, headers 가 있으면 `headersEnabled: true` 를 같이 둔다 (없는 키는 보내지 않는다). 응답 변수 기반 분기는 별도 condition node 에서 logic edge 로 처리한다.
 
 ```json
 {
@@ -151,17 +152,28 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
     "responseVariables": [
       {"variableName": "order_id", "jsonPath": "$.order_id"},
       {"variableName": "order_found", "jsonPath": "$.found"}
-    ],
-    "logicalTransitions": [
-      {"id": "lt_found", "condition": {
-        "logicalOperator": "and",
-        "conditions": [{"variable": "order_found", "operator": "equals", "value": "true"}]
-      }}
-    ],
-    "transitions": [
-      {"id": "tr_lookup_fail", "condition": "요청 실패 시", "isFallback": true}
     ]
   }
+}
+```
+
+```json
+{
+  "id": "edge-api-success",
+  "source": "api_lookup",
+  "target": "condition_order_found",
+  "condition": { "type": "ai", "prompt": "API 응답을 정상 수신한 경우" },
+  "skip_user_response": false
+}
+```
+
+```json
+{
+  "id": "edge-api-failure",
+  "source": "api_lookup",
+  "target": "node_api_failure_apology",
+  "condition": { "type": "fallback" },
+  "skip_user_response": false
 }
 ```
 
@@ -169,7 +181,7 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
 - `api_configuration`, `response_variables`, `logical_transitions` (snake_case) 로 보내면 v3 가 거절한다.
 - `headers: [{"key": "...", "value": "..."}]` (배열) 로 보내면 거절된다 — 객체 매핑이다.
 - 응답 변수의 jsonPath 는 `$.found` 같은 mock 친화 키만 쓴다. 도메인 키 (`$.data.order_id`) 는 scenario_test mock 에 없어서 logical transition 이 항상 false 로 평가된다.
-- `responseMode: "fire_and_forget"` (응답 비대기) 과 `responseVariables`·`logicalTransitions` 조합은 저장이 거부된다 — fire 는 결과를 쓰지 않는 발송 전용이다.
+- `responseMode: "fire_and_forget"` (응답 비대기) 과 `responseVariables`·결과 기반 condition 조합은 저장이 거부된다 — fire 는 결과를 쓰지 않는 발송 전용이다.
 
 ## endCall
 
@@ -313,7 +325,7 @@ custom tool 실행 node 와 agent `data.builtInTools` 설정은 schema surface �
 ```
 
 작성 규칙:
-- **`tool_id` 는 필수** — 누락 시 dry-run 이 차단한다. 등록되지 않은 custom tool 을 가리키지 않도록 `list_tools` 결과의 ID 를 사용한다.
+- **`toolId` 는 필수** — 누락 시 dry-run 이 차단한다. 등록되지 않은 custom tool 을 가리키지 않도록 `list_tools` 결과의 ID 를 사용한다.
 - 임의 UUID 를 tool id 로 만들지 않는다. 필요한 custom tool 이 없으면 tool 노드가 아니라 api / conversation / endCall 로 설계를 바꾼다.
 - built-in tool (end_call, transfer_call, transfer_agent, send_sms, send_dtmf) 설정은 agent `data.builtInTools` schema surface 다 — tool 노드 안에 직접 넣지 않는다.
 

@@ -84,7 +84,7 @@ generated conversation 의 `data.prompt` 에는 완료 시 아래 의미를 명�
 
 ## Markdown → JSON 매핑
 
-설계 markdown 의 표기는 LLM 가독용이다. 실제 JSON `flow_data` 로 옮길 때는 다음 매핑을 사용한다.
+설계 markdown 의 표기는 LLM 가독용이다. 실제 JSON `flow` 로 옮길 때는 다음 매핑을 사용한다.
 
 | Markdown 표기 | JSON `data` 필드 |
 |---|---|
@@ -92,7 +92,7 @@ generated conversation 의 `data.prompt` 에는 완료 시 아래 의미를 명�
 | `message mode: static` | `data.promptType: "static"` + `data.staticSentence: "<발화 멘트 그대로>"` |
 | `message mode: generated` | `data.promptType: "dynamic"` + `data.firstMessage: "<진입 시 첫 발화>"` + `data.prompt: "<현재 노드의 역할/목표/처리/금지를 채운 node-scoped LLM system prompt>"` |
 | `first_message: "..."` | `data.firstMessage` |
-| `transition conditions` 의 각 줄 | `data.transitions[].id` (자유 식별자) + `data.transitions[].condition: "<exit 조건 한국어 문장>"` |
+| `transition conditions` 의 각 줄 | 해당 source node 에서 나가는 `edges[]` 한 개 + `edge.condition:{type:"ai", prompt:"<exit 조건 한국어 문장>"}` |
 
 **주의**: `promptType` 의 enum 은 v3 에서 `"static"` 또는 `"dynamic"` 이다. 설계 markdown 의 `generated` 라는 단어를 그대로 JSON 에 넣지 않는다.
 
@@ -105,10 +105,10 @@ generated conversation 의 `data.prompt` 에는 완료 시 아래 의미를 명�
 - `data.prompt`: 첫 발화 이후에도 유지되는 비공개 지시문. 노드의 역할, 목표, 처리 규칙, 금지사항, 전환 판단을 적는다.
 - static 노드는 `data.prompt` 를 만들지 않는다. 정확한 고정 문구는 `data.staticSentence` 에만 둔다.
 - `data.promptType` 은 반드시 쓴다. `staticSentence` 만 두고 `promptType:"static"` 을 빼면 런타임은 dynamic 기본값으로 해석해 고정 문구를 무시할 수 있다.
-- 일반 transition row 는 반드시 `condition` 을 채운다. `null`, 빈 문자열, `"None"` 은 자동 진행 조건이 아니며 LLM이 선택할 의미가 없어 dead transition 이 된다.
-- static 노드가 안내 멘트 후 endCall 또는 다음 노드로 바로 넘어가야 해도 transition row 에 `isSkipUserResponse:true` 를 붙이지 않는다. 일반 transition row 를 만들고 edge.sourceHandle 로 그 row id 를 연결한다.
+- 일반 out-edge 는 반드시 의미 있는 `condition` 을 가진다. `null`, 빈 문자열, `"None"` 은 자동 진행 조건이 아니며 LLM이 선택할 의미가 없어 dead route 가 된다.
+- static 노드가 안내 멘트 후 endCall 또는 다음 노드로 바로 넘어가야 해도 edge 에 `skip_user_response:true` 를 습관적으로 붙이지 않는다. 정말 사용자 응답을 기다리지 않는 edge 인지 schema 와 런타임 의도를 확인한다.
 - 단, one-shot 안내 후 바로 종료만 하는 static node 는 반복 위험이 있으므로 endCall 종료 멘트로 흡수하는 편을 우선한다.
-- 최종 `flow_data` JSON 에는 `[[...]]` 작성용 placeholder 를 남기지 않는다. `[[...]]` 는 작성 중 빈칸이고, `{{...}}` 만 런타임 변수다.
+- 최종 `flow` JSON 에는 `[[...]]` 작성용 placeholder 를 남기지 않는다. `[[...]]` 는 작성 중 빈칸이고, `{{...}}` 만 런타임 변수다.
 
 ### Template 축소 매핑
 
