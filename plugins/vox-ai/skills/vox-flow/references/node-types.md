@@ -78,14 +78,14 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 
 ## Edge condition rules
 
-- 자연어 판단은 `condition:{type:"ai", prompt:"..."}` 로 표현한다. conversation out-edge 에서 가장 흔하다.
+- 자연어 route condition 은 `condition:{type:"ai", prompt:"..."}` 로 표현한다. conversation out-edge 에서는 고객 발화 판단에 쓰고, api / tool / sendSms / transfer 계열 node 에서는 `"요청 성공 시"` 같은 일반 성공 path label 로 쓴다.
 - 변수 비교는 `condition:{type:"logic", equations:[...], operator:"&&"|"||"}` 로 표현한다. source 는 condition node 로 둔다.
 - 실패/else/default 는 `condition:{type:"fallback"}` 으로 표현한다.
 - fallback 은 자동으로 생긴다고 가정하지 않는다. 필요한 fallback edge 를 모두 명시한다.
 - begin node 에서 첫 실행 node 로 가는 edge 는 보통 fallback condition 을 쓴다.
 - edge `skip_user_response` 는 사용자 응답을 기다리지 않는 route 에만 쓴다. static conversation → endCall edge, 실패 fallback edge 에 습관적으로 붙이지 않는다.
 - begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 나가는 edge 는 만들지 않는다.
-- condition node 에서 나가는 edge 는 `logic` 또는 `fallback` condition 만 쓴다. `ai` condition 은 conversation node 에서 고객 발화를 판단할 때 쓴다.
+- condition node 에서 나가는 edge 는 `logic` 또는 `fallback` condition 만 쓴다. 응답 변수 값 비교는 api node 의 `ai` edge 가 아니라 다음 condition node 의 `logic` edge 로 처리한다.
 - 기존 public `flow` 수정 시 edge id, node id, 바꾸지 않는 condition 은 보존한다. "더 좋은 이름"으로 정규화하지 않는다.
 - `position` 은 모든 노드에서 필수다. 기본은 **가로 정렬** — `x` 를 320 step 으로 늘려가며 좌→우로 흐르게 두고, 분기 경로만 `y ± 240` 으로 위/아래 분리한다.
 

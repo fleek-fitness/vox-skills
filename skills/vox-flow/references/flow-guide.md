@@ -98,7 +98,7 @@ FlowEdge {
 
 ### AI condition
 
-고객 발화를 LLM 이 자연어 조건으로 판단한다. conversation node 의 out-edge 에서 가장 흔히 쓴다.
+자연어 route condition 이다. conversation node 의 out-edge 에서는 고객 발화를 LLM 이 판단하는 조건으로 쓰고, api / tool / sendSms / transfer 계열 node 의 일반 성공 edge 에서는 `"요청 성공 시"` 같은 경로 라벨로 쓴다. 응답 변수 값을 비교해야 하면 다음 condition node 로 보내고 `logic` condition 을 사용한다.
 
 ```json
 {
@@ -219,6 +219,7 @@ flow 에서 변수는 노드 간 데이터를 전달하는 핵심 메커니즘�
 - api / tool / sendSms node: 성공 path 외 실패 fallback edge 1개.
 - transferAgent / transferCall node: 실패 fallback edge 1개.
 - conversation node: 예상 외 응답 path 는 보통 fallback 이 아니라 ai condition 으로 명시한다. 예: "고객이 거절했거나 통화를 끊으려는 경우".
+- api / tool / sendSms / transferCall / transferAgent node: 성공/일반 path 는 ai condition 으로 명시하고, 실패 path 는 fallback edge 로 명시한다. API 응답 변수 비교는 다음 condition node 에서 logic edge 로 처리한다.
 - begin node: 첫 실행 node 로 fallback edge 하나를 둔다.
 - endCall node 와 note node 에서 나가는 edge 는 두지 않는다. note node 는 editor-only annotation 이므로 실행 흐름에 연결하지 않는다.
 

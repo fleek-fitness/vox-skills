@@ -96,8 +96,8 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
-| E1 | CRITICAL | api 노드 명시적 실패 분기 | 모든 api 노드에 성공 edge 외 명시적 실패 edge 가 있고, 실패 edge 의 target 이 endCall 직행이 아니라 retry / 양해 안내 conversation 노드인가. (anti-pattern / 권장 JSON 은 [execution-node-markdown.md#api](execution-node-markdown.md#api)) |
-| E2 | WARN | tool / sendSms 실패 분기 흡수 | tool / sendSms 노드의 실패 fallback edge 가 endCall 직행이 아닌 안내/재시도 conversation 으로 흡수되는가. |
+| E1 | CRITICAL | api 노드 명시적 실패 분기 | 모든 api 노드에 성공 edge 외 명시적 실패 edge 가 있고, 실패 edge 의 target 이 재시도 / 양해 안내 conversation 또는 복구 안내 멘트를 가진 endCall 인가. 무음 / 빈 멘트 / 일반 실패 endCall 직행은 금지. (anti-pattern / 권장 JSON 은 [execution-node-markdown.md#api](execution-node-markdown.md#api)) |
+| E2 | WARN | tool / sendSms 실패 분기 흡수 | tool / sendSms 노드의 실패 fallback edge 가 안내/재시도 conversation 또는 결과를 보존하는 endCall 멘트로 흡수되는가. 성공한 업무를 일반 실패로 뒤집지 않는가. |
 
 ### F. dry-run + 식별자 필수 필드
 

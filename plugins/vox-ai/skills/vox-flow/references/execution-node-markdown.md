@@ -88,8 +88,8 @@
 - [variable_name]: [JSONPath 표현식] — [설명]
 
 ## transition conditions
-- 성공: API 응답 정상 수신 시 다음 노드로 진행. 보통 다음 condition 노드에서 응답 변수 (`{{response_var}}`) 를 비교한다.
-- 실패: API 호출 실패 시 [실패 안내 노드]로 진행. fallback edge. **endCall 직행 금지** — 사용자에게 사정 안내 후 재시도 또는 정중한 마무리.
+- 성공: API 응답 정상 수신 시 다음 노드로 진행. 보통 `condition:{type:"ai", prompt:"요청 성공 시"}` 같은 일반 성공 edge 로 다음 condition 노드에 보내고, 그 condition 노드에서 응답 변수 (`{{response_var}}`) 를 비교한다.
+- 실패: API 호출 실패 시 [실패 안내 노드]로 진행. fallback edge. **무음/빈 endCall 금지** — 사용자에게 사정 안내 후 재시도하거나, 최종 종료만 남았다면 복구 안내 멘트를 가진 endCall 로 마무리한다.
 ```
 
 작성 규칙:
@@ -112,7 +112,7 @@
   "condition": { "type": "fallback" }, "skip_user_response": false }
 ```
 
-`node_api_failure_apology` 는 짧은 사과/안내 conversation 노드 — "조회가 어려워서 확인 후 다시 안내드릴게요" 정도. 최종 종료만 남았다면 별도 static conversation 을 만들지 말고 endCall 종료 멘트에 복구 안내를 넣어도 된다. 중요한 것은 사용자가 빈 종료처럼 느끼지 않게 하는 것이다.
+`node_api_failure_apology` 는 짧은 사과/안내 conversation 노드 — "조회가 어려워서 확인 후 다시 안내드릴게요" 정도. 최종 종료만 남았다면 별도 static conversation 을 만들지 말고 endCall 종료 멘트에 복구 안내를 넣어도 된다. 중요한 것은 fallback target 이 무음 / 빈 멘트 / 일반 실패 종료처럼 느껴지지 않게 하는 것이다.
 
 ### Post-success SMS fallback
 
@@ -164,7 +164,7 @@ api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`
   "id": "edge-api-success",
   "source": "api_lookup",
   "target": "condition_order_found",
-  "condition": { "type": "ai", "prompt": "API 응답을 정상 수신한 경우" },
+  "condition": { "type": "ai", "prompt": "요청 성공 시" },
   "skip_user_response": false
 }
 ```
