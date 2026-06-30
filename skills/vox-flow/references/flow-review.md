@@ -88,6 +88,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | D6 | WARN | legacy partial helper 사용 | 새 flow 작성/수정인데 `update_agent_partial` 또는 `flow_data` 를 사용하려는가. legacy builder payload 유지보수일 때만 허용 |
 | D7 | CRITICAL | public flow field casing 오류 | public `flow` node `data` 에 `promptType` / `apiConfiguration` / `toolId` 같은 camelCase key 를 넣음. 최신 public `flow` 는 `prompt_type` / `api_configuration` / `tool_id` 같은 snake_case 를 사용 |
 | D8 | CRITICAL | 실행 불가능 edge | begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 나가는 edge, 또는 condition node 에서 나가는 `ai` edge 를 만들었는가 |
+| D9 | CRITICAL | deprecated node write 시도 | public `flow` 로 저장하려는 graph 에 `function` 또는 legacy `knowledge` node 가 남아 있는가. 조회 결과에는 보일 수 있지만 public `flow` write 에서는 거절되므로 마이그레이션 필요 |
 
 ### E. 통화 흐름 안전성 (silent termination 방지)
 
@@ -143,6 +144,7 @@ CRITICAL이 없고 WARN이 경미하면 "통과"로 판정. 각 항목은 1~2문
 | CRITICAL F1 (dry-run 미수행) | `validate_flow(flow=..., level="all")` 호출 후 `errors` 처리, `advisories` 사용자 전달 | 응답 처리 결과 재확인 |
 | CRITICAL F2~F4 (transferAgent / tool 식별자 누락, 임의 fixture 값) | 실제 조회/사용자 제공 값으로 교체하거나 해당 노드를 제거한 뒤 dry-run 재실행 | 해당 노드 + dry-run 응답 재확인 |
 | CRITICAL D7~D8 (public flow 계약 위반) | schema endpoint 결과 기준으로 field casing / edge 방향 / condition type 을 수정 | 해당 graph + dry-run 응답 재확인 |
+| CRITICAL D9 (deprecated node write 시도) | `function`은 `tool`/`api`로, legacy `knowledge`는 conversation node-level knowledge 설정으로 마이그레이션. 보존만 필요하면 legacy `flow_data` 경로 사용 | 해당 graph + dry-run 응답 재확인 |
 | WARN | 해당 항목만 수정 | 수정 항목에 대해서만 재확인 |
 
 - 재리뷰 시 이전 리뷰에서 OK였던 항목은 재검사하지 않는다.

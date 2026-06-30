@@ -106,6 +106,7 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 - `tool`: `tool_id` 는 `list_tools` 결과에서 확인한 실제 id 만 사용한다. 임의 UUID 를 만들지 않는다.
 - `condition`: deterministic 분기 전용이다. 고객 발화 판단을 넣지 않는다.
 - `global_node_setting`: conversation / sendSms / endCall 에서만 사용한다. 다른 node type 에 넣으면 dry-run 이 차단한다.
+- `function` / legacy `knowledge`: 기존 flow 조회 결과에 보일 수 있지만 public `flow` write 에는 넣지 않는다. 각각 `tool`/`api`, conversation node-level knowledge 설정으로 마이그레이션한다.
 
 ## Review checklist
 
@@ -114,4 +115,5 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 3. legacy builder routing key 를 public `flow` 에 넣지 않았는가?
 4. fallback, failure, else path 를 필요한 `edges` 로 명시했는가?
 5. dry-run 절차 (`validate_flow(flow=..., level="all")` → `errors === []` 확인 → `advisories` 사용자 전달) 를 거쳤는가?
-6. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인했는가?
+6. 기존 flow 수정이면 `function` / legacy `knowledge` node 를 public `flow` write 전에 마이그레이션했는가?
+7. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인했는가?

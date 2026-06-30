@@ -105,7 +105,8 @@
 3. `node-creation.md`의 markdown 용어를 JSON field 로 직접 복사하지 않는다.
 4. fallback/실패/else path 는 자동 생성된다고 가정하지 말고 `edges` 로 명시한다.
 5. public `flow` 의 node `data` 에 legacy builder routing key 를 넣지 않는다: `transitions`, `logicalTransitions`, `globalNodeSettings`. edge 에도 `sourceHandle`, `targetHandle`, `type:"custom"` 을 넣지 않는다.
-6. `skip_user_response:true` 는 사용자 발화를 기다리지 않는 것이 명확한 edge 에만 쓴다. static conversation → endCall/next edge 와 fallback edge 에는 습관적으로 붙이지 않는다.
-7. 업무 성공 뒤 SMS 실패 fallback 이 있으면, fallback target 이 generic failure 가 아니라 "업무는 완료, 문자만 실패" 종료 멘트인지 확인한다.
-8. `validate_flow(flow=..., level="all")` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `advisories` 는 사용자에게 한 줄로 전달한다.
-9. `create_agent(flow=...)` / `update_agent(flow=...)` 후 `get_agent` 로 round-trip 확인한다. 기존 flow 의 노드/엣지 몇 개만 바꿔도 public `flow` 는 전체 graph replacement 이므로, 변경하지 않는 nodes/edges 를 그대로 보존해서 다시 보낸다.
+6. 기존 flow 수정이면 `function` / legacy `knowledge` node 를 그대로 public `flow` write 에 포함하지 않는다. 지원되는 node type 으로 마이그레이션하거나 legacy `flow_data` 경로를 쓴다.
+7. `skip_user_response:true` 는 사용자 발화를 기다리지 않는 것이 명확한 edge 에만 쓴다. static conversation → endCall/next edge 와 fallback edge 에는 습관적으로 붙이지 않는다.
+8. 업무 성공 뒤 SMS 실패 fallback 이 있으면, fallback target 이 generic failure 가 아니라 "업무는 완료, 문자만 실패" 종료 멘트인지 확인한다.
+9. `validate_flow(flow=..., level="all")` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `advisories` 는 사용자에게 한 줄로 전달한다.
+10. `create_agent(flow=...)` / `update_agent(flow=...)` 후 `get_agent` 로 round-trip 확인한다. 기존 flow 의 노드/엣지 몇 개만 바꿔도 public `flow` 는 전체 graph replacement 이므로, 변경하지 않는 nodes/edges 를 그대로 보존해서 다시 보낸다.

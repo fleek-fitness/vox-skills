@@ -125,7 +125,7 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 | `endCall` | 통화 종료 |
 | `note` | 메모 (실행 없음) |
 
-각 노드의 의미/사용 판단 → `node-types.md` 참조. Deprecated: `function` (→ `tool`). Unsupported: `knowledge` node (→ conversation node-level knowledge configuration). 정확한 schema 는 항상 MCP schema endpoint 결과를 따른다.
+각 노드의 의미/사용 판단 → `node-types.md` 참조. Deprecated: `function` / legacy `knowledge` node. 호환성을 위해 기존 flow 조회 결과에는 보일 수 있지만, public `flow` write 에는 넣지 않는다. 정확한 schema 는 항상 MCP schema endpoint 결과를 따른다.
 
 ## 설계 패턴
 
@@ -141,7 +141,7 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 
 1. **공통 규칙 먼저** — flow에서도 실패 원인의 대부분은 음성 UX 위반(장문 발화, 부정확한 사실)이므로, `vox-agents`의 voice-ai-playbook 규칙(사실성 우선, 트레이드오프, 런타임 vs 개발 산출물 구분)이 flow에도 동일하게 적용된다.
 2. node type, field, enum, required 여부를 추측하지 않는다 — `flow` 작성 직전에 `get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal')` 를 한 번 호출하고 그 결과를 기준으로 JSON 을 만든다. 이 한 응답에 graph shape, edge condition, 모든 node type 의 `data` shape 가 함께 들어온다. per-node `get_schema(node-{type})` 는 narrow case 의 보조 호출이지 default 가 아니다. 자세한 패턴은 [Schema Fetching](#schema-fetching).
-3. deprecated node(`function`)와 unsupported node(`knowledge`)는 신규 flow에 사용하지 않는다 — 지식 기반 응답이 필요하면 `conversation` node의 node-level knowledge 설정을 사용한다.
+3. deprecated node(`function`, legacy `knowledge`)는 신규 flow에 사용하지 않고, 기존 flow 수정 시에도 public `flow` write 전에 마이그레이션한다. `function`은 `tool` 또는 `api`로, legacy `knowledge`는 `conversation` node의 node-level knowledge 설정으로 옮긴다. 마이그레이션할 수 없으면 `update_agent(flow=...)` 로 round-trip 하지 말고 legacy `flow_data` 유지보수 경로를 사용하거나 사용자에게 막힌 이유를 보고한다.
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
 5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
@@ -164,6 +164,7 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 - `valid: true` + `errors: []` + `advisories: []` → 안전. 그대로 `create_agent(flow=...)` / `update_agent(flow=...)` 호출.
 - `valid: true` + `errors: []` + `advisories: [...]` → 저장은 가능하지만 런타임 주의 항목이 있음. 사용자에게 한두 줄로 요약 후 진행한다. 예: terminal node 가 begin 에서 도달되지 않거나 skip/fallback wakeup transition 이 연결되지 않은 경우.
 - `valid: false` → `errors[]` 의 각 항목 (`rule`, `node_id`, `message`, `suggestion`) 을 읽고 1회 수정 후 재검증. 같은 rule 이 다시 나오면 사용자에게 보고하고 멈춘다.
+- `deprecated_node_unsupported` → 기존 flow 조회 결과에 read-only compatibility node(`function`, legacy `knowledge`)가 포함된 상태다. public `flow` 로 저장하기 전에 지원되는 node type 으로 마이그레이션한다. 단순 보존 목적이면 `update_agent(flow=...)` 를 호출하지 않는다.
 
 ### Legacy `flow_data` tools
 
@@ -188,6 +189,8 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 
 새 flow 작성/수정에서는 `update_agent(flow=...)` 로 전체 graph 를 보낸다. 보내지 않은 노드/엣지는 삭제로 간주되므로, 기존 flow 를 수정할 때는 먼저 `get_agent` 로 현재 `flow` 를 읽고, 변경하지 않는 nodes/edges 를 그대로 보존한 뒤 전체 graph 를 다시 보낸다.
 
+단, 현재 `flow.nodes[]` 에 `function` 또는 legacy `knowledge` node 가 있으면 public `flow` write 는 거절된다. 먼저 지원되는 node type 으로 마이그레이션하거나, 해당 legacy graph 를 보존해야 하면 `flow_data` 유지보수 경로를 쓴다.
+
 `update_agent_partial` 는 legacy builder-only helper 다. 기존 legacy `flow_data` 를 작은 ordered ops 로 유지보수해야 하는 경우에만 사용한다.
 
 ```text
@@ -203,6 +206,7 @@ update_agent_partial(agent_id="<UUID>", operations=[...], validate_only?)
 | 상황 | 도구 |
 |------|------|
 | public `flow` 생성/수정 | `create_agent(flow=...)` / `update_agent(flow=...)` |
+| public `flow` 조회 결과에 `function` / legacy `knowledge` node 포함 | 지원되는 node type 으로 마이그레이션 후 `update_agent(flow=...)`; 보존만 필요하면 legacy `flow_data` 경로 |
 | legacy `flow_data` 노드 1~2개 추가/삭제, 한 노드의 prompt/transition 손보기, 엣지 한 줄 다시 잇기 | `update_agent_partial` (ordered ops) |
 | legacy `flow_data` 전체 교체 | `update_agent(flow_data=...)` (deprecated compatibility) |
 

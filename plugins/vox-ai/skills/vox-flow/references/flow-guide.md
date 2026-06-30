@@ -288,6 +288,8 @@ graph LR
 5. blocking `errors` 가 없을 때 `create_agent(type="flow", data=..., flow=...)` 또는 `update_agent(flow=...)` 를 호출한다.
 6. `get_agent` 로 다시 읽어 unknown field drop, enum mismatch, 누락 edge 를 확인한다.
 
+기존 flow 를 수정할 때 `get_agent` 결과에 `function` 또는 legacy `knowledge` node 가 보일 수 있다. 이 node 들은 호환성을 위해 read 에는 노출되지만 public `flow` write 에서는 거절된다. `update_agent(flow=...)` 전에 `function`은 `tool`/`api`로, legacy `knowledge`는 conversation node-level knowledge 설정으로 마이그레이션한다.
+
 ### 생성
 
 REST:
@@ -333,11 +335,11 @@ mcp__vox__update_agent(
 )
 ```
 
-`flow` 는 전체 graph replacement 다. 일부만 빼면 그 노드/엣지가 삭제된다. 기존 flow 를 수정할 때는 `get_agent` 로 받은 current `flow` 를 기반으로 변경하지 않는 nodes/edges 를 그대로 보존한다.
+`flow` 는 전체 graph replacement 다. 일부만 빼면 그 노드/엣지가 삭제된다. 기존 flow 를 수정할 때는 `get_agent` 로 받은 current `flow` 를 기반으로 변경하지 않는 nodes/edges 를 그대로 보존한다. 단, current `flow` 안의 deprecated node(`function`, legacy `knowledge`)는 그대로 보존해도 public `flow` save 에서 거절되므로 먼저 마이그레이션해야 한다.
 
 ### Legacy builder payload
 
-`validate_flow_data`, `autofix_flow_data`, `update_agent_partial`, `update_agent(flow_data=...)` 는 legacy builder payload 전용이다. 새 flow 작성에는 쓰지 않는다. 기존 legacy graph 를 유지보수해야 하는 경우에만 해당 도구 설명과 schema endpoint 결과를 따른다.
+`validate_flow_data`, `autofix_flow_data`, `update_agent_partial`, `update_agent(flow_data=...)` 는 legacy builder payload 전용이다. 새 flow 작성에는 쓰지 않는다. 기존 legacy graph 를 유지보수해야 하거나 deprecated node 를 아직 마이그레이션할 수 없는 경우에만 해당 도구 설명과 schema endpoint 결과를 따른다.
 
 ### 조회
 
