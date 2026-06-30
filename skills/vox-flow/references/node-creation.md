@@ -98,6 +98,7 @@
 ## JSON conversion gate
 
 이 markdown 을 MCP/API `flow` 로 변환하기 전에는 아래 순서를 따른다.
+핵심 루프는 **schema 조회 → fill → validate → save** 다.
 
 1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 호출 — 한 응답에 envelope + 모든 node `data` shape ($defs) 가 함께 들어온다. per-node `get_schema(node-{type})` 는 일반 케이스에선 필요 없다 (narrow case 는 SKILL.md 의 [Schema Fetching](../SKILL.md#schema-fetching) 참조).
 2. agent `data` 도 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 호출.

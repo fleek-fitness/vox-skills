@@ -41,7 +41,11 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
 2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
-4. **dry-run 검증 (validate_flow)**: JSON 작성 직전에 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 `flow` JSON 을 만들고, MCP `validate_flow(flow=..., level="all")` 를 호출해 결과를 사용자에게 한두 줄로 요약한다. `errors` / `advisories` 처리는 [Response Handling](#response-handling) 을 따른다. blocking `errors` 가 비었을 때에만 `create_agent(flow=...)` / `update_agent(flow=...)` 를 호출한다.
+4. **JSON 작성/전송 loop**: `schema 조회 → fill → validate → save` 순서로 진행한다.
+   - **schema 조회**: [Schema Fetching](#schema-fetching) 으로 current `flow` schema 를 가져온다.
+   - **fill**: schema 기준으로 `nodes[]`, `edges[]`, node `data` 를 채운다. reference 표나 기억으로 field/enum/required 여부를 추측하지 않는다.
+   - **validate**: MCP `validate_flow(flow=..., level="all")` 를 호출하고 `errors` / `advisories` 를 [Response Handling](#response-handling) 기준으로 처리한다.
+   - **save**: blocking `errors` 가 비었을 때에만 `create_agent(flow=...)` / `update_agent(flow=...)` 를 호출한다.
 
 사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지. 새 작성/수정은 `flow` 를 사용한다. `flow_data`, `validate_flow_data`, `autofix_flow_data`, `update_agent_partial` 는 legacy builder payload 를 다뤄야 하는 경우에만 쓴다.
 

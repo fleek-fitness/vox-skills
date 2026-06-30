@@ -279,13 +279,14 @@ graph LR
 
 새 작성/수정은 `flow` 를 사용한다. `flow_data` 는 legacy builder payload 이며 새 작성에는 사용하지 않는다.
 
-작업 순서:
+작업 순서는 **schema 조회 → fill → validate → save** 로 고정한다.
 
 1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 로 현재 flow schema 를 확인한다.
 2. agent `data` 를 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 를 확인한다.
-3. `validate_flow(flow=..., level="all")` 로 dry-run 한다.
-4. blocking `errors` 가 없을 때 `create_agent(type="flow", data=..., flow=...)` 또는 `update_agent(flow=...)` 를 호출한다.
-5. `get_agent` 로 다시 읽어 unknown field drop, enum mismatch, 누락 edge 를 확인한다.
+3. schema 결과 기준으로 `nodes[]`, `edges[]`, node `data` 를 채운다. field 이름, enum, required 여부는 schema 결과를 따른다.
+4. `validate_flow(flow=..., level="all")` 로 dry-run 한다.
+5. blocking `errors` 가 없을 때 `create_agent(type="flow", data=..., flow=...)` 또는 `update_agent(flow=...)` 를 호출한다.
+6. `get_agent` 로 다시 읽어 unknown field drop, enum mismatch, 누락 edge 를 확인한다.
 
 ### 생성
 
