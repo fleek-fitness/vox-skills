@@ -52,6 +52,8 @@ Flow {
 
 **자주 틀림**: agent 최상위 `data.prompt` 는 객체이고, flow node 의 `data.prompt` 는 conversation node 안의 문자열이다. 서로 다른 필드다. flow agent 는 보통 conversation node 의 `data.prompt` 가 노드별 system prompt 를 담당하므로, 최상위 `data.prompt` 는 비워 두거나 통화 전반 공통 지시만 아주 짧게 둔다.
 
+flow graph 만 만들거나 검증하는 작업이면 agent 최상위 `data` 를 보내지 않는다. 사용자가 agent-level prompt/voice/llm/stt 설정을 요구했을 때만 `agent-schema` 를 확인하고 필요한 subtree 만 보낸다. schema 에 보이는 값이라는 이유로 `data.stt.speed:"high"`, `llm`, `voice`, `speech` 같은 기본값을 복사하지 않는다.
+
 `flow_data` 는 deprecated legacy graph 다. 새 작성에는 `flow` 를 사용한다.
 
 ### FlowNode
@@ -89,6 +91,8 @@ FlowEdge {
 - `source` / `target` 은 node id 를 가리킨다.
 - legacy edge field 를 보내지 않는다: `sourceHandle`, `targetHandle`, `type:"custom"`, `animated`, `selected`.
 - `skip_user_response` 는 이 edge 에서 사용자 응답을 기다리지 않고 다음 node 로 진행해야 할 때만 쓴다. static conversation → endCall, 실패 fallback edge 에 습관적으로 붙이지 않는다.
+- `begin` 에서 첫 실행 node 로 나가는 edge 에는 `skip_user_response:true` 를 붙이지 않는다. 시작 edge 는 flow wakeup 자체이며 사용자 응답 skip 의미를 덧씌우지 않는다.
+- extraction 완료, static one-shot 안내 후 다음 단계, API 성공 후 일반 진행처럼 정상 진행이 확정된 edge 를 fallback 으로 표현하지 않는다. schema 가 허용하는 명시 condition 으로 진행 의미를 적고, fallback 은 실패/else/default 복구 path 에 남긴다.
 - begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 note 에서 나가는 edge 는 만들지 않는다.
 - condition node 에서 나가는 edge 는 `logic` 또는 `fallback` condition 만 사용한다. 고객 발화 판단은 conversation node 의 `ai` condition edge 로 보낸다.
 
@@ -220,7 +224,8 @@ flow 에서 변수는 노드 간 데이터를 전달하는 핵심 메커니즘�
 - transferAgent / transferCall node: 실패 fallback edge 1개.
 - conversation node: 예상 외 응답 path 는 보통 fallback 이 아니라 ai condition 으로 명시한다. 예: "고객이 거절했거나 통화를 끊으려는 경우".
 - api / tool / sendSms / transferCall / transferAgent node: 성공/일반 path 는 ai condition 으로 명시하고, 실패 path 는 fallback edge 로 명시한다. API 응답 변수 비교는 다음 condition node 에서 logic edge 로 처리한다.
-- begin node: 첫 실행 node 로 fallback edge 하나를 둔다.
+- extraction node / static one-shot conversation node: 정상 진행 edge 를 fallback 으로 만들지 않는다. "추출 완료 후 다음 단계로 진행", "안내 멘트 발화 후 다음 단계로 진행"처럼 명시 condition 을 둔다.
+- begin node: 첫 실행 node 로 fallback edge 하나를 둘 수 있지만 `skip_user_response:true` 는 붙이지 않는다.
 - endCall node 와 note node 에서 나가는 edge 는 두지 않는다. note node 는 editor-only annotation 이므로 실행 흐름에 연결하지 않는다.
 
 ### 4. Extraction 전에 Conversation
@@ -229,7 +234,21 @@ extraction 노드는 기존 대화 컨텍스트에서 추출한다. 필요한 �
 
 conversation 에서 필요한 정보가 모두 모였으면 "확인했습니다. 진행하겠습니다" 같은 중간 발화로 같은 노드에 머물지 말고 즉시 extraction 으로 전환되도록 prompt 와 edge condition 을 작성한다.
 
-### 5. Condition 노드는 logic 분기 전용
+### 5. 요약 확인은 실제 확인 turn
+
+수집한 정보를 고객에게 확인받아야 하는 flow 는 terminal summary 로 끝내지 않는다. endCall 멘트는 이미 종료 직전이라 고객이 수정할 기회가 없다.
+
+권장 흐름:
+
+```mermaid
+graph LR
+  extraction --> 요약확인 -->|맞음| endCall
+  요약확인 -->|수정 필요| 정보수집
+```
+
+요약확인 conversation node 는 수집값을 짧게 읽고 "맞으면 진행, 틀리면 수정"을 물어본다. 확인 edge 와 수정 edge 를 모두 둔다.
+
+### 6. Condition 노드는 logic 분기 전용
 
 condition 노드는 이미 만들어진 변수 값을 비교한다. 고객 발화의 동의/거절 판단은 conversation out-edge 의 ai condition 으로 처리한다.
 
@@ -281,6 +300,8 @@ graph LR
 새 작성/수정은 `flow` 를 사용한다. `flow_data` 는 legacy graph 이며 새 작성에는 사용하지 않는다.
 
 작업 순서는 **schema 조회 → fill → validate → save** 로 고정한다.
+
+flow graph 만 다루는 작업이면 agent 최상위 `data` 를 생략한다. agent-level 설정까지 바꿀 때만 `agent-schema` 를 확인하고, 사용자가 의도한 subtree 만 보낸다.
 
 1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 로 현재 flow schema 를 확인한다.
 2. agent `data` 를 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 를 확인한다.

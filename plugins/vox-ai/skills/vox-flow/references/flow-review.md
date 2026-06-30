@@ -66,6 +66,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B19 | WARN | api 응답 변수 정의 | api 노드에 응답 변수 추출 의도가 정의되어 있는가. JSON 작성 시 정확한 field shape 는 schema endpoint 결과를 따르는가 |
 | B20 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
 | B21 | CRITICAL | 기존 edge 보존 | 기존 flow 수정에서 사용자 요청 없이 기존 node id / edge id / edge condition 이 정규화되거나 바뀌지 않았는가 |
+| B22 | CRITICAL | 확인 turn 누락 | 사용자가 수집 정보 요약 확인을 요구했는데, 확인/수정 conversation node 없이 endCall 종료 멘트의 요약만으로 끝내는가 |
 
 ### C. Flowchart ↔ 노드 설계 정합성
 
@@ -89,6 +90,9 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | D7 | CRITICAL | public flow field casing 오류 | public `flow` node `data` 에 `promptType` / `apiConfiguration` / `toolId` 같은 camelCase key 를 넣음. 최신 public `flow` 는 `prompt_type` / `api_configuration` / `tool_id` 같은 snake_case 를 사용 |
 | D8 | CRITICAL | 실행 불가능 edge | begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 나가는 edge, 또는 condition node 에서 나가는 `ai` edge 를 만들었는가 |
 | D9 | CRITICAL | deprecated node write 시도 | public `flow` 로 저장하려는 graph 에 `function` 또는 legacy `knowledge` node 가 남아 있는가. 조회 결과에는 보일 수 있지만 public `flow` write 에서는 거절되므로 마이그레이션 필요 |
+| D10 | CRITICAL | begin edge skip 오사용 | `begin` 에서 첫 실행 node 로 나가는 edge 에 `skip_user_response:true` 를 붙였는가 |
+| D11 | CRITICAL | fallback 으로 정상 진행 표현 | extraction 완료, static one-shot 안내 후 다음 단계, 성공/일반 진행 edge 를 fallback 으로 만들었는가. fallback 은 실패/else/default path 여야 함 |
+| D12 | WARN | 불필요한 agent data override | flow graph 만 만들거나 검증하는데 agent 최상위 `data` 를 보내거나, `data.stt.speed`, `llm`, `voice`, `speech` 기본값을 복사했는가 |
 
 ### E. 통화 흐름 안전성 (silent termination 방지)
 
@@ -140,11 +144,14 @@ CRITICAL이 없고 WARN이 경미하면 "통과"로 판정. 각 항목은 1~2문
 |----------|----------|------------|
 | CRITICAL A1~A5 (flowchart 구조 문제) | 1단계(flow-sketch) 수정 후 2단계 재작업 | 전체 재리뷰 |
 | CRITICAL B1~B3, B16~B17, C1~C2 (노드 설계/정합성 문제) | 해당 노드만 2단계 재작업 | 해당 항목 + 정합성(C) 재리뷰 |
+| CRITICAL B22 (확인 turn 누락) | 요약 확인 conversation node 를 추가하고 확인 완료 / 수정 필요 edge 를 설계 | 해당 node + edge 재확인 |
 | CRITICAL E1 (api 실패 분기 누락/오설계) | 해당 api 노드의 실패 edge target 을 안내 conversation 으로 변경 | 해당 노드 + 안내 노드 재확인 |
 | CRITICAL F1 (dry-run 미수행) | `validate_flow(flow=..., level="all")` 호출 후 `errors` 처리, `advisories` 사용자 전달 | 응답 처리 결과 재확인 |
 | CRITICAL F2~F4 (transferAgent / tool 식별자 누락, 임의 fixture 값) | 실제 조회/사용자 제공 값으로 교체하거나 해당 노드를 제거한 뒤 dry-run 재실행 | 해당 노드 + dry-run 응답 재확인 |
 | CRITICAL D7~D8 (public flow 계약 위반) | schema endpoint 결과 기준으로 field casing / edge 방향 / condition type 을 수정 | 해당 graph + dry-run 응답 재확인 |
 | CRITICAL D9 (deprecated node write 시도) | `function`은 `tool`/`api`로, legacy `knowledge`는 conversation node-level knowledge 설정으로 마이그레이션. 보존만 필요하면 legacy `flow_data` 경로 사용 | 해당 graph + dry-run 응답 재확인 |
+| CRITICAL D10~D11 (edge semantics 오류) | begin edge 의 skip 을 제거하고, 정상 진행 edge 는 명시 condition 으로 바꾸며 fallback 은 실패/else/default path 로만 남김 | 해당 graph + dry-run 응답 재확인 |
+| WARN D12 (불필요한 agent data override) | flow-only 작업이면 `data` 를 생략하고, 필요한 agent-level subtree 만 schema 확인 후 보냄 | payload diff 재확인 |
 | WARN | 해당 항목만 수정 | 수정 항목에 대해서만 재확인 |
 
 - 재리뷰 시 이전 리뷰에서 OK였던 항목은 재검사하지 않는다.

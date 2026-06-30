@@ -43,7 +43,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
 4. **JSON 작성/전송 loop**: `schema 조회 → fill → validate → save` 순서로 진행한다.
    - **schema 조회**: [Schema Fetching](#schema-fetching) 으로 current `flow` schema 를 가져온다.
-   - **fill**: schema 기준으로 `nodes[]`, `edges[]`, node `data` 를 채운다. reference 표나 기억으로 field/enum/required 여부를 추측하지 않는다.
+   - **fill**: schema 기준으로 `nodes[]`, `edges[]`, node `data` 를 채운다. flow graph 만 만들거나 검증하는 작업이면 agent 최상위 `data` 는 생략하고, reference 표나 기억으로 field/enum/required 여부를 추측하지 않는다.
    - **validate**: MCP `validate_flow(flow=..., level="all")` 를 호출하고 `errors` / `advisories` 를 [Response Handling](#response-handling) 기준으로 처리한다.
    - **save**: blocking `errors` 가 비었을 때에만 `create_agent(flow=...)` / `update_agent(flow=...)` 를 호출한다.
 
@@ -154,6 +154,9 @@ standard 보강으로 확인할 수 있는 대표 정보:
 13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent.agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
 14. **외부 fixture 값은 만들지 않는다** — `transferCall` 은 실제 전화번호/SIP target 이 있을 때만 쓰고, `transferAgent` 는 실제 대상 agent UUID 가 있을 때만 쓴다. `tool` 은 `list_tools` 결과의 실제 id 를 사용한다. `sendSms` 의 발신번호/첨부 파일 key 처럼 운영 리소스가 필요한 값은 시나리오나 API가 제공하지 않으면 비워 두거나 해당 노드를 쓰지 않는다. placeholder 번호, 임의 UUID, 가짜 sender 를 넣지 않는다.
 15. **agent data latency/STT 기본값은 보존한다** — flow agent 생성/수정에서 `data` 를 같이 보낼 때, override 하지 않는 sub-schema(`llm`/`voice` 등)는 OMIT 해 api-server 기본값을 그대로 받는다(기본값을 하드코딩하거나 복사하지 않는다). 명시 override 시 허용값은 `list_llm_models`/`list_voice_models`, shape 는 `get_schema(... detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리한다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움을 추측해 낮추지 않는다.
+16. **flow 검증 중심 작업에서는 agent `data` 를 만들지 않는다** — 사용자가 agent-level prompt/voice/llm/stt 변경을 요구하지 않았고 flow graph 만 생성·검증한다면 `create_agent(name, type="flow", flow=...)` 처럼 최소 payload 로 보낸다. schema 에 보인다는 이유만으로 `data.stt.speed:"high"`, `llm`, `voice`, `speech` 기본값을 채우지 않는다.
+17. **edge 의미를 fallback 으로 뭉개지 않는다** — `begin` 에서 첫 실행 node 로 가는 edge 에는 `skip_user_response:true` 를 붙이지 않는다. extraction 완료, static one-shot 안내 후 다음 단계, API 성공 후 일반 진행처럼 정상 진행이 확정된 edge 는 명시적인 condition 으로 표현하고, fallback 은 실패/else/default 복구 path 에만 쓴다.
+18. **"확인" 요구는 실제 확인 turn 으로 만든다** — 사용자가 수집 정보 요약을 확인받으라고 했으면 endCall 종료 멘트에 요약을 넣는 것만으로 끝내지 않는다. 요약을 읽고 "맞으면 진행, 틀리면 수정"을 받는 conversation node 와 확인/수정 edge 를 둔 뒤 종료한다.
 
 ## Response Handling
 
