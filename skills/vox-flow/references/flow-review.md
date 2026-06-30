@@ -67,6 +67,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B20 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
 | B21 | CRITICAL | 기존 edge 보존 | 기존 flow 수정에서 사용자 요청 없이 기존 node id / edge id / edge condition 이 정규화되거나 바뀌지 않았는가 |
 | B22 | CRITICAL | 확인 turn 누락 | 사용자가 수집 정보 요약 확인을 요구했는데, 확인/수정 conversation node 없이 endCall 종료 멘트의 요약만으로 끝내는가 |
+| B23 | WARN | 제어 변수 직접 발화 | endCall/conversation 사용자-facing 문구가 `{{is_emergency}}`, `{{address_complete}}`, `{{access_allowed}}` 같은 boolean/control variable 을 그대로 읽히게 하는가. 분기용 변수는 자연어 문장 또는 별도 string summary 변수로 바꿔야 함 |
 
 ### C. Flowchart ↔ 노드 설계 정합성
 
@@ -145,6 +146,7 @@ CRITICAL이 없고 WARN이 경미하면 "통과"로 판정. 각 항목은 1~2문
 | CRITICAL A1~A5 (flowchart 구조 문제) | 1단계(flow-sketch) 수정 후 2단계 재작업 | 전체 재리뷰 |
 | CRITICAL B1~B3, B16~B17, C1~C2 (노드 설계/정합성 문제) | 해당 노드만 2단계 재작업 | 해당 항목 + 정합성(C) 재리뷰 |
 | CRITICAL B22 (확인 turn 누락) | 요약 확인 conversation node 를 추가하고 확인 완료 / 수정 필요 edge 를 설계 | 해당 node + edge 재확인 |
+| WARN B23 (제어 변수 직접 발화) | boolean/control variable 을 사용자-facing 문구에서 제거하고 자연어 요약 또는 별도 string summary 변수로 교체 | 종료/요약 문구 재확인 |
 | CRITICAL E1 (api 실패 분기 누락/오설계) | 해당 api 노드의 실패 edge target 을 안내 conversation 으로 변경 | 해당 노드 + 안내 노드 재확인 |
 | CRITICAL F1 (dry-run 미수행) | `validate_flow(flow=..., level="all")` 호출 후 `errors` 처리, `advisories` 사용자 전달 | 응답 처리 결과 재확인 |
 | CRITICAL F2~F4 (transferAgent / tool 식별자 누락, 임의 fixture 값) | 실제 조회/사용자 제공 값으로 교체하거나 해당 노드를 제거한 뒤 dry-run 재실행 | 해당 노드 + dry-run 응답 재확인 |

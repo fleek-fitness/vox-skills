@@ -203,6 +203,8 @@ flow 에서 변수는 노드 간 데이터를 전달하는 핵심 메커니즘�
 | extraction `data.extraction_configuration.extraction_prompt` | `{{customer_name}} 의 주문번호를 추출하세요` |
 | sendSms `data.prompt` / `data.static_sentence` | `{{customer_name}}님 예약이 확정되었습니다` |
 
+사용자에게 말하는 문구에는 내부 제어 변수를 그대로 넣지 않는다. `is_emergency`, `address_complete`, `access_allowed`, `access_permission_provided` 같은 boolean/control variable 은 condition node 의 logic branching 용이다. 종료 요약에서 상태를 말해야 하면 `{{is_emergency}}` 를 읽히게 하는 대신 "물이나 전기 위험 여부는 말씀해 주신 내용 기준으로 함께 남기겠습니다"처럼 자연어로 쓰거나, 별도 string summary variable 을 추출해 읽는다.
+
 상세 → `variable-system.md` (vox-agents/references/) 참조.
 
 ## 설계 원칙

@@ -192,6 +192,8 @@ api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`
 
 최종 안내만 남은 경우에는 endCall 의 종료 멘트를 적극 사용한다. 별도 static conversation node 로 "안내 → endCall" 을 만들면 사용자 응답을 기다리며 같은 문구가 반복될 수 있다.
 
+종료 멘트는 사용자가 그대로 듣는 문장이다. `{{is_emergency}}`, `{{address_complete}}`, `{{access_allowed}}` 같은 branching/control boolean 을 그대로 넣지 않는다. 상태를 요약해야 하면 자연어로 풀어 쓰거나, 앞선 extraction 에서 사용자-facing string summary 변수(`emergency_summary`, `request_summary` 등)를 따로 만들어 읽는다.
+
 ```md
 ## name
 [노드 이름]
