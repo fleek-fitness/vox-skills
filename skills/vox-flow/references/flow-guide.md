@@ -12,7 +12,7 @@ flow JSON 을 작성하거나 수정할 때는 먼저 현재 schema 를 가져�
 get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")
 ```
 
-`detail="minimal"` 을 명시한다. `detail` 을 빼면 더 큰 standard payload 가 와서 토큰만 늘어난다. api / transferCall / transferAgent / sendSms / tool 처럼 설명 문구가 중요한 node type 은 SKILL.md [Schema Fetching](../SKILL.md#schema-fetching)에 따라 해당 type 만 standard 모드로 보강한다.
+`detail="minimal"` 을 명시한다. api / transferCall / transferAgent / sendSms / tool 처럼 설명 문구가 중요한 node type 은 SKILL.md [Schema Fetching](../SKILL.md#schema-fetching)에 따라 해당 type 만 standard 모드로 보강한다.
 
 agent `data` 도 같이 다루면 필요한 schema 를 별도로 가져온다.
 
@@ -52,7 +52,7 @@ Flow {
 
 **자주 틀림**: agent 최상위 `data.prompt` 는 객체이고, flow node 의 `data.prompt` 는 conversation node 안의 문자열이다. 서로 다른 필드다. flow agent 는 보통 conversation node 의 `data.prompt` 가 노드별 system prompt 를 담당하므로, 최상위 `data.prompt` 는 비워 두거나 통화 전반 공통 지시만 아주 짧게 둔다.
 
-`flow_data` 는 deprecated legacy builder payload 다. 새 작성에는 `flow` 를 사용한다.
+`flow_data` 는 deprecated legacy graph 다. 새 작성에는 `flow` 를 사용한다.
 
 ### FlowNode
 
@@ -70,7 +70,7 @@ FlowNode {
   - 권장 spacing: `x += 320`, 분기 spacing `y ± 240`.
   - 예시: `begin {x:0,y:0}` → `extraction {x:320,y:0}` → `api {x:640,y:0}` → 성공 `endCall {x:960,y:-120}`, 실패 `transferCall {x:960,y:120}`.
 - node `data` 는 node type 별 실행 설정이다. Public `flow` node data 는 snake_case 를 쓴다. 예: `prompt_type`, `static_sentence`, `api_configuration`, `response_variables`, `extraction_configuration`, `transfer_configuration`, `agent`, `tool_id`.
-- public `flow` 의 node `data` 에 builder routing key 를 넣지 않는다: `transitions`, `logicalTransitions`, `globalNodeSettings`.
+- public `flow` 의 node `data` 에 legacy routing key 를 넣지 않는다: `transitions`, `logicalTransitions`, `globalNodeSettings`.
 - global node 는 `data.global_node_setting` 으로 표시한다. legacy `globalNodeSettings` 를 보내지 않는다.
 
 ### FlowEdge
@@ -87,7 +87,7 @@ FlowEdge {
 
 - edge `id` 는 생략 가능하다. 제공하면 빈 문자열이 아니어야 하며, 기존 edge 수정 시 가능하면 보존한다.
 - `source` / `target` 은 node id 를 가리킨다.
-- builder 전용 field 를 보내지 않는다: `sourceHandle`, `targetHandle`, `type:"custom"`, `animated`, `selected`.
+- legacy edge field 를 보내지 않는다: `sourceHandle`, `targetHandle`, `type:"custom"`, `animated`, `selected`.
 - `skip_user_response` 는 이 edge 에서 사용자 응답을 기다리지 않고 다음 node 로 진행해야 할 때만 쓴다. static conversation → endCall, 실패 fallback edge 에 습관적으로 붙이지 않는다.
 - begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 note 에서 나가는 edge 는 만들지 않는다.
 - condition node 에서 나가는 edge 는 `logic` 또는 `fallback` condition 만 사용한다. 고객 발화 판단은 conversation node 의 `ai` condition edge 로 보낸다.
@@ -277,7 +277,7 @@ graph LR
 
 ## API / MCP 로 Flow 만들고 수정
 
-새 작성/수정은 `flow` 를 사용한다. `flow_data` 는 legacy builder payload 이며 새 작성에는 사용하지 않는다.
+새 작성/수정은 `flow` 를 사용한다. `flow_data` 는 legacy graph 이며 새 작성에는 사용하지 않는다.
 
 작업 순서는 **schema 조회 → fill → validate → save** 로 고정한다.
 
@@ -337,9 +337,9 @@ mcp__vox__update_agent(
 
 `flow` 는 전체 graph replacement 다. 일부만 빼면 그 노드/엣지가 삭제된다. 기존 flow 를 수정할 때는 `get_agent` 로 받은 current `flow` 를 기반으로 변경하지 않는 nodes/edges 를 그대로 보존한다. 단, current `flow` 안의 deprecated node(`function`, legacy `knowledge`)는 그대로 보존해도 public `flow` save 에서 거절되므로 먼저 마이그레이션해야 한다.
 
-### Legacy builder payload
+### Legacy `flow_data`
 
-`validate_flow_data`, `autofix_flow_data`, `update_agent_partial`, `update_agent(flow_data=...)` 는 legacy builder payload 전용이다. 새 flow 작성에는 쓰지 않는다. 기존 legacy graph 를 유지보수해야 하거나 deprecated node 를 아직 마이그레이션할 수 없는 경우에만 해당 도구 설명과 schema endpoint 결과를 따른다.
+`validate_flow_data`, `autofix_flow_data`, `update_agent_partial`, `update_agent(flow_data=...)` 는 legacy `flow_data` graph 전용이다. 새 flow 작성에는 쓰지 않는다. 기존 legacy graph 를 유지보수해야 하거나 deprecated node 를 아직 마이그레이션할 수 없는 경우에만 해당 도구 설명과 schema endpoint 결과를 따른다.
 
 ### 조회
 

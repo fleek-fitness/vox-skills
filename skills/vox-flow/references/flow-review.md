@@ -81,11 +81,11 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
 | D1 | CRITICAL | schema endpoint 미확인 | MCP/API `flow` JSON 을 만들거나 수정하면서 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 확인하지 않은 경우. `detail="minimal"` 을 명시했는가 (생략 시 더 큰 standard payload) |
-| D2 | CRITICAL | legacy builder routing key 사용 | public `flow` node `data` 에 `transitions` / `logicalTransitions` / `globalNodeSettings` 를 넣거나 edge 에 `sourceHandle` / `targetHandle` / `type:"custom"` 을 넣음 |
+| D2 | CRITICAL | legacy routing key 사용 | public `flow` node `data` 에 `transitions` / `logicalTransitions` / `globalNodeSettings` 를 넣거나 edge 에 `sourceHandle` / `targetHandle` / `type:"custom"` 을 넣음 |
 | D3 | CRITICAL | fallback edge 누락 | 실패/else/default path 가 필요한데 `flow.edges` 에 명시하지 않고 자동 생성된다고 가정 |
 | D4 | WARN | round-trip 미확인 | `create_agent` / `update_agent` 후 `get_agent` 로 unknown field drop 여부를 확인하지 않음 |
 | D5 | WARN | agent data schema 미확인 | agent `data` 를 함께 보냈는데 `agent-schema` create/update schema 를 확인하지 않음 |
-| D6 | WARN | legacy partial helper 사용 | 새 flow 작성/수정인데 `update_agent_partial` 또는 `flow_data` 를 사용하려는가. legacy builder payload 유지보수일 때만 허용 |
+| D6 | WARN | legacy partial helper 사용 | 새 flow 작성/수정인데 `update_agent_partial` 또는 `flow_data` 를 사용하려는가. legacy `flow_data` graph 유지보수일 때만 허용 |
 | D7 | CRITICAL | public flow field casing 오류 | public `flow` node `data` 에 `promptType` / `apiConfiguration` / `toolId` 같은 camelCase key 를 넣음. 최신 public `flow` 는 `prompt_type` / `api_configuration` / `tool_id` 같은 snake_case 를 사용 |
 | D8 | CRITICAL | 실행 불가능 edge | begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 나가는 edge, 또는 condition node 에서 나가는 `ai` edge 를 만들었는가 |
 | D9 | CRITICAL | deprecated node write 시도 | public `flow` 로 저장하려는 graph 에 `function` 또는 legacy `knowledge` node 가 남아 있는가. 조회 결과에는 보일 수 있지만 public `flow` write 에서는 거절되므로 마이그레이션 필요 |
@@ -109,7 +109,7 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 | F2 | CRITICAL | transferAgent 식별자 누락 | 모든 `transferAgent` 노드가 `agent.agent_id` (UUID) 를 가지는가. `agent_version` 도 함께 명시 권장. (누락 시 dry-run 차단) |
 | F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `tool_id` 를 가지는가. (누락 시 dry-run 차단) |
 | F4 | CRITICAL | 임의 fixture 값 사용 | `transferCall.transfer_configuration.transfer_to`, `transferAgent.agent.agent_id`, `tool.tool_id`, `sendSms` 발신번호/첨부 key 같은 운영 리소스 값을 시나리오/API/MCP 조회 없이 임의로 만들지 않았는가. 실제 값이 없으면 해당 노드를 쓰지 않는다. |
-| F5 | WARN | advisories 미반영 | dry-run 응답의 `advisories` 를 사용자에게 한 줄도 전달하지 않았는가. runtime 주의 항목은 저장을 막지 않아도 운영자가 알아야 한다. |
+| F5 | WARN | advisories 미반영 | dry-run 응답의 `advisories` 를 사용자에게 한 줄도 전달하지 않았는가. 실행 중 주의 항목은 저장을 막지 않아도 운영자가 알아야 한다. |
 
 ## 출력 포맷
 

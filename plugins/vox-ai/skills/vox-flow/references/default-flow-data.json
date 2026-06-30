@@ -1,5 +1,5 @@
 {
-  "_comment": "Minimal public flow example (begin -> conversation -> endCall). The source of truth is MCP get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal'). Public flow node data uses snake_case. Edges carry conditions directly. Do not add legacy builder routing keys such as sourceHandle, targetHandle, transitions, or logicalTransitions.",
+  "_comment": "Minimal public flow example (begin -> conversation -> endCall). The source of truth is MCP get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal'). Public flow node data uses snake_case. Edges carry conditions directly. Do not add legacy routing keys such as sourceHandle, targetHandle, transitions, or logicalTransitions.",
   "nodes": [
     {
       "id": "begin",

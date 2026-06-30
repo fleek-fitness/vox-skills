@@ -5,7 +5,7 @@
 ## Shared rules
 
 - 실패, else, fallback path 가 필요하면 markdown 에 의도를 쓰고 JSON 변환 시 `edges` 로 명시한다.
-- public `flow` 에 legacy builder routing key 를 넣지 않는다: node `data.transitions`, `data.logicalTransitions`, `data.globalNodeSettings`, edge `sourceHandle`, `targetHandle`, `type:"custom"`.
+- public `flow` 에 legacy routing key 를 넣지 않는다: node `data.transitions`, `data.logicalTransitions`, `data.globalNodeSettings`, edge `sourceHandle`, `targetHandle`, `type:"custom"`.
 - public `flow` node data 는 snake_case 다. node 실행 설정 필드(`prompt_type`, `static_sentence`, `api_configuration`, `response_variables`, `transfer_configuration`, `agent`, `tool_id` 등)는 schema endpoint 결과를 따른다.
 - 각 노드는 `## name / ## content / ## transition conditions` 구조를 유지한다.
 - nested config default 채우기 / dry-run 호출 / 응답 처리는 SKILL.md 의 Core Operating Rules 와 [Response Handling](../SKILL.md#response-handling) 을 따른다 — 식별자 (`url`, `agent.agent_id`, `tool_id`) 만 책임지고 채우고 나머지 nested 필드는 백엔드 보충을 신뢰한다.
@@ -180,7 +180,7 @@ api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`
 ```
 
 흔한 실수:
-- `apiConfiguration`, `responseVariables`, `logicalTransitions` 같은 legacy/builder-style camelCase key 로 보내면 public `flow` v3 가 거절한다.
+- `apiConfiguration`, `responseVariables`, `logicalTransitions` 같은 legacy camelCase key 로 보내면 public `flow` 가 거절한다.
 - `headers: [{"key": "...", "value": "..."}]` (배열) 로 보내면 거절된다 — 객체 매핑이다.
 - 응답 변수의 `json_path` 는 실제 API 응답 또는 테스트 mock 이 반환하는 경로와 정확히 맞춘다. 응답에 없는 경로를 쓰면 logical transition 이 항상 false 로 평가된다.
 - `response_mode: "fire_and_forget"` (응답 비대기) 과 `response_variables`·결과 기반 condition 조합은 저장이 거부된다 — fire 는 결과를 쓰지 않는 발송 전용이다.

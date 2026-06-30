@@ -43,7 +43,7 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 
 ## 절대 하지 말 것
 
-- public `flow` 에 legacy builder routing key 를 넣지 않는다: node `data.transitions`, `data.logicalTransitions`, `data.globalNodeSettings`, edge `sourceHandle`, `targetHandle`, `type:"custom"`.
+- public `flow` 에 legacy routing key 를 넣지 않는다: node `data.transitions`, `data.logicalTransitions`, `data.globalNodeSettings`, edge `sourceHandle`, `targetHandle`, `type:"custom"`.
 - `get_schema(flow-data)` + 같은 detail 의 `get_schema(node-{type})` 를 중복 호출하지 않는다.
 - `detail="standard"` 를 default 로 사용하지 않는다. 항상 minimal 로 시작한다.
 - schema 결과 없이 예전 예시를 복사하지 않는다.
@@ -56,7 +56,7 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 - `advisories` 는 저장은 가능하지만 런타임에서 문제가 될 수 있는 항목이다. 사용자에게 요약한다.
 - `valid` 는 blocking error 기준이다.
 
-`validate_flow_data` / `autofix_flow_data` 는 legacy builder payload 전용이다. 새 flow 작성에는 사용하지 않는다.
+`validate_flow_data` / `autofix_flow_data` 는 legacy `flow_data` graph 전용이다. 새 flow 작성에는 사용하지 않는다.
 
 ## Node selection guide
 
@@ -74,7 +74,7 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 | `transferAgent` | 같은 조직 내 다른 vox.ai agent 로 대화를 넘길 때. |
 | `sendSms` | 통화 중 SMS/LMS/MMS 를 발송할 때. |
 | `endCall` | 종료 발화 후 통화를 끝내거나 즉시 종료할 때. |
-| `note` | editor 설명용 메모. `data` 는 `content` / `width` / `height` 만 사용하고 runtime 실행 흐름에는 넣지 않는다. |
+| `note` | editor 설명용 메모. `data` 는 `content` / `width` / `height` 만 사용하고 통화 실행 흐름에는 넣지 않는다. |
 
 ## Edge condition rules
 
@@ -112,7 +112,7 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 
 1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 를 호출했는가?
 2. schema 결과에 없는 field 를 과거 문서나 UI 기억만으로 넣지 않았는가?
-3. legacy builder routing key 를 public `flow` 에 넣지 않았는가?
+3. legacy routing key 를 public `flow` 에 넣지 않았는가?
 4. fallback, failure, else path 를 필요한 `edges` 로 명시했는가?
 5. dry-run 절차 (`validate_flow(flow=..., level="all")` → `errors === []` 확인 → `advisories` 사용자 전달) 를 거쳤는가?
 6. 기존 flow 수정이면 `function` / legacy `knowledge` node 를 public `flow` write 전에 마이그레이션했는가?

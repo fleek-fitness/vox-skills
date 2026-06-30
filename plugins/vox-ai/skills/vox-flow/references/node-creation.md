@@ -104,7 +104,7 @@
 2. agent `data` 도 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 호출.
 3. `node-creation.md`의 markdown 용어를 JSON field 로 직접 복사하지 않는다.
 4. fallback/실패/else path 는 자동 생성된다고 가정하지 말고 `edges` 로 명시한다.
-5. public `flow` 의 node `data` 에 legacy builder routing key 를 넣지 않는다: `transitions`, `logicalTransitions`, `globalNodeSettings`. edge 에도 `sourceHandle`, `targetHandle`, `type:"custom"` 을 넣지 않는다.
+5. public `flow` 의 node `data` 에 legacy routing key 를 넣지 않는다: `transitions`, `logicalTransitions`, `globalNodeSettings`. edge 에도 `sourceHandle`, `targetHandle`, `type:"custom"` 을 넣지 않는다.
 6. 기존 flow 수정이면 `function` / legacy `knowledge` node 를 그대로 public `flow` write 에 포함하지 않는다. 지원되는 node type 으로 마이그레이션하거나 legacy `flow_data` 경로를 쓴다.
 7. `skip_user_response:true` 는 사용자 발화를 기다리지 않는 것이 명확한 edge 에만 쓴다. static conversation → endCall/next edge 와 fallback edge 에는 습관적으로 붙이지 않는다.
 8. 업무 성공 뒤 SMS 실패 fallback 이 있으면, fallback target 이 generic failure 가 아니라 "업무는 완료, 문자만 실패" 종료 멘트인지 확인한다.
