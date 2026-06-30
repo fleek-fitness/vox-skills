@@ -74,7 +74,7 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 | `transferAgent` | 같은 조직 내 다른 vox.ai agent 로 대화를 넘길 때. |
 | `sendSms` | 통화 중 SMS/LMS/MMS 를 발송할 때. |
 | `endCall` | 종료 발화 후 통화를 끝내거나 즉시 종료할 때. |
-| `note` | editor 설명용 메모. runtime 실행 흐름에는 넣지 않는다. |
+| `note` | editor 설명용 메모. `data` 는 `content` / `width` / `height` 만 사용하고 runtime 실행 흐름에는 넣지 않는다. |
 
 ## Edge condition rules
 
@@ -84,6 +84,8 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 - fallback 은 자동으로 생긴다고 가정하지 않는다. 필요한 fallback edge 를 모두 명시한다.
 - begin node 에서 첫 실행 node 로 가는 edge 는 보통 fallback condition 을 쓴다.
 - edge `skip_user_response` 는 사용자 응답을 기다리지 않는 route 에만 쓴다. static conversation → endCall edge, 실패 fallback edge 에 습관적으로 붙이지 않는다.
+- begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 나가는 edge 는 만들지 않는다.
+- condition node 에서 나가는 edge 는 `logic` 또는 `fallback` condition 만 쓴다. `ai` condition 은 conversation node 에서 고객 발화를 판단할 때 쓴다.
 - 기존 public `flow` 수정 시 edge id, node id, 바꾸지 않는 condition 은 보존한다. "더 좋은 이름"으로 정규화하지 않는다.
 - `position` 은 모든 노드에서 필수다. 기본은 **가로 정렬** — `x` 를 320 step 으로 늘려가며 좌→우로 흐르게 두고, 분기 경로만 `y ± 240` 으로 위/아래 분리한다.
 
@@ -91,7 +93,7 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 
 아래 node 는 과거 데이터 형태와 현재 public `flow` surface 가 자주 섞인다. 작성 전 schema endpoint 결과를 반드시 대조한다.
 
-- `transferAgent`: 과거 flat `agentId` 표현을 그대로 쓰지 않는다. 현재 schema 결과의 nested `agent.{agent_id, agent_version}` shape 를 따른다. 실제 대상 agent UUID 가 없으면 만들지 않는다.
+- `transferAgent`: 과거 flat `agentId` 표현을 그대로 쓰지 않는다. 현재 schema 결과의 nested `agent.{agent_id, agent_version}` shape 를 따른다. `prompt` 도 넣지 않는다. 실제 대상 agent UUID 가 없으면 만들지 않는다.
 - `transferCall`: 실제 전화번호/SIP target 이 없으면 쓰지 않는다. placeholder 번호로 통과시키지 말고, fallback 안내나 callback 요청 flow 로 바꾼다.
 - `sendSms`: message object 와 섞지 않는다. SMS node 전용 field shape 를 schema 결과에서 확인한다.
 - `sendSms`: 발신번호/첨부 key 같은 운영 fixture 는 임의로 만들지 않는다. schema default 로 충분한 값은 비워 둔다.
@@ -99,10 +101,11 @@ get_schema(namespace="flow-schema", schema_type="node-{type}", detail="standard"
 - `endCall`: 종료 멘트가 필요한 경우 node data 의 종료 응답 필드를 schema 로 확인한다. 최종 one-shot 안내만 남았다면 별도 static conversation 대신 endCall 종료 멘트에 넣는 편이 반복을 줄인다.
 - `api`: 지원 HTTP method, auth, body, response variable shape 를 schema 결과에서 확인한다. 임의로 `PATCH` 등을 추가하지 않는다.
 - `api`: 응답 변수 기반 분기는 별도 condition node 에서 logic edge 로 처리한다.
-- `api` / `sendSms`: `responseMode:"fire_and_forget"` 은 결과 변수를 쓰지 않는 발송 전용 흐름에만 쓴다.
+- `api` / `sendSms`: `response_mode:"fire_and_forget"` 은 결과 변수를 쓰지 않는 발송 전용 흐름에만 쓴다.
 - `tool`: built-in tool 과 custom tool 을 섞지 않는다. custom tool 실행 node 와 agent `data.builtInTools` 설정은 별도 schema surface 다.
-- `tool`: `toolId` 는 `list_tools` 결과에서 확인한 실제 id 만 사용한다. 임의 UUID 를 만들지 않는다.
+- `tool`: `tool_id` 는 `list_tools` 결과에서 확인한 실제 id 만 사용한다. 임의 UUID 를 만들지 않는다.
 - `condition`: deterministic 분기 전용이다. 고객 발화 판단을 넣지 않는다.
+- `global_node_setting`: conversation / sendSms / endCall 에서만 사용한다. 다른 node type 에 넣으면 dry-run 이 차단한다.
 
 ## Review checklist
 

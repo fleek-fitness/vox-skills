@@ -86,6 +86,8 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | D4 | WARN | round-trip 미확인 | `create_agent` / `update_agent` 후 `get_agent` 로 unknown field drop 여부를 확인하지 않음 |
 | D5 | WARN | agent data schema 미확인 | agent `data` 를 함께 보냈는데 `agent-schema` create/update schema 를 확인하지 않음 |
 | D6 | WARN | legacy partial helper 사용 | 새 flow 작성/수정인데 `update_agent_partial` 또는 `flow_data` 를 사용하려는가. legacy builder payload 유지보수일 때만 허용 |
+| D7 | CRITICAL | public flow field casing 오류 | public `flow` node `data` 에 `promptType` / `apiConfiguration` / `toolId` 같은 camelCase key 를 넣음. 최신 public `flow` 는 `prompt_type` / `api_configuration` / `tool_id` 같은 snake_case 를 사용 |
+| D8 | CRITICAL | 실행 불가능 edge | begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 나가는 edge, 또는 condition node 에서 나가는 `ai` edge 를 만들었는가 |
 
 ### E. 통화 흐름 안전성 (silent termination 방지)
 
@@ -104,8 +106,8 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 |----|--------|------|----------|
 | F1 | CRITICAL | dry-run 미수행 | `flow` 를 `create_agent` / `update_agent` 로 보내기 전에 `validate_flow(flow=..., level="all")` 를 호출하지 않았는가. 이 단계가 없으면 blocking error 가 그대로 사용자에게 노출된다. |
 | F2 | CRITICAL | transferAgent 식별자 누락 | 모든 `transferAgent` 노드가 `agent.agent_id` (UUID) 를 가지는가. `agent_version` 도 함께 명시 권장. (누락 시 dry-run 차단) |
-| F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `toolId` 를 가지는가. (누락 시 dry-run 차단) |
-| F4 | CRITICAL | 임의 fixture 값 사용 | `transferCall.transferTo`, `transferAgent.agent.agent_id`, `tool.toolId`, `sendSms` 발신번호/첨부 key 같은 운영 리소스 값을 시나리오/API/MCP 조회 없이 임의로 만들지 않았는가. 실제 값이 없으면 해당 노드를 쓰지 않는다. |
+| F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `tool_id` 를 가지는가. (누락 시 dry-run 차단) |
+| F4 | CRITICAL | 임의 fixture 값 사용 | `transferCall.transfer_configuration.transfer_to`, `transferAgent.agent.agent_id`, `tool.tool_id`, `sendSms` 발신번호/첨부 key 같은 운영 리소스 값을 시나리오/API/MCP 조회 없이 임의로 만들지 않았는가. 실제 값이 없으면 해당 노드를 쓰지 않는다. |
 | F5 | WARN | advisories 미반영 | dry-run 응답의 `advisories` 를 사용자에게 한 줄도 전달하지 않았는가. runtime 주의 항목은 저장을 막지 않아도 운영자가 알아야 한다. |
 
 ## 출력 포맷
@@ -140,6 +142,7 @@ CRITICAL이 없고 WARN이 경미하면 "통과"로 판정. 각 항목은 1~2문
 | CRITICAL E1 (api 실패 분기 누락/오설계) | 해당 api 노드의 실패 edge target 을 안내 conversation 으로 변경 | 해당 노드 + 안내 노드 재확인 |
 | CRITICAL F1 (dry-run 미수행) | `validate_flow(flow=..., level="all")` 호출 후 `errors` 처리, `advisories` 사용자 전달 | 응답 처리 결과 재확인 |
 | CRITICAL F2~F4 (transferAgent / tool 식별자 누락, 임의 fixture 값) | 실제 조회/사용자 제공 값으로 교체하거나 해당 노드를 제거한 뒤 dry-run 재실행 | 해당 노드 + dry-run 응답 재확인 |
+| CRITICAL D7~D8 (public flow 계약 위반) | schema endpoint 결과 기준으로 field casing / edge 방향 / condition type 을 수정 | 해당 graph + dry-run 응답 재확인 |
 | WARN | 해당 항목만 수정 | 수정 항목에 대해서만 재확인 |
 
 - 재리뷰 시 이전 리뷰에서 OK였던 항목은 재검사하지 않는다.

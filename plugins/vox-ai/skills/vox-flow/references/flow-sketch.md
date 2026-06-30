@@ -128,7 +128,7 @@ condition   {주문상태확인}    order_status == "delivered" / "in_transit" /
 [배송완료안내]  [배송중안내]    [취소안내]
 ```
 
-핵심: api 노드의 responseVariables(JSONPath)로 추출한 변수를 condition이 소비한다. api가 실패하면 fallback edge로 빠지므로, condition까지 도달했다면 변수가 존재한다고 보장된다.
+핵심: api 노드의 `response_variables`(JSONPath)로 추출한 변수를 condition이 소비한다. api가 실패하면 fallback edge로 빠지므로, condition까지 도달했다면 변수가 존재한다고 보장된다.
 
 ### 3단계: Mermaid Flowchart 작성
 

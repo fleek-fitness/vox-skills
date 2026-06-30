@@ -1,5 +1,5 @@
 {
-  "_comment": "Minimal public flow example (begin -> conversation -> endCall). The source of truth is MCP get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal'). Edges carry conditions directly. Do not add legacy builder routing keys such as sourceHandle, targetHandle, transitions, or logicalTransitions.",
+  "_comment": "Minimal public flow example (begin -> conversation -> endCall). The source of truth is MCP get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal'). Public flow node data uses snake_case. Edges carry conditions directly. Do not add legacy builder routing keys such as sourceHandle, targetHandle, transitions, or logicalTransitions.",
   "nodes": [
     {
       "id": "begin",
@@ -7,8 +7,8 @@
       "position": { "x": 0, "y": 0 },
       "data": {
         "name": "시작",
-        "firstLineType": "aiFirst",
-        "pauseBeforeSpeakingSeconds": 0
+        "first_line_type": "aiFirst",
+        "pause_before_speaking_seconds": 0
       }
     },
     {
@@ -17,8 +17,8 @@
       "position": { "x": 320, "y": 0 },
       "data": {
         "name": "인사 및 요청 확인",
-        "promptType": "static",
-        "staticSentence": "안녕하세요. 무엇을 도와드릴까요?"
+        "prompt_type": "static",
+        "static_sentence": "안녕하세요. 무엇을 도와드릴까요?"
       }
     },
     {
@@ -27,8 +27,8 @@
       "position": { "x": 640, "y": 0 },
       "data": {
         "name": "종료",
-        "promptType": "static",
-        "staticSentence": "감사합니다. 통화를 종료합니다."
+        "prompt_type": "static",
+        "static_sentence": "감사합니다. 통화를 종료합니다."
       }
     }
   ],
@@ -37,8 +37,7 @@
       "id": "edge-begin-conversation",
       "source": "begin",
       "target": "conversation",
-      "condition": { "type": "fallback" },
-      "skip_user_response": false
+      "condition": { "type": "fallback" }
     },
     {
       "id": "edge-conversation-end",

@@ -69,7 +69,7 @@ FlowNode {
 - 레이아웃은 가로 정렬이 기본이다. happy path 는 좌→우로 흐르게 두고, 분기/병렬 경로만 위아래로 벌린다.
   - 권장 spacing: `x += 320`, 분기 spacing `y ± 240`.
   - 예시: `begin {x:0,y:0}` → `extraction {x:320,y:0}` → `api {x:640,y:0}` → 성공 `endCall {x:960,y:-120}`, 실패 `transferCall {x:960,y:120}`.
-- node `data` 는 node type 별 실행 설정이다. `promptType`, `staticSentence`, `apiConfiguration`, `responseVariables`, `extractionConfiguration`, `transferConfiguration`, `agent`, `toolId` 같은 필드는 schema 결과를 따른다.
+- node `data` 는 node type 별 실행 설정이다. Public `flow` node data 는 snake_case 를 쓴다. 예: `prompt_type`, `static_sentence`, `api_configuration`, `response_variables`, `extraction_configuration`, `transfer_configuration`, `agent`, `tool_id`.
 - public `flow` 의 node `data` 에 builder routing key 를 넣지 않는다: `transitions`, `logicalTransitions`, `globalNodeSettings`.
 - global node 는 `data.global_node_setting` 으로 표시한다. legacy `globalNodeSettings` 를 보내지 않는다.
 
@@ -89,6 +89,8 @@ FlowEdge {
 - `source` / `target` 은 node id 를 가리킨다.
 - builder 전용 field 를 보내지 않는다: `sourceHandle`, `targetHandle`, `type:"custom"`, `animated`, `selected`.
 - `skip_user_response` 는 이 edge 에서 사용자 응답을 기다리지 않고 다음 node 로 진행해야 할 때만 쓴다. static conversation → endCall, 실패 fallback edge 에 습관적으로 붙이지 않는다.
+- begin 으로 들어가는 edge, endCall 에서 나가는 edge, note 로 들어가거나 note 에서 나가는 edge 는 만들지 않는다.
+- condition node 에서 나가는 edge 는 `logic` 또는 `fallback` condition 만 사용한다. 고객 발화 판단은 conversation node 의 `ai` condition edge 로 보낸다.
 
 ## Edge Conditions
 
@@ -157,8 +159,8 @@ fallback 은 자동으로 생긴다고 가정하지 않는다. 필요한 실패/
   "position": { "x": 960, "y": 360 },
   "data": {
     "name": "종료 요청",
-    "promptType": "static",
-    "staticSentence": "알겠습니다. 통화를 종료하겠습니다.",
+    "prompt_type": "static",
+    "static_sentence": "알겠습니다. 통화를 종료하겠습니다.",
     "global_node_setting": {
       "condition": {
         "type": "ai",
@@ -170,6 +172,7 @@ fallback 은 자동으로 생긴다고 가정하지 않는다. 필요한 실패/
 ```
 
 - global enter condition 은 고객 발화 기반으로 쓴다.
+- global node 는 현재 public contract 상 conversation / sendSms / endCall 에서만 설정한다. begin, api, condition, extraction, transferCall, transferAgent, tool, note 에 `global_node_setting` 을 넣지 않는다.
 - 2-3개 이내로 제한한다. 너무 많으면 전환 충돌 위험이 커진다.
 - global node 로 들어가는 entry edge 를 직접 펼쳐 넣지 않는다.
 
@@ -190,11 +193,11 @@ flow 에서 변수는 노드 간 데이터를 전달하는 핵심 메커니즘�
 
 | 위치 | 사용법 |
 |---|---|
-| conversation `data.prompt` / `data.staticSentence` | `{{customer_name}}님의 주문을 확인합니다` |
-| api `data.apiConfiguration.url` / `body` | `https://api.example.com/orders/{{order_id}}` |
+| conversation `data.prompt` / `data.static_sentence` | `{{customer_name}}님의 주문을 확인합니다` |
+| api `data.api_configuration.url` / `body` | `https://api.example.com/orders/{{order_id}}` |
 | edge `condition` | logic condition 의 `left`, ai condition 의 prompt |
-| extraction `data.extractionConfiguration.extractionPrompt` | `{{customer_name}} 의 주문번호를 추출하세요` |
-| sendSms `data.prompt` / `data.staticSentence` | `{{customer_name}}님 예약이 확정되었습니다` |
+| extraction `data.extraction_configuration.extraction_prompt` | `{{customer_name}} 의 주문번호를 추출하세요` |
+| sendSms `data.prompt` / `data.static_sentence` | `{{customer_name}}님 예약이 확정되었습니다` |
 
 상세 → `variable-system.md` (vox-agents/references/) 참조.
 
@@ -217,6 +220,7 @@ flow 에서 변수는 노드 간 데이터를 전달하는 핵심 메커니즘�
 - transferAgent / transferCall node: 실패 fallback edge 1개.
 - conversation node: 예상 외 응답 path 는 보통 fallback 이 아니라 ai condition 으로 명시한다. 예: "고객이 거절했거나 통화를 끊으려는 경우".
 - begin node: 첫 실행 node 로 fallback edge 하나를 둔다.
+- endCall node 와 note node 에서 나가는 edge 는 두지 않는다. note node 는 editor-only annotation 이므로 실행 흐름에 연결하지 않는다.
 
 ### 4. Extraction 전에 Conversation
 

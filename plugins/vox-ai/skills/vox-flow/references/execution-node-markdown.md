@@ -6,9 +6,9 @@
 
 - 실패, else, fallback path 가 필요하면 markdown 에 의도를 쓰고 JSON 변환 시 `edges` 로 명시한다.
 - public `flow` 에 legacy builder routing key 를 넣지 않는다: node `data.transitions`, `data.logicalTransitions`, `data.globalNodeSettings`, edge `sourceHandle`, `targetHandle`, `type:"custom"`.
-- node 실행 설정 필드(`promptType`, `staticSentence`, `apiConfiguration`, `responseVariables`, `transferConfiguration`, `agent`, `toolId` 등)는 schema endpoint 결과를 따른다. 일부는 camelCase 이므로 기억으로 snake_case 변환하지 않는다.
+- public `flow` node data 는 snake_case 다. node 실행 설정 필드(`prompt_type`, `static_sentence`, `api_configuration`, `response_variables`, `transfer_configuration`, `agent`, `tool_id` 등)는 schema endpoint 결과를 따른다.
 - 각 노드는 `## name / ## content / ## transition conditions` 구조를 유지한다.
-- nested config default 채우기 / dry-run 호출 / 응답 처리는 SKILL.md 의 Core Operating Rules 와 [Response Handling](../SKILL.md#response-handling) 을 따른다 — 식별자 (`url`, `agent.agent_id`, `toolId`) 만 책임지고 채우고 나머지 nested 필드는 백엔드 보충을 신뢰한다.
+- nested config default 채우기 / dry-run 호출 / 응답 처리는 SKILL.md 의 Core Operating Rules 와 [Response Handling](../SKILL.md#response-handling) 을 따른다 — 식별자 (`url`, `agent.agent_id`, `tool_id`) 만 책임지고 채우고 나머지 nested 필드는 백엔드 보충을 신뢰한다.
 
 ## extraction
 
@@ -131,7 +131,7 @@
 
 ### JSON shape (api 노드)
 
-api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`{ "X-Foo": "bar" }`) 이지 배열이 아니다. body 가 있으면 `bodyEnabled: true`, headers 가 있으면 `headersEnabled: true` 를 같이 둔다 (없는 키는 보내지 않는다). 응답 변수 기반 분기는 별도 condition node 에서 logic edge 로 처리한다.
+api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`{ "X-Foo": "bar" }`) 이지 배열이 아니다. body 가 있으면 `body_enabled: true`, headers 가 있으면 `headers_enabled: true` 를 같이 둔다 (없는 키는 보내지 않는다). 응답 변수 기반 분기는 별도 condition node 에서 logic edge 로 처리한다.
 
 ```json
 {
@@ -140,18 +140,20 @@ api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`
   "position": {"x": 640, "y": 0},
   "data": {
     "name": "주문 조회",
-    "apiConfiguration": {
+    "prompt_type": "static",
+    "static_sentence": "잠시 조회하겠습니다.",
+    "api_configuration": {
       "method": "POST",
       "url": "https://api.example.com/orders/lookup",
-      "headersEnabled": true,
+      "headers_enabled": true,
       "headers": {"Content-Type": "application/json"},
-      "bodyEnabled": true,
+      "body_enabled": true,
       "body": "{\"order_last4\":\"{{order_last4}}\"}",
-      "timeoutSeconds": 10
+      "timeout_seconds": 10
     },
-    "responseVariables": [
-      {"variableName": "order_id", "jsonPath": "$.order_id"},
-      {"variableName": "order_found", "jsonPath": "$.found"}
+    "response_variables": [
+      {"variable_name": "order_id", "json_path": "$.order_id"},
+      {"variable_name": "order_found", "json_path": "$.found"}
     ]
   }
 }
@@ -178,10 +180,10 @@ api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`
 ```
 
 흔한 실수:
-- `api_configuration`, `response_variables`, `logical_transitions` (snake_case) 로 보내면 v3 가 거절한다.
+- `apiConfiguration`, `responseVariables`, `logicalTransitions` 같은 legacy/builder-style camelCase key 로 보내면 public `flow` v3 가 거절한다.
 - `headers: [{"key": "...", "value": "..."}]` (배열) 로 보내면 거절된다 — 객체 매핑이다.
-- 응답 변수의 jsonPath 는 `$.found` 같은 mock 친화 키만 쓴다. 도메인 키 (`$.data.order_id`) 는 scenario_test mock 에 없어서 logical transition 이 항상 false 로 평가된다.
-- `responseMode: "fire_and_forget"` (응답 비대기) 과 `responseVariables`·결과 기반 condition 조합은 저장이 거부된다 — fire 는 결과를 쓰지 않는 발송 전용이다.
+- 응답 변수의 `json_path` 는 실제 API 응답 또는 테스트 mock 이 반환하는 경로와 정확히 맞춘다. 응답에 없는 경로를 쓰면 logical transition 이 항상 false 로 평가된다.
+- `response_mode: "fire_and_forget"` (응답 비대기) 과 `response_variables`·결과 기반 condition 조합은 저장이 거부된다 — fire 는 결과를 쓰지 않는 발송 전용이다.
 
 ## endCall
 
@@ -238,7 +240,7 @@ api 노드의 `data` 는 schema 결과를 따른다. `headers` 는 **객체** (`
 - 실패: 전환 실패 시 fallback edge로 진행. (JSON 변환 시 edge 명시)
 ```
 
-JSON 변환 시 `data.transferConfiguration.transferTo` 는 필수다. 이 값은 시나리오/운영자가 제공한 실제 전화번호 또는 SIP URI 여야 한다. 테스트 편의를 위해 임의 번호를 만들지 말고, 실제 target 이 없으면 transferCall 대신 endCall 안내나 callback 요청 flow 로 설계한다. 실패 row 는 `{"condition":"에러 발생 시","isFallback":true}` 로 만들고 `isSkipUserResponse` 를 붙이지 않는다. fallback row 에 skip flag 를 붙이면 editor 에서 source handle 이 숨겨져 선이 끊긴 것처럼 보일 수 있다.
+JSON 변환 시 `data.transfer_configuration.transfer_to` 는 필수다. 이 값은 시나리오/운영자가 제공한 실제 전화번호 또는 SIP URI 여야 한다. 테스트 편의를 위해 임의 번호를 만들지 말고, 실제 target 이 없으면 transferCall 대신 endCall 안내나 callback 요청 flow 로 설계한다. 전환 전 고정 발화가 필요하면 `prompt_type:"static"` + `static_sentence` 를 쓰고, warm transfer 대상에게 전달할 whisper 는 `warm_transfer_static_sentence` / `warm_transfer_prompt` 를 따로 쓴다. 실패는 public `flow.edges` 의 fallback edge 로 명시하고 `skip_user_response` 를 습관적으로 붙이지 않는다.
 
 ## transferAgent
 
@@ -261,12 +263,13 @@ JSON 변환 시 `data.transferConfiguration.transferTo` 는 필수다. 이 값�
 - 실패: 전환 실패 시 fallback edge로 진행. (JSON 변환 시 edge 명시)
 ```
 
-JSON 변환 시 실패 row 는 `{"condition":"에러 발생 시","isFallback":true}` 로 만들고 `isSkipUserResponse` 를 붙이지 않는다.
+JSON 변환 시 실패는 public `flow.edges` 의 fallback edge 로 명시하고 `skip_user_response` 를 붙이지 않는다.
 
 작성 규칙:
 - **`agent.agent_id` (UUID) 는 필수** — 누락 시 dry-run 이 차단한다. `agent_version` 도 함께 명시 권장: 미지정 시 latest 가 어떤 버전인지 알기 어려워 운영 추적이 힘들다.
 - 실제 대상 agent UUID 가 없으면 transferAgent 노드를 만들지 않는다. 임의 UUID 또는 숫자 placeholder 를 넣지 말고, `list_agents` / 기존 `get_agent` 컨텍스트 / 사용자 제공 값에서 확인된 agent 만 사용한다.
 - 과거 flat `agentId` 표현은 사용하지 않는다. 현재 schema 의 nested `agent.{agent_id, agent_version}` shape 를 따른다.
+- transferAgent node data 에 `prompt` 를 넣지 않는다. 전환 전 안내가 필요하면 직전 conversation/endCall 등 별도 발화 가능한 노드에서 처리한다.
 
 ## sendSms
 
@@ -297,7 +300,7 @@ JSON 변환 시 실패 row 는 `{"condition":"에러 발생 시","isFallback":tr
 - SMS 실패 fallback 에서 이미 성공한 예약/등록/접수 결과를 실패로 뒤집지 않는다.
 - scenario_test 에서는 SMS 가 지원되지 않아 실패할 수 있으므로, fallback 멘트는 본 통화 안에서 접수번호/콜백 시간/확인 방법을 직접 안내하도록 쓴다.
 - 발신번호, 첨부 file key, 특정 템플릿 id 같은 운영 fixture 는 임의로 만들지 않는다. schema default 로 충분한 값은 비워 두고, 실제 값이 필요한 환경이면 사용자/운영자에게 받아서 넣는다.
-- `responseMode: "fire_and_forget"` 이면 발송 결과를 기다리지 않고 성공 전환으로 즉시 진행한다 — `요청 실패 시` fallback 은 실행되지 않으므로, 실패 안내가 필요한 흐름에는 쓰지 않는다.
+- `response_mode: "fire_and_forget"` 이면 발송 결과를 기다리지 않고 성공 전환으로 즉시 진행한다 — `요청 실패 시` fallback 은 실행되지 않으므로, 실패 안내가 필요한 흐름에는 쓰지 않는다.
 
 ## tool
 
@@ -325,7 +328,7 @@ custom tool 실행 node 와 agent `data.builtInTools` 설정은 schema surface �
 ```
 
 작성 규칙:
-- **`toolId` 는 필수** — 누락 시 dry-run 이 차단한다. 등록되지 않은 custom tool 을 가리키지 않도록 `list_tools` 결과의 ID 를 사용한다.
+- **`tool_id` 는 필수** — 누락 시 dry-run 이 차단한다. 등록되지 않은 custom tool 을 가리키지 않도록 `list_tools` 결과의 ID 를 사용한다.
 - 임의 UUID 를 tool id 로 만들지 않는다. 필요한 custom tool 이 없으면 tool 노드가 아니라 api / conversation / endCall 로 설계를 바꾼다.
 - built-in tool (end_call, transfer_call, transfer_agent, send_sms, send_dtmf) 설정은 agent `data.builtInTools` schema surface 다 — tool 노드 안에 직접 넣지 않는다.
 
@@ -334,6 +337,6 @@ custom tool 실행 node 와 agent `data.builtInTools` 설정은 schema surface �
 통화 종료 요청, 상담원 연결 요청처럼 어디서든 발생할 수 있는 예외는 global node 후보가 될 수 있다.
 
 작성 규칙:
-- 보통 conversation 또는 endCall 에 설계한다. 정확한 허용 shape 는 schema endpoint 결과를 따른다.
+- public `flow` 에서는 conversation / sendSms / endCall 에만 설정한다. begin, api, condition, extraction, transferCall, transferAgent, tool, note 에 `global_node_setting` 을 넣지 않는다.
 - global enter condition 은 고객 발화 기반으로 쓴다.
 - 2-3개 이내로 제한한다. 너무 많으면 전환 충돌 위험이 커진다.

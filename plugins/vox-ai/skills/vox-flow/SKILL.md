@@ -80,11 +80,11 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 
 각 node 가 standard 보강을 필요로 하는 이유 (minimal 에서 잃는 정보):
 
-- **`node-api`** — `apiConfiguration.body` 가 JSON 문자열인지 object 인지, `responseVariables.jsonPath` 의 JSONPath 문법 예시, `authType` × `authCredentials` 조합 의미
-- **`node-transferCall`** — `transferConfiguration.transferTo` 가 phone number vs SIP URI 어느 쪽인지, `transferType` (cold/warm) 의 동작 차이, `sipHeaders` 사용법, `displayedCallerId` (agent/user) 의미
-- **`node-transferAgent`** — `agent.agent_id` 가 같은 조직 agent UUID 라는 운영 제약, `preserveChatContext` 의 의미
-- **`node-sendSms`** — `staticImageFileKeys` 가 어떤 S3 key 형식인지, `smsFromNumber` 가 등록된 발신번호여야 한다는 제약
-- **`node-tool`** — `toolId` (custom tool UUID) 와 `agentToolId` (built-in tool 인덱스) 의 차이
+- **`node-api`** — `api_configuration.body` 가 JSON 문자열인지 object 인지, `response_variables.json_path` 의 JSONPath 문법 예시, `auth_type` × `auth_credentials` 조합 의미
+- **`node-transferCall`** — `transfer_configuration.transfer_to` 가 phone number vs SIP URI 어느 쪽인지, `transfer_type` (cold/warm) 의 동작 차이, `sip_headers` 사용법, `displayed_caller_id` (agent/user) 의미
+- **`node-transferAgent`** — `agent.agent_id` 가 같은 조직 agent UUID 라는 운영 제약, `preserve_chat_context` 의 의미
+- **`node-sendSms`** — `static_image_file_keys` 가 어떤 S3 key 형식인지, `sms_from_number` 가 등록된 발신번호여야 한다는 제약
+- **`node-tool`** — `tool_id` (custom tool UUID) 의 의미. built-in tool 설정은 agent `data.builtInTools` schema surface 를 별도로 확인한다.
 
 위 type 이 flow 에 없다면 (`begin` / `conversation` / `condition` / `extraction` / `endCall` / `note` 만 사용), minimal flow-data 한 번이면 충분하다.
 
@@ -141,13 +141,13 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
 5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
-7. **conversation JSON 은 mode와 exit 조건을 빠뜨리지 않는다** — static 문구는 `promptType:"static"` + `staticSentence`, generated 대화는 `promptType:"dynamic"` + `prompt`/`firstMessage` 로 작성한다. 일반 out-edge 의 `condition` 은 빈 값/null/"None" 이 아니라 사용자가 그 노드를 벗어나도 되는 의미 있는 한국어 exit 조건이어야 한다. 조건 없는 edge 는 자동 진행이 아니라 dead route 가 된다.
-8. **검증/비교는 정답 데이터 출처가 있어야 한다** — 본인확인, 예약조회, 계약검증처럼 사용자의 답을 기존 데이터와 비교해야 하는 flow 는 먼저 정답값 출처를 정한다. API node 의 responseVariables 또는 통화 시작 전 주입된 preset dynamic variables 가 없으면 "일치 확인"이라고 말하거나 condition 으로 검증하지 않는다. 그런 경우는 정보 수집 flow 로 낮추거나, 조회 API 를 추가한다.
+7. **conversation JSON 은 mode와 exit 조건을 빠뜨리지 않는다** — static 문구는 `prompt_type:"static"` + `static_sentence`, generated 대화는 `prompt_type:"dynamic"` + `prompt`/`first_message` 로 작성한다. 일반 out-edge 의 `condition` 은 빈 값/null/"None" 이 아니라 사용자가 그 노드를 벗어나도 되는 의미 있는 한국어 exit 조건이어야 한다. 조건 없는 edge 는 자동 진행이 아니라 dead route 가 된다.
+8. **검증/비교는 정답 데이터 출처가 있어야 한다** — 본인확인, 예약조회, 계약검증처럼 사용자의 답을 기존 데이터와 비교해야 하는 flow 는 먼저 정답값 출처를 정한다. API node 의 `response_variables` 또는 통화 시작 전 주입된 preset dynamic variables 가 없으면 "일치 확인"이라고 말하거나 condition 으로 검증하지 않는다. 그런 경우는 정보 수집 flow 로 낮추거나, 조회 API 를 추가한다.
 9. **동일 인물/동일 대상 shortcut 을 명시한다** — "계약자와 학습자가 본인", "예약자와 방문자가 동일"처럼 앞에서 받은 답이 뒤 질문의 답을 결정하면 다시 묻지 않는다. extraction 에서 동일성 변수(`is_same_person` 등)를 만들고 condition 으로 재사용 path 와 추가질문 path 를 나눈다.
 10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, `update_agent(flow=...)` 는 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. legacy builder payload 를 명시적으로 다루는 경우에만 `flow_data` / `update_agent_partial` 를 사용한다.
 11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema(flow-data, minimal)` 결과를 기준으로 `flow` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
 12. **flow 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow` 를 보내기 전, MCP `validate_flow(flow=..., level="all")` 를 먼저 호출해 dry-run 한다. `errors` 는 저장을 막는 문제이고, `advisories` 는 저장은 되지만 런타임에서 문제가 될 수 있는 항목이다. `errors` 가 비었을 때만 진짜 호출하고, `advisories` 는 사용자에게 한두 줄로 요약 전달한다. legacy `flow_data` 를 다룰 때만 `validate_flow_data` / `autofix_flow_data` 응답의 `fixed_flow_data` 와 `warnings` 를 따른다.
-13. **nested config default 는 백엔드가 채운다** — `apiConfiguration` 의 인증/헤더/바디 옵션, `extractionConfiguration`, `transferConfiguration`, `knowledge`, `message` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent.agent_id`, `toolId` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
+13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent.agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
 14. **외부 fixture 값은 만들지 않는다** — `transferCall` 은 실제 전화번호/SIP target 이 있을 때만 쓰고, `transferAgent` 는 실제 대상 agent UUID 가 있을 때만 쓴다. `tool` 은 `list_tools` 결과의 실제 id 를 사용한다. `sendSms` 의 발신번호/첨부 파일 key 처럼 운영 리소스가 필요한 값은 시나리오나 API가 제공하지 않으면 비워 두거나 해당 노드를 쓰지 않는다. placeholder 번호, 임의 UUID, 가짜 sender 를 넣지 않는다.
 15. **agent data latency/STT 기본값은 보존한다** — flow agent 생성/수정에서 `data` 를 같이 보낼 때, override 하지 않는 sub-schema(`llm`/`voice` 등)는 OMIT 해 api-server 기본값을 그대로 받는다(기본값을 하드코딩하거나 복사하지 않는다). 명시 override 시 허용값은 `list_llm_models`/`list_voice_models`, shape 는 `get_schema(... detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리한다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움을 추측해 낮추지 않는다.
 
