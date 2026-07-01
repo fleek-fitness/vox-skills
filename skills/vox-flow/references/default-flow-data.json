@@ -1,5 +1,5 @@
 {
-  "_comment": "v3 flow_data 최소 예시 (begin -> conversation -> endCall). schema source-of-truth 는 MCP get_schema(namespace='flow-schema', schema_type='flow-data') 결과다. 분기는 source node 의 data.transitions[] / data.logicalTransitions[] 에 두고, edge.sourceHandle 로 해당 row 를 연결한다. begin edge sourceHandle 은 transition id 가 아니라 begin-source 이다.",
+  "_comment": "Minimal public flow example (begin -> conversation -> endCall). The source of truth is MCP get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal'). Public flow node data uses snake_case. Edges carry conditions directly. Do not add legacy routing keys such as sourceHandle, targetHandle, transitions, or logicalTransitions.",
   "nodes": [
     {
       "id": "begin",
@@ -7,8 +7,8 @@
       "position": { "x": 0, "y": 0 },
       "data": {
         "name": "시작",
-        "firstLineType": "aiFirst",
-        "pauseBeforeSpeakingSeconds": 0
+        "first_line_type": "aiFirst",
+        "pause_before_speaking_seconds": 0
       }
     },
     {
@@ -17,14 +17,8 @@
       "position": { "x": 320, "y": 0 },
       "data": {
         "name": "인사 및 요청 확인",
-        "promptType": "static",
-        "staticSentence": "안녕하세요. 무엇을 도와드릴까요?",
-        "transitions": [
-          {
-            "id": "tr_conversation_done",
-            "condition": "고객의 요청 확인이 끝난 경우"
-          }
-        ]
+        "prompt_type": "static",
+        "static_sentence": "안녕하세요. 무엇을 도와드릴까요?"
       }
     },
     {
@@ -33,8 +27,8 @@
       "position": { "x": 640, "y": 0 },
       "data": {
         "name": "종료",
-        "promptType": "static",
-        "staticSentence": "감사합니다. 통화를 종료합니다."
+        "prompt_type": "static",
+        "static_sentence": "감사합니다. 통화를 종료합니다."
       }
     }
   ],
@@ -43,17 +37,17 @@
       "id": "edge-begin-conversation",
       "source": "begin",
       "target": "conversation",
-      "type": "custom",
-      "sourceHandle": "begin-source",
-      "targetHandle": "conversation-target"
+      "condition": { "type": "fallback" }
     },
     {
       "id": "edge-conversation-end",
       "source": "conversation",
       "target": "end",
-      "type": "custom",
-      "sourceHandle": "tr_conversation_done",
-      "targetHandle": "end-target"
+      "condition": {
+        "type": "ai",
+        "prompt": "고객의 요청 확인이 끝난 경우"
+      },
+      "skip_user_response": false
     }
   ]
 }

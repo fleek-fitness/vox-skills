@@ -22,5 +22,6 @@
   "update_agent_partial",
   "update_telephone_number_agent",
   "update_tool",
+  "validate_flow",
   "validate_flow_data"
 ]

@@ -85,7 +85,7 @@ vox.ai 관련 요청의 routing entrypoint. 요청 내용에 따라 아래 domai
 
 플로우 에이전트 설계를 담당합니다. vox-agents의 확장 스킬입니다.
 
-- 10종 node type 설계/설정
+- 11종 node type 설계/설정
 - 스크립트 → Mermaid flowchart → flow node 변환
 - 변수 시스템 (extraction → condition 체인)
 - 설계물 체크리스트 기반 리뷰

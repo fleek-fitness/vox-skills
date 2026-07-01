@@ -41,13 +41,17 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
 2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
-4. **dry-run 검증 (validate_flow_data)**: JSON 작성 직전에 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 JSON 을 만들고, MCP `validate_flow_data` 를 호출해 결과를 사용자에게 한두 줄로 요약한다. errors / warnings 처리는 [Response Handling](#response-handling) 을 따른다. errors 가 비었을 때에만 `create_agent` / `update_agent` (또는 작은 구조 변경이면 `update_agent_partial`) 호출.
+4. **JSON 작성/전송 loop**: `schema 조회 → fill → validate → save` 순서로 진행한다.
+   - **schema 조회**: [Schema Fetching](#schema-fetching) 으로 current `flow` schema 를 가져온다.
+   - **fill**: schema 기준으로 `nodes[]`, `edges[]`, node `data` 를 채운다. flow graph 만 만들거나 검증하는 작업이면 agent 최상위 `data` 는 생략하고, reference 표나 기억으로 field/enum/required 여부를 추측하지 않는다.
+   - **validate**: MCP `validate_flow(flow=..., level="all")` 를 호출하고 `errors` / `advisories` 를 [Response Handling](#response-handling) 기준으로 처리한다.
+   - **save**: blocking `errors` 가 비었을 때에만 `create_agent(flow=...)` / `update_agent(flow=...)` 를 호출한다.
 
-사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지. 기존 flow 의 노드/엣지 몇 개만 손보는 경우는 전체 재작성 없이 [Incremental Editing](#incremental-editing) 으로 간다.
+사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지. 새 작성/수정은 `flow` 를 사용한다. `flow_data`, `validate_flow_data`, `autofix_flow_data`, `update_agent_partial` 는 legacy `flow_data` graph 를 다뤄야 하는 경우에만 쓴다.
 
 ## Schema Fetching
 
-`flow_data` JSON 을 작성하기 직전에 schema 를 가져온다. **default 는 단일 호출이다.**
+`flow` JSON 을 작성하기 직전에 schema 를 가져온다. **default 는 단일 호출이다.**
 
 ### Default — `flow-data` minimal 한 번
 
@@ -55,7 +59,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")
 ```
 
-이 한 응답에 envelope (`nodes[]`, `edges[]`, `viewport`) 와 모든 node type 의 `data` shape (`BeginData`, `ConversationData`, `ApiData`, `ConditionData`, `ExtractionData`, `SendSmsData`, `ToolData`, `TransferCallData`, `TransferAgentData`, `EndCallData`, `NoteData`, `FunctionData`) 가 `$defs` 로 함께 포함되어 온다. `detail="minimal"` 은 description / title / examples 를 재귀적으로 strip 해 응답을 약 41% (≈ 12,660 → 7,460 tokens) 줄인다.
+이 한 응답에 public `flow` graph (`nodes[]`, `edges[]`), edge `condition`, `skip_user_response`, 모든 node type 의 `data` shape 가 `$defs` 로 함께 포함되어 온다. 먼저 이 응답으로 작성하고, 설명 문구가 필요한 일부 node type 만 standard 로 보강한다.
 
 flow 에 `api` / `transferCall` / `transferAgent` / `sendSms` / `tool` 노드 중 **하나라도** 있으면, 다음 [standard 모드로 보강이 필요한 노드 type](#standard-모드로-보강이-필요한-노드-type) 단계를 추가로 거친다. `begin` / `conversation` / `condition` / `extraction` / `endCall` / `note` 만 사용하는 flow 라면 이 minimal 한 번으로 충분하다.
 
@@ -68,7 +72,7 @@ get_schema(namespace="agent-schema", schema_type="agent-data-update", detail="mi
 
 ### standard 모드로 보강이 필요한 노드 type
 
-다음 node type 중 **하나라도 flow 에 등장하면** 그 type 에 한해 standard 모드로 한 번 더 fetch 해서 description 을 본다 (minimal 만으로는 의미 단서가 부족함):
+다음 node type 중 **하나라도 flow 에 등장하고 설명 문구가 필요하면** 그 type 에 한해 standard 모드로 한 번 더 fetch 한다:
 
 ```text
 get_schema(namespace="flow-schema", schema_type="node-api", detail="standard")
@@ -78,13 +82,13 @@ get_schema(namespace="flow-schema", schema_type="node-sendSms", detail="standard
 get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 ```
 
-각 node 가 standard 보강을 필요로 하는 이유 (minimal 에서 잃는 정보):
+standard 보강으로 확인할 수 있는 대표 정보:
 
-- **`node-api`** — `apiConfiguration.body` 가 JSON 문자열인지 object 인지, `responseVariables.jsonPath` 의 JSONPath 문법 예시, `authType` × `authCredentials` 조합 의미
-- **`node-transferCall`** — `transferConfiguration.transferTo` 가 phone number vs SIP URI 어느 쪽인지, `transferType` (cold/warm) 의 동작 차이, `sipHeaders` 사용법, `displayedCallerId` (agent/user) 의미
-- **`node-transferAgent`** — `agent.agent_id` 가 같은 조직 agent UUID 라는 운영 제약, `preserveChatContext` 의 의미
-- **`node-sendSms`** — `staticImageFileKeys` 가 어떤 S3 key 형식인지, `smsFromNumber` 가 등록된 발신번호여야 한다는 제약
-- **`node-tool`** — `toolId` (custom tool UUID) 와 `agentToolId` (built-in tool 인덱스) 의 차이
+- **`node-api`** — `api_configuration.body` 가 JSON 문자열인지 object 인지, `response_variables.json_path` 의 JSONPath 문법 예시, `auth_type` × `auth_credentials` 조합 의미
+- **`node-transferCall`** — `transfer_configuration.transfer_to` 가 phone number vs SIP URI 어느 쪽인지, `transfer_type` (cold/warm) 의 동작 차이, `sip_headers` 사용법, `displayed_caller_id` (agent/user) 의미
+- **`node-transferAgent`** — `agent.agent_id` 가 같은 조직 agent UUID 라는 운영 제약, `preserve_chat_context` 의 의미
+- **`node-sendSms`** — `static_image_file_keys` 가 어떤 S3 key 형식인지, `sms_from_number` 가 등록된 발신번호여야 한다는 제약
+- **`node-tool`** — `tool_id` (custom tool UUID) 의 의미. built-in tool 설정은 agent `data.builtInTools` schema surface 를 별도로 확인한다.
 
 위 type 이 flow 에 없다면 (`begin` / `conversation` / `condition` / `extraction` / `endCall` / `note` 만 사용), minimal flow-data 한 번이면 충분하다.
 
@@ -94,7 +98,7 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 
 - flow 가 매우 큼 (15+ 노드, 다양한 type) + LLM context budget 이 빡빡해서 minimal envelope 도 부담스러울 때 → 사용한 type 별 minimal per-node 호출로 분할
 - 같은 flow 를 반복 patch 하면서 envelope 은 캐시하고 한 노드 type 의 detail 만 다시 standard 모드로 보고 싶을 때
-- `validate_flow_data` 가 같은 node type 에서 같은 룰로 반복 실패할 때 → 그 type 만 standard 모드로 받아 description 으로 디버깅
+- `validate_flow` 가 같은 node type 에서 같은 룰로 반복 실패할 때 → 그 type 만 standard 모드로 받아 description 으로 디버깅
 
 이 경우에만 `list_schemas(namespace="flow-schema", category="flow-node")` 로 카탈로그를 받아 어떤 node type 이 있는지 metadata only 로 확인할 수 있다 (응답은 `schema: null`).
 
@@ -105,7 +109,7 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 
 ## Node Type 요약
 
-아래 표는 설계 대화를 위한 개념 요약이다. 실제 `flow_data` JSON 을 작성할 때는 이 표나 로컬 reference 를 schema source 로 쓰지 말고, [Schema Fetching](#schema-fetching) 에 따라 `get_schema('flow-data', detail='minimal')` 한 번을 호출해 현재 node type, field, enum, required 여부를 확인한다.
+아래 표는 설계 대화를 위한 개념 요약이다. 실제 `flow` JSON 을 작성할 때는 이 표나 로컬 reference 를 schema source 로 쓰지 말고, [Schema Fetching](#schema-fetching) 에 따라 `get_schema('flow-data', detail='minimal')` 한 번을 호출해 현재 node type, field, enum, required 여부를 확인한다.
 
 | Node | 용도 |
 |------|------|
@@ -121,7 +125,7 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 | `endCall` | 통화 종료 |
 | `note` | 메모 (실행 없음) |
 
-각 노드의 의미/사용 판단 → `node-types.md` 참조. Deprecated: `function` (→ `tool`). Unsupported: `knowledge` node (→ conversation node-level knowledge configuration). 정확한 schema 는 항상 MCP schema endpoint 결과를 따른다.
+각 노드의 의미/사용 판단 → `node-types.md` 참조. Deprecated: `function` / legacy `knowledge` node. 호환성을 위해 기존 flow 조회 결과에는 보일 수 있지만, public `flow` write 에는 넣지 않는다. 정확한 schema 는 항상 MCP schema endpoint 결과를 따른다.
 
 ## 설계 패턴
 
@@ -136,88 +140,81 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 ## Core Operating Rules
 
 1. **공통 규칙 먼저** — flow에서도 실패 원인의 대부분은 음성 UX 위반(장문 발화, 부정확한 사실)이므로, `vox-agents`의 voice-ai-playbook 규칙(사실성 우선, 트레이드오프, 런타임 vs 개발 산출물 구분)이 flow에도 동일하게 적용된다.
-2. node type, field, enum, required 여부를 추측하지 않는다 — `flow_data` 작성 직전에 `get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal')` 를 한 번 호출하고 그 결과를 기준으로 JSON 을 만든다. 이 한 응답에 envelope 과 모든 node type 의 `data` shape 가 함께 들어온다. per-node `get_schema(node-{type})` 는 narrow case 의 보조 호출이지 default 가 아니다. 자세한 패턴은 [Schema Fetching](#schema-fetching).
-3. deprecated node(`function`)와 unsupported node(`knowledge`)는 신규 flow에 사용하지 않는다 — 지식 기반 응답이 필요하면 `conversation` node의 node-level knowledge 설정을 사용한다.
+2. node type, field, enum, required 여부를 추측하지 않는다 — `flow` 작성 직전에 `get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal')` 를 한 번 호출하고 그 결과를 기준으로 JSON 을 만든다. 이 한 응답에 graph shape, edge condition, 모든 node type 의 `data` shape 가 함께 들어온다. per-node `get_schema(node-{type})` 는 narrow case 의 보조 호출이지 default 가 아니다. 자세한 패턴은 [Schema Fetching](#schema-fetching).
+3. deprecated node(`function`, legacy `knowledge`)는 신규 flow에 사용하지 않고, 기존 flow 수정 시에도 public `flow` write 전에 마이그레이션한다. `function`은 `tool` 또는 `api`로, legacy `knowledge`는 `conversation` node의 node-level knowledge 설정으로 옮긴다. 마이그레이션할 수 없으면 `update_agent(flow=...)` 로 round-trip 하지 말고 legacy `flow_data` 유지보수 경로를 사용하거나 사용자에게 막힌 이유를 보고한다.
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
 5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
-7. **conversation JSON 은 mode와 exit 조건을 빠뜨리지 않는다** — static 문구는 `promptType:"static"` + `staticSentence`, generated 대화는 `promptType:"dynamic"` + `prompt`/`firstMessage` 로 작성한다. 일반 `transitions[]` row 의 `condition` 은 빈 값/null/"None" 이 아니라 사용자가 그 노드를 벗어나도 되는 의미 있는 한국어 exit 조건이어야 한다. 조건 없는 row 는 자동 진행이 아니라 dead transition 이 된다.
-8. **검증/비교는 정답 데이터 출처가 있어야 한다** — 본인확인, 예약조회, 계약검증처럼 사용자의 답을 기존 데이터와 비교해야 하는 flow 는 먼저 정답값 출처를 정한다. API node 의 responseVariables 또는 통화 시작 전 주입된 preset dynamic variables 가 없으면 "일치 확인"이라고 말하거나 condition 으로 검증하지 않는다. 그런 경우는 정보 수집 flow 로 낮추거나, 조회 API 를 추가한다.
+7. **conversation JSON 은 mode와 exit 조건을 빠뜨리지 않는다** — static 문구는 `prompt_type:"static"` + `static_sentence`, generated 대화는 `prompt_type:"dynamic"` + `prompt`/`first_message` 로 작성한다. 일반 out-edge 의 `condition` 은 빈 값/null/"None" 이 아니라 사용자가 그 노드를 벗어나도 되는 의미 있는 한국어 exit 조건이어야 한다. 조건 없는 edge 는 자동 진행이 아니라 dead route 가 된다.
+8. **검증/비교는 정답 데이터 출처가 있어야 한다** — 본인확인, 예약조회, 계약검증처럼 사용자의 답을 기존 데이터와 비교해야 하는 flow 는 먼저 정답값 출처를 정한다. API node 의 `response_variables` 또는 통화 시작 전 주입된 preset dynamic variables 가 없으면 "일치 확인"이라고 말하거나 condition 으로 검증하지 않는다. 그런 경우는 정보 수집 flow 로 낮추거나, 조회 API 를 추가한다.
 9. **동일 인물/동일 대상 shortcut 을 명시한다** — "계약자와 학습자가 본인", "예약자와 방문자가 동일"처럼 앞에서 받은 답이 뒤 질문의 답을 결정하면 다시 묻지 않는다. extraction 에서 동일성 변수(`is_same_person` 등)를 만들고 condition 으로 재사용 path 와 추가질문 path 를 나눈다.
-10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, `update_agent` 의 `flow_data` 는 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. 노드/엣지 몇 개만 바꾸는 작은 구조 변경은 전체 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 ([Incremental Editing](#incremental-editing)).
-11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema(flow-data, minimal)` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
-12. **flow_data 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 본문의 `result.message` 에 자동 보정 안내 텍스트가 실려오므로, 그 내용을 사용자에게 그대로 전달한다 (차단 오류 사전 차단만 안 될 뿐). `validate_flow_data` 가 차단 오류를 던질 때, 그것이 결정론적으로 고칠 수 있는 종류면 `autofix_flow_data(flow_data=...)` 로 한 번에 보정한 결과를 다시 검증할 수 있다 ([Response Handling](#response-handling)).
-13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge`, `message` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
+10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, `update_agent(flow=...)` 는 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. legacy `flow_data` graph 를 명시적으로 다루는 경우에만 `flow_data` / `update_agent_partial` 를 사용한다.
+11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema(flow-data, minimal)` 결과를 기준으로 `flow` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
+12. **flow 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow` 를 보내기 전, MCP `validate_flow(flow=..., level="all")` 를 먼저 호출해 dry-run 한다. `errors` 는 저장을 막는 문제이고, `advisories` 는 저장은 되지만 실행 중 문제가 될 수 있는 항목이다. `errors` 가 비었을 때만 진짜 호출하고, `advisories` 는 사용자에게 한두 줄로 요약 전달한다. legacy `flow_data` 를 다룰 때만 `validate_flow_data` / `autofix_flow_data` 응답의 `fixed_flow_data` 와 `warnings` 를 따른다.
+13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent.agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
 14. **외부 fixture 값은 만들지 않는다** — `transferCall` 은 실제 전화번호/SIP target 이 있을 때만 쓰고, `transferAgent` 는 실제 대상 agent UUID 가 있을 때만 쓴다. `tool` 은 `list_tools` 결과의 실제 id 를 사용한다. `sendSms` 의 발신번호/첨부 파일 key 처럼 운영 리소스가 필요한 값은 시나리오나 API가 제공하지 않으면 비워 두거나 해당 노드를 쓰지 않는다. placeholder 번호, 임의 UUID, 가짜 sender 를 넣지 않는다.
 15. **agent data latency/STT 기본값은 보존한다** — flow agent 생성/수정에서 `data` 를 같이 보낼 때, override 하지 않는 sub-schema(`llm`/`voice` 등)는 OMIT 해 api-server 기본값을 그대로 받는다(기본값을 하드코딩하거나 복사하지 않는다). 명시 override 시 허용값은 `list_llm_models`/`list_voice_models`, shape 는 `get_schema(... detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리한다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움을 추측해 낮추지 않는다.
+16. **flow 검증 중심 작업에서는 agent `data` 를 만들지 않는다** — 사용자가 agent-level prompt/voice/llm/stt 변경을 요구하지 않았고 flow graph 만 생성·검증한다면 `create_agent(name, type="flow", flow=...)` 처럼 최소 payload 로 보낸다. schema 에 보인다는 이유만으로 `data.stt.speed:"high"`, `llm`, `voice`, `speech` 기본값을 채우지 않는다.
+17. **edge 의미를 fallback 으로 뭉개지 않는다** — `begin` 에서 첫 실행 node 로 가는 edge 에는 `skip_user_response:true` 를 붙이지 않는다. extraction 완료, static one-shot 안내 후 다음 단계, API 성공 후 일반 진행처럼 정상 진행이 확정된 edge 는 명시적인 condition 으로 표현하고, fallback 은 실패/else/default 복구 path 에만 쓴다.
+18. **"확인" 요구는 실제 확인 turn 으로 만든다** — 사용자가 수집 정보 요약을 확인받으라고 했으면 endCall 종료 멘트에 요약을 넣는 것만으로 끝내지 않는다. 요약을 읽고 "맞으면 진행, 틀리면 수정"을 받는 conversation node 와 확인/수정 edge 를 둔 뒤 종료한다.
+19. **분기용 제어 변수를 그대로 말하지 않는다** — `is_emergency`, `address_complete`, `access_allowed` 같은 boolean/control variable 은 condition branching 에 쓰는 내부 상태다. endCall 또는 conversation 의 사용자-facing 문구에서 `{{is_emergency}}` 처럼 그대로 읽히게 하지 말고, 자연어 문장이나 별도 string summary 변수로 바꾼다.
 
 ## Response Handling
 
-`validate_flow_data` / `autofix_flow_data` / `create_agent` / `update_agent` 의 검증 결과를 어떻게 다루는지 정리.
+`validate_flow` / `create_agent` / `update_agent` 의 검증 결과를 어떻게 다루는지 정리.
 
-### `validate_flow_data` 응답
+### `validate_flow` 응답
 
-- `valid: true` + `warnings: []` → 안전. 그대로 `create_agent` / `update_agent` 호출.
-- `valid: true` + `warnings: [...]` → 자동 보정이 적용되었거나 권장 사항이 있음. 사용자에게 한두 줄로 요약 후 진행 (예: "api 노드 X 에 실패 fallback 자동 추가됨"). 응답의 `fixed_flow_data` 가 있으면 그것을 그대로 보낸다.
-- `valid: false` → `errors[]` 의 각 항목 (`rule`, `node_id`, `message`, `suggestion`) 을 읽고 1회 수정 후 재검증. 같은 rule 이 다시 나오면 사용자에게 보고하고 멈춘다. 결정론적으로 고칠 수 있는 오류가 섞여 있으면 손으로 고치는 대신 아래 `autofix_flow_data` 로 한 번에 보정한다.
+- `valid: true` + `errors: []` + `advisories: []` → 안전. 그대로 `create_agent(flow=...)` / `update_agent(flow=...)` 호출.
+- `valid: true` + `errors: []` + `advisories: [...]` → 저장은 가능하지만 실행 중 주의 항목이 있음. 사용자에게 한두 줄로 요약 후 진행한다. 예: terminal node 가 begin 에서 도달되지 않거나 skip/fallback wakeup transition 이 연결되지 않은 경우.
+- `valid: false` → `errors[]` 의 각 항목 (`rule`, `node_id`, `message`, `suggestion`) 을 읽고 1회 수정 후 재검증. 같은 rule 이 다시 나오면 사용자에게 보고하고 멈춘다.
+- `deprecated_node_unsupported` → 기존 flow 조회 결과에 read-only compatibility node(`function`, legacy `knowledge`)가 포함된 상태다. public `flow` 로 저장하기 전에 지원되는 node type 으로 마이그레이션한다. 단순 보존 목적이면 `update_agent(flow=...)` 를 호출하지 않는다.
 
-### `autofix_flow_data` 응답
+### Legacy `flow_data` tools
 
-`autofix_flow_data(flow_data=..., apply_fixes?)` 는 결정론적으로 안전한 보정만 적용한다 (DB read-only). `apply_fixes` 없이 호출하면 무엇을 고칠지 preview 만 받고, `apply_fixes=true` 면 보정된 flow_data 를 돌려준다.
+`validate_flow_data` 와 `autofix_flow_data` 는 legacy `flow_data` graph 전용이다. 새 flow 작성에는 쓰지 않는다.
 
-- 보정 결과는 곧장 보내지 말고 `validate_flow_data` 로 다시 dry-run 해 `errors === []` 를 확인한다.
-- 보정으로도 안 풀리는 `errors` (식별자 누락, 정답값 출처 부재 등) 는 사용자/시나리오 입력이 필요한 것이므로 임의로 채우지 말고 보고한다.
-- 어떤 항목이 보정됐는지는 [validate_flow_data 응답](#validate_flow_data-응답) warnings 처리와 같은 톤으로 한두 줄 전달한다.
+- legacy payload 를 유지보수해야 하면 `validate_flow_data(flow_data=...)` 로 dry-run 하고, `errors` 가 비었을 때만 legacy write 를 진행한다.
+- `warnings` 또는 `fixed_flow_data` 가 있으면 자동 보정 preview 이므로 사용자에게 한두 줄로 전달한다.
+- `autofix_flow_data(flow_data=..., apply_fixes=true)` 를 썼다면, 보정본을 곧장 보내지 말고 `validate_flow_data` 로 다시 dry-run 한다.
 
 ### `create_agent` / `update_agent` 422 / 400 응답
 
-응답 envelope 가 `{"error": {"code": "VALIDATION_ERROR", "details": {"source": "flow_validator", "errors": [...]}}}` 형태이면 `details.errors[]` 를 위 dry-run 과 동일한 룰별 처리로 다룬다. 그 외 (스키마 자체 검증 실패) 는 그래프 구조 위반이므로 nodes / edges 자체를 점검한다.
+응답 envelope 가 `{"error": {"code": "VALIDATION_ERROR", "details": {"errors": [...]}}}` 형태이면 `details.errors[]` 를 위 dry-run 과 동일한 룰별 처리로 다룬다. 그 외 schema 검증 실패는 nodes / edges / node data 자체를 점검한다.
 
-### `create_agent` / `update_agent` 200 응답의 `result.message`
+### `advisories` 빠른 참조
 
-응답 본문의 `result.message` 텍스트에 자동 보정 안내가 실려온다 (별도 변형 없이 그대로 전달됨). dry-run 을 생략하고 바로 보낸 경우에도 자동 보정 사실을 이 필드로 확인할 수 있다. 자동 보정이 일어났다는 사실을 사용자에게 한 줄로 알린다 — 모르고 지나가면 다음 작업 때 보정 결과를 사람이 다시 의도와 맞춰야 한다.
-
-### 룰 ID 빠른 참조
-
-차단 오류 (errors, 사전에 막아야 할 것):
-- `transfer_agent_missing_agent` — transferAgent 노드의 `agent.agent_id` 누락
-- `tool_missing_tool_id` — tool 노드의 `tool_id` 누락
+저장은 가능하지만 사용자에게 알려야 하는 실행 중 주의 항목:
+- `unconnected_skip_user_response_transition` — skip/wakeup transition 이 outgoing edge 없이 남아 있음
+- `unconnected_fallback_transition` — fallback transition 이 outgoing edge 없이 남아 있음
 - `no_terminal_reachable` — begin 으로부터 endCall / transferCall / transferAgent 도달 경로 없음
-- `operator_value_type_mismatch` — logic operator 의 numeric value 가 비-numeric
-
-경고 (warnings, 자동 보정 후 알림):
-- `api_missing_failure_edge` — api 노드 fallback edge 자동 추가됨 (단, target 이 endCall 직행이라면 사용자 의도대로 안내 conversation 으로 다시 라우팅 권장)
-- `condition_unknown_variable` — logic 변수 미정의 (오타 의심)
-- `unreachable_node` — 도달 불가 노드
-- `variable_naming_non_snake_case` — 변수명 권장 형식 위반
-
-조용한 자동 보정 (silent, 알림 없음):
-- `trim_variable_names` — 변수명 trailing 공백/개행 trim
-- `inject_nested_defaults` — nested config 누락 필드 default 보충
-- `add_missing_outgoing_edges` — 비-terminal 노드 누락 outgoing edge 자동 추가
-- `add_skip_response_fallback` — `is_skip_user_response: true` 노드 fallback safety net 자동 추가
-- `add_condition_fallback` — condition 노드 fallback edge 자동 추가
 
 ## Incremental Editing
 
-기존 flow 의 노드/엣지 몇 개만 손보는 경우는 `update_agent` 로 nodes/edges 전체를 다시 보내는 대신 `update_agent_partial` 의 ordered ops 를 쓴다. 전체 교체는 보내지 않은 노드를 삭제로 간주하므로, 작은 변경에서는 round-trip 으로 받은 전체 그래프를 그대로 들고 다녀야 하고 한 줄 오타가 다른 노드를 날릴 수 있다.
+새 flow 작성/수정에서는 `update_agent(flow=...)` 로 전체 graph 를 보낸다. 보내지 않은 노드/엣지는 삭제로 간주되므로, 기존 flow 를 수정할 때는 먼저 `get_agent` 로 현재 `flow` 를 읽고, 변경하지 않는 nodes/edges 를 그대로 보존한 뒤 전체 graph 를 다시 보낸다.
+
+단, 현재 `flow.nodes[]` 에 `function` 또는 legacy `knowledge` node 가 있으면 public `flow` write 는 거절된다. 먼저 지원되는 node type 으로 마이그레이션하거나, 해당 legacy graph 를 보존해야 하면 `flow_data` 유지보수 경로를 쓴다.
+
+`update_agent_partial` 는 legacy `flow_data` helper 다. 기존 legacy `flow_data` 를 작은 ordered ops 로 유지보수해야 하는 경우에만 사용한다.
 
 ```text
 update_agent_partial(agent_id="<UUID>", operations=[...], validate_only?)
 ```
 
-- `operations[]` 는 순서대로 적용되는 구조 변경 ops 다 (`addNode` / `removeNode` / `updateNode` / `addEdge` / `removeEdge` 등). 한 호출이 **atomic** — 중간 op 가 실패하면 전부 롤백된다.
-- `validate_only=true` 면 적용하지 않고 dry-run 만 한다. ops 가 합쳐진 결과 그래프에 대한 검증 결과는 [Response Handling](#response-handling) 의 dry-run 룰과 같은 방식으로 다룬다.
-- 새 노드/엣지의 field·enum 은 여전히 schema 기준이다 — [Schema Fetching](#schema-fetching) 의 `flow-data` minimal 한 번으로 받은 $defs 를 op 의 노드 `data` shape 에 그대로 적용한다.
+- `operations[]` 는 legacy `flow_data` graph 에 순서대로 적용되는 구조 변경 ops 다 (`addNode` / `removeNode` / `updateNode` / `addEdge` / `removeEdge` 등). 한 호출이 **atomic** — 중간 op 가 실패하면 전부 롤백된다.
+- `validate_only=true` 면 적용하지 않고 dry-run 만 한다.
+- 새 flow 작성에서 partial ops 로 우회하지 않는다. public `flow` 를 읽고 전체 graph 를 `update_agent(flow=...)` 로 보낸다.
 
 ### update_agent_partial vs update_agent
 
 | 상황 | 도구 |
 |------|------|
-| 노드 1~2개 추가/삭제, 한 노드의 prompt/transition 손보기, 엣지 한 줄 다시 잇기 | `update_agent_partial` (ordered ops) |
-| flow 전면 재설계, 노드 다수 교체, 새 flow 통째로 작성 | `update_agent` (full `flow_data` 교체) |
+| public `flow` 생성/수정 | `create_agent(flow=...)` / `update_agent(flow=...)` |
+| public `flow` 조회 결과에 `function` / legacy `knowledge` node 포함 | 지원되는 node type 으로 마이그레이션 후 `update_agent(flow=...)`; 보존만 필요하면 legacy `flow_data` 경로 |
+| legacy `flow_data` 노드 1~2개 추가/삭제, 한 노드의 prompt/transition 손보기, 엣지 한 줄 다시 잇기 | `update_agent_partial` (ordered ops) |
+| legacy `flow_data` 전체 교체 | `update_agent(flow_data=...)` (deprecated compatibility) |
 
-판단이 애매하면: 직전 `get_agent` 그래프를 거의 그대로 두고 일부만 바꾸면 partial, 그래프를 새로 그리는 수준이면 full 교체.
+판단이 애매하면 public `flow` 를 우선한다. legacy helper 는 기존 `flow_data` graph 를 명시적으로 보존해야 할 때만 쓴다.
 
 ## Ownership Boundary
 
@@ -232,16 +229,17 @@ update_agent_partial(agent_id="<UUID>", operations=[...], validate_only?)
 ## Related Resources
 
 ### MCP Tools (vox.ai)
-- `create_agent` — flow 에이전트 생성 (`type: "flow"`)
-- `update_agent` — 에이전트 설정 수정 (`flow_data` 는 전체 교체)
-- `update_agent_partial(agent_id, operations[], validate_only?)` — 작은 구조 변경용 ordered ops (atomic). 노드/엣지 몇 개만 바꿀 때 전체 교체 대신 사용 ([Incremental Editing](#incremental-editing)).
-- `get_agent` — 기존 에이전트 설정 확인 (flow_data 포함)
+- `create_agent` — flow 에이전트 생성 (`type: "flow"`, `flow=...`)
+- `update_agent` — 에이전트 설정 수정 (`flow` 는 전체 교체)
+- `update_agent_partial(agent_id, operations[], validate_only?)` — legacy `flow_data` graph 작은 구조 변경용 ordered ops (atomic). 새 flow 작성에는 사용하지 않는다 ([Incremental Editing](#incremental-editing)).
+- `get_agent` — 기존 에이전트 설정 확인 (`flow` 포함, `flow_data` 는 deprecated compatibility)
 - `list_agents` — 에이전트 목록
-- `get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal')` — **default 호출.** envelope + 모든 node type 의 `data` shape 가 한 응답에 들어온다. `flow_data` 구성 전 1회 호출.
+- `get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal')` — **default 호출.** public `flow` graph + edge condition + 모든 node type 의 `data` shape 가 한 응답에 들어온다. `flow` 구성 전 1회 호출.
 - `list_schemas(namespace='flow-schema', category='flow-node')` — narrow case 보조. 사용 가능한 node type 카탈로그 (`node-conversation`, `node-api`, ...). schema body 는 빠진 metadata only.
 - `get_schema(namespace='flow-schema', schema_type='node-{type}')` — narrow case 보조. 특정 node 의 `data` shape 만. 일반적으로는 위 `flow-data` 한 번으로 충분하므로 호출하지 않는다.
-- `validate_flow_data(flow_data=...)` — flow_data dry-run. 응답: `{valid, fixed_flow_data, warnings, errors}`. `create_agent` / `update_agent` 직전에 호출해 차단 오류를 사전 차단하고 자동 보정 결과를 사용자에게 전달한다.
-- `autofix_flow_data(flow_data=..., apply_fixes?)` — 결정론적으로 안전한 보정만 적용 (DB read-only). `apply_fixes` 없이 preview, `apply_fixes=true` 면 보정본 반환. 보정 후 `validate_flow_data` 로 재검증한다.
+- `validate_flow(flow=..., level='critical'|'runtime'|'all')` — public `flow` dry-run. 응답: `{valid, errors, advisories}`. `create_agent(flow=...)` / `update_agent(flow=...)` 직전에 호출한다.
+- `validate_flow_data(flow_data=...)` — deprecated legacy `flow_data` graph dry-run.
+- `autofix_flow_data(flow_data=..., apply_fixes?)` — deprecated legacy `flow_data` 보정 helper.
 
 ### Docs (vox.ai docs / vox-docs)
 - `https://docs.tryvox.co/docs/build/flow/overview` — 플로우 에이전트 개요

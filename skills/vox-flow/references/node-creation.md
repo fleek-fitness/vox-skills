@@ -2,7 +2,7 @@
 
 콜센터/OB/CS 스크립트나 확정된 flowchart 를 `## name / ## content / ## transition conditions` 형식의 flow-node markdown 으로 변환한다.
 
-이 문서의 출력은 **대시보드 입력/리뷰용 설계 markdown** 이다. MCP/API `flow_data` JSON 이 아니다. markdown 을 JSON 으로 변환할 때는 반드시 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 를 호출하고, schema endpoint 결과의 field/enum/required 여부를 따른다.
+이 문서의 출력은 **대시보드 입력/리뷰용 설계 markdown** 이다. MCP/API `flow` JSON 이 아니다. markdown 을 JSON 으로 변환할 때는 반드시 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 를 호출하고, schema endpoint 결과의 field/enum/required 여부를 따른다.
 
 ## Read only what you need
 
@@ -72,6 +72,7 @@
 - 전환조건은 고객 발화나 이미 추출된 변수 기준으로 쓴다. "안내 완료", "처리 완료" 같은 에이전트 행동만으로 exit 를 만들지 않는다.
 - 정보 수집/동의 conversation 은 완료 조건이 충족되면 즉시 다음 실행 노드로 handoff 하도록 쓴다. 완료 후 "확인했습니다. 진행하겠습니다" 같은 filler 만 말하고 같은 노드에 남는 설계는 피한다.
 - conversation 노드가 "일치합니다", "조회되었습니다", "검증되었습니다" 라고 확정하려면 그 전에 API 응답 변수 또는 preset dynamic variable 로 정답값이 실제 존재해야 한다. 정답값 출처가 없으면 정보 수집/확인 요청만 하고, 검증 표현은 쓰지 않는다.
+- 사용자가 수집 정보 요약 확인을 요구하면, endCall 종료 멘트에 요약만 넣지 않는다. 요약을 들려주고 "맞으면 진행, 틀리면 수정"을 받는 confirmation conversation node 와 수정 path 를 설계한다.
 - 최종 one-shot 복구 안내는 가능하면 endCall 종료 멘트에 넣는다. static conversation → endCall 은 반복 위험이 있어, 사용자의 추가 응답을 받아야 하는 단계가 아니라면 만들지 않는다.
 - 업무 API 성공 후 SMS 실패 path 는 업무 결과를 보존하는 별도 종료 멘트로 설계한다. SMS 실패를 전체 예약/등록/접수 실패로 뒤집지 않는다.
 - 예시 멘트는 큰따옴표로 감싼다.
@@ -87,23 +88,29 @@
 - conversation 노드에 static/generated 의도가 명시되어 있는가?
 - generated conversation 에 첫 발화와 노드 안 재질문 방식이 명시되어 있는가?
 - JSON/MCP 생성 직전 generated conversation 의 `data.prompt` 에 역할, 목표, 범위, 변수, 금지사항, 전환 판단이 채워져 있고 `[[...]]` 작성용 placeholder 가 남지 않았는가?
-- 검증/비교 노드가 참조하는 정답값이 API responseVariables 또는 preset dynamic variables 로 실제 생성되는가?
+- 검증/비교 노드가 참조하는 정답값이 API `response_variables` 또는 preset dynamic variables 로 실제 생성되는가?
 - 동일 인물/동일 대상 답변을 받았을 때 뒤 질문을 생략하거나 값을 재사용하는 분기가 있는가?
 - extraction 노드는 추출 소스, 변수명, 타입, 기대 출력 예시가 있는가?
 - condition 노드는 앞선 extraction/api 에서 만든 변수를 소비하는가?
 - api 노드는 호출 목적, 대기 멘트 여부, 응답 변수 의도가 있는가?
 - transfer/sendSms/tool 실패 path 가 필요한 경우 fallback edge 로 보낼 의도가 명시되어 있는가?
+- 수집 정보 확인을 요구받은 flow 라면 확인/수정 conversation turn 이 실제로 있는가?
 - JSON 으로 변환하려는 경우 schema endpoint 호출 + dry-run 단계가 표시되어 있는가? (식별자 필수 / dry-run / warnings 전달 등 세부 체크는 [flow-review.md](flow-review.md) 의 D · E · F 섹션 참조)
 
 ## JSON conversion gate
 
-이 markdown 을 MCP/API `flow_data` 로 변환하기 전에는 아래 순서를 따른다.
+이 markdown 을 MCP/API `flow` 로 변환하기 전에는 아래 순서를 따른다.
+핵심 루프는 **schema 조회 → fill → validate → save** 다.
 
 1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 호출 — 한 응답에 envelope + 모든 node `data` shape ($defs) 가 함께 들어온다. per-node `get_schema(node-{type})` 는 일반 케이스에선 필요 없다 (narrow case 는 SKILL.md 의 [Schema Fetching](../SKILL.md#schema-fetching) 참조).
 2. agent `data` 도 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 호출.
 3. `node-creation.md`의 markdown 용어를 JSON field 로 직접 복사하지 않는다.
 4. fallback/실패/else path 는 자동 생성된다고 가정하지 말고 `edges` 로 명시한다.
-5. `isSkipUserResponse:true` 는 extraction skip transition 처럼 사용자 발화를 기다리지 않는 것이 명확한 실행 row 에만 쓴다. static conversation → endCall/next row 와 fallback row 에는 붙이지 않는다.
-6. 업무 성공 뒤 SMS 실패 fallback 이 있으면, fallback target 이 generic failure 가 아니라 "업무는 완료, 문자만 실패" 종료 멘트인지 확인한다.
-7. `validate_flow_data(flow_data=...)` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `warnings` 는 사용자에게 한 줄로 전달한다. 결정론적으로 고칠 수 있는 `errors` 는 손으로 고치지 말고 `autofix_flow_data(flow_data=...)` 로 보정한 뒤 다시 dry-run 한다.
-8. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인한다. 응답 본문의 `result.message` 에 자동 보정 안내가 있으면 함께 전달한다. 기존 flow 의 노드/엣지 몇 개만 바꾸는 경우는 full 교체 대신 `update_agent_partial` 의 ordered ops 를 쓴다 (SKILL.md [Incremental Editing](../SKILL.md#incremental-editing)).
+5. public `flow` 의 node `data` 에 legacy routing key 를 넣지 않는다: `transitions`, `logicalTransitions`, `globalNodeSettings`. edge 에도 `sourceHandle`, `targetHandle`, `type:"custom"` 을 넣지 않는다.
+6. 기존 flow 수정이면 `function` / legacy `knowledge` node 를 그대로 public `flow` write 에 포함하지 않는다. 지원되는 node type 으로 마이그레이션하거나 legacy `flow_data` 경로를 쓴다.
+7. `skip_user_response:true` 는 사용자 발화를 기다리지 않는 것이 명확한 edge 에만 쓴다. `begin` outgoing edge, static conversation → endCall/next edge, fallback edge 에는 습관적으로 붙이지 않는다.
+8. extraction 완료나 static one-shot 안내 후 정상 진행 edge 를 fallback 으로 만들지 않는다. fallback 은 실패/else/default 복구 path 로 남기고, 정상 진행은 schema 가 허용하는 명시 condition 으로 표현한다.
+9. 업무 성공 뒤 SMS 실패 fallback 이 있으면, fallback target 이 generic failure 가 아니라 "업무는 완료, 문자만 실패" 종료 멘트인지 확인한다.
+10. flow graph 만 생성/검증하면 agent 최상위 `data` 는 생략한다. agent-level 설정을 실제로 바꿀 때만 schema 를 확인하고 필요한 subtree 만 보낸다.
+11. `validate_flow(flow=..., level="all")` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `advisories` 는 사용자에게 한 줄로 전달한다.
+12. `create_agent(flow=...)` / `update_agent(flow=...)` 후 `get_agent` 로 round-trip 확인한다. 기존 flow 의 노드/엣지 몇 개만 바꿔도 public `flow` 는 전체 graph replacement 이므로, 변경하지 않는 nodes/edges 를 그대로 보존해서 다시 보낸다.

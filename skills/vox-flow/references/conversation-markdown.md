@@ -25,9 +25,38 @@ generated conversation 의 `data.prompt` 에는 완료 시 아래 의미를 명�
 - API 응답 변수나 preset dynamic variable 로 정답값이 없는 상태에서 "시스템 정보와 일치한다", "본인 확인이 완료됐다"처럼 검증 완료를 말하지 않는다. conversation 은 답변을 수집하고, 검증은 extraction 이후 api/condition 에 맡긴다.
 - 고객이 "본인입니다", "같은 사람입니다"처럼 앞 질문과 뒤 질문의 대상이 같다고 말하면 같은 정보를 다시 묻지 않는다. 이런 shortcut 은 extraction 변수와 condition 분기로 JSON 에 반영한다.
 - 동의 확인 노드에서는 고객이 "네, 진행해 주세요"처럼 명확히 동의하면 즉시 동의 전환을 선택한다. 같은 질문을 반복하지 않는다.
-- firstMessage 는 질문/안내 한 번이고, 전환조건 성립 후의 요약 멘트는 다음 node 또는 endCall message 에 둔다.
+- first_message 는 질문/안내 한 번이고, 전환조건 성립 후의 요약 멘트는 다음 node 또는 endCall message 에 둔다.
+- 수집 정보 요약을 고객에게 확인받아야 하면 별도 confirmation conversation node 를 둔다. endCall 에서 요약만 읽고 종료하면 고객이 "맞다/틀리다"를 말할 기회가 없으므로 확인 turn 이 아니다.
 
 정적 one-shot 안내만 하고 바로 종료해야 하는 경우에는 별도 static conversation node 를 만들기보다, 가능하면 **endCall node 의 종료 멘트**에 그 안내를 넣는다. static conversation → endCall 을 일반 transition 으로 연결하면 런타임이 사용자 응답을 기다리며 같은 고정 문구를 반복할 수 있다.
+
+## Summary confirmation pattern
+
+사용자가 "수집한 내용을 확인받아라", "요약 후 맞는지 물어봐라"라고 요구하면 아래 구조를 쓴다.
+
+```md
+## name
+수집 정보 확인
+
+## content
+### 목적
+1. 수집한 정보를 고객에게 짧게 요약하고 맞는지 확인한다.
+
+### 모드
+- message mode: generated
+- first_message: "제가 확인한 내용은 {{summary_fields}}입니다. 맞으면 맞다고 말씀해 주시고, 수정이 필요하면 어떤 부분인지 알려주세요."
+
+### 노드 내 대화 처리
+1. 고객이 맞다고 하면 확인 완료 전환을 선택한다.
+2. 고객이 수정 사항을 말하면 수정 필요 전환을 선택한다.
+3. 애매하면 한 번만 "맞는지, 수정이 필요한지"를 다시 묻는다.
+
+## transition conditions
+- 확인 완료: 고객이 요약 내용이 맞다고 명확히 말한 경우.
+- 수정 필요: 고객이 요약 내용 중 일부가 틀렸거나 수정해야 한다고 말한 경우.
+```
+
+확인 완료는 endCall 또는 다음 실행 노드로 보내고, 수정 필요는 정보 수집 conversation 으로 되돌린다.
 
 ## Static format
 
@@ -84,31 +113,32 @@ generated conversation 의 `data.prompt` 에는 완료 시 아래 의미를 명�
 
 ## Markdown → JSON 매핑
 
-설계 markdown 의 표기는 LLM 가독용이다. 실제 JSON `flow_data` 로 옮길 때는 다음 매핑을 사용한다.
+설계 markdown 의 표기는 LLM 가독용이다. 실제 JSON `flow` 로 옮길 때는 다음 매핑을 사용한다.
 
 | Markdown 표기 | JSON `data` 필드 |
 |---|---|
 | `## name` | `data.name` (string) |
-| `message mode: static` | `data.promptType: "static"` + `data.staticSentence: "<발화 멘트 그대로>"` |
-| `message mode: generated` | `data.promptType: "dynamic"` + `data.firstMessage: "<진입 시 첫 발화>"` + `data.prompt: "<현재 노드의 역할/목표/처리/금지를 채운 node-scoped LLM system prompt>"` |
-| `first_message: "..."` | `data.firstMessage` |
-| `transition conditions` 의 각 줄 | `data.transitions[].id` (자유 식별자) + `data.transitions[].condition: "<exit 조건 한국어 문장>"` |
+| `message mode: static` | `data.prompt_type: "static"` + `data.static_sentence: "<발화 멘트 그대로>"` |
+| `message mode: generated` | `data.prompt_type: "dynamic"` + `data.first_message: "<진입 시 첫 발화>"` + `data.prompt: "<현재 노드의 역할/목표/처리/금지를 채운 node-scoped LLM system prompt>"` |
+| `first_message: "..."` | `data.first_message` |
+| `transition conditions` 의 각 줄 | 해당 source node 에서 나가는 `edges[]` 한 개 + `edge.condition:{type:"ai", prompt:"<exit 조건 한국어 문장>"}` |
 
-**주의**: `promptType` 의 enum 은 v3 에서 `"static"` 또는 `"dynamic"` 이다. 설계 markdown 의 `generated` 라는 단어를 그대로 JSON 에 넣지 않는다.
+**주의**: `prompt_type` 의 enum 은 v3 에서 `"static"` 또는 `"dynamic"` 이다. 설계 markdown 의 `generated` 라는 단어를 그대로 JSON 에 넣지 않는다.
 
 ## Generated prompt 채우기
 
 `vox-agents/references/voice-ai-prompt-template.md` 는 single prompt agent 전체를 위한 템플릿이다. flow conversation 노드에서는 전체 템플릿을 복사하지 말고, 현재 노드 범위로 줄인 `data.prompt` 를 작성한다.
 
-- 사용자가 "노드 프롬프트", "node prompt", "이 conversation node 의 prompt" 를 요청하면 산출물은 해당 노드의 `data.firstMessage` / `data.prompt` / 전환 판단만이다. 전체 agent system prompt, 도구 계약, 전역 대화 흐름을 고봉밥으로 출력하지 않는다.
-- `data.firstMessage`: 노드 진입 시 실제로 말할 첫 문장/질문 하나.
+- 사용자가 "노드 프롬프트", "node prompt", "이 conversation node 의 prompt" 를 요청하면 산출물은 해당 노드의 `data.first_message` / `data.prompt` / 전환 판단만이다. 전체 agent system prompt, 도구 계약, 전역 대화 흐름을 고봉밥으로 출력하지 않는다.
+- `data.first_message`: 노드 진입 시 실제로 말할 첫 문장/질문 하나.
 - `data.prompt`: 첫 발화 이후에도 유지되는 비공개 지시문. 노드의 역할, 목표, 처리 규칙, 금지사항, 전환 판단을 적는다.
-- static 노드는 `data.prompt` 를 만들지 않는다. 정확한 고정 문구는 `data.staticSentence` 에만 둔다.
-- `data.promptType` 은 반드시 쓴다. `staticSentence` 만 두고 `promptType:"static"` 을 빼면 런타임은 dynamic 기본값으로 해석해 고정 문구를 무시할 수 있다.
-- 일반 transition row 는 반드시 `condition` 을 채운다. `null`, 빈 문자열, `"None"` 은 자동 진행 조건이 아니며 LLM이 선택할 의미가 없어 dead transition 이 된다.
-- static 노드가 안내 멘트 후 endCall 또는 다음 노드로 바로 넘어가야 해도 transition row 에 `isSkipUserResponse:true` 를 붙이지 않는다. 일반 transition row 를 만들고 edge.sourceHandle 로 그 row id 를 연결한다.
+- static 노드는 `data.prompt` 를 만들지 않는다. 정확한 고정 문구는 `data.static_sentence` 에만 둔다.
+- `data.prompt_type` 은 반드시 쓴다. `static_sentence` 만 두고 `prompt_type:"static"` 을 빼면 런타임은 dynamic 기본값으로 해석해 고정 문구를 무시할 수 있다.
+- 일반 out-edge 는 반드시 의미 있는 `condition` 을 가진다. `null`, 빈 문자열, `"None"` 은 자동 진행 조건이 아니며 LLM이 선택할 의미가 없어 dead route 가 된다.
+- static 노드가 안내 멘트 후 endCall 또는 다음 노드로 바로 넘어가야 해도 edge 에 `skip_user_response:true` 를 습관적으로 붙이지 않는다. 정말 사용자 응답을 기다리지 않는 edge 인지 schema 와 런타임 의도를 확인한다.
+- static one-shot 안내 후 정상 진행 edge 를 fallback 으로 만들지 않는다. "안내 멘트 발화 후 다음 단계로 진행"처럼 명시적인 condition 을 두고, fallback 은 실패/else/default 복구 path 로 남긴다.
 - 단, one-shot 안내 후 바로 종료만 하는 static node 는 반복 위험이 있으므로 endCall 종료 멘트로 흡수하는 편을 우선한다.
-- 최종 `flow_data` JSON 에는 `[[...]]` 작성용 placeholder 를 남기지 않는다. `[[...]]` 는 작성 중 빈칸이고, `{{...}}` 만 런타임 변수다.
+- 최종 `flow` JSON 에는 `[[...]]` 작성용 placeholder 를 남기지 않는다. `[[...]]` 는 작성 중 빈칸이고, `{{...}}` 만 런타임 변수다.
 
 ### Template 축소 매핑
 
@@ -145,7 +175,7 @@ generated conversation 의 `data.prompt` 는 아래 구조를 현재 노드 정�
 - 애매한 답변에는 가장 중요한 확인 질문 하나만 합니다.
 
 # 노드 내 처리
-1. 기본 질문: "[firstMessage와 같은 의도의 질문]"
+1. 기본 질문: "[first_message와 같은 의도의 질문]"
 2. [상황 A]이면 [짧은 응대/재질문].
 3. [상황 B]이면 [짧은 응대/재질문].
 4. 재질문은 최대 [N]회까지만 합니다.
@@ -163,11 +193,12 @@ generated conversation 의 `data.prompt` 는 아래 구조를 현재 노드 정�
 
 ### 작성 체크
 
-- `firstMessage` 는 첫 발화만, `prompt` 는 노드 운영 규칙만 담았는가?
+- `first_message` 는 첫 발화만, `prompt` 는 노드 운영 규칙만 담았는가?
 - prompt 안에 `[[...]]` placeholder 가 남아 있지 않은가?
 - 전체 agent prompt 를 통째로 붙여 넣지 않았는가?
 - API/SMS/tool/endCall 이 할 일을 conversation 노드가 완료한 것처럼 말하지 않는가?
 - transition condition 과 prompt 의 전환 판단이 같은 의미를 가리키는가?
+- 요약 확인 요구가 있으면 확인/수정 edge 를 가진 confirmation node 를 만들었는가?
 
 ## Content boundary
 
