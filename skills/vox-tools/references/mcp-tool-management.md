@@ -11,7 +11,7 @@ vox.ai 에이전트는 두 종류의 도구를 사용합니다.
 | 종류 | `end_call`, `transfer_call`, `transfer_agent`, `send_sms`, `send_dtmf` | HTTP/API |
 | 범위 | 플랫폼 전체 공통 | 조직(organization) 단위 |
 | 생성 | 불가 (플랫폼 제공) | `create_tool()` |
-| 에이전트 연결 | `update_agent(builtInTools=[...])` | `update_agent(toolIds=[...])` |
+| 에이전트 연결 | `update_agent(data={"builtInTools": [...]})` | `update_agent(toolIds=[...])` |
 
 - **빌트인 도구**: 플랫폼이 제공하는 기본 도구. 별도 생성/연결 엔드포인트 없이 `data.builtInTools[]` 배열로 에이전트에 직접 설정(파라미터)을 지정하여 장착합니다.
   - 상세: See [mcp-built-in-tools.md](mcp-built-in-tools.md)
@@ -25,35 +25,42 @@ vox.ai 에이전트는 두 종류의 도구를 사용합니다.
 
 ### 1. 빌트인 도구 payload 스키마 확인
 
-```
-get_schema(namespace="tool-schema", category="built_in")
+```text
+list_schemas(namespace="tool-schema", category="built_in", include_schema=true)
+get_schema(namespace="tool-schema", schema_type="transfer_call")
 ```
 
 ### 2. 에이전트 생성
 
 ```
-create_agent(name="CS 상담 에이전트", prompt="당신은 CS 상담 에이전트입니다...")
+create_agent(
+  name="CS 상담 에이전트",
+  type="single_prompt",
+  data={"prompt": {"prompt": "당신은 CS 상담 에이전트입니다..."}}
+)
 ```
 
 ### 3. 빌트인 도구 장착
 
-```
+```text
 update_agent(
   agent_id="agent-uuid",
-  builtInTools=[
-    {"toolType": "end_call", "name": "end_call", "description": "통화를 종료합니다."},
-    {
-      "toolType": "transfer_call", "name": "transfer_to_human",
-      "transferConfiguration": [{"transferType": "phone", "transferTo": "010-1234-5678"}],
-      "transferType": "cold"
-    }
-  ]
+  data={
+    "builtInTools": [
+      {"toolType": "end_call", "name": "end_call", "description": "통화를 종료합니다."},
+      {
+        "toolType": "transfer_call", "name": "transfer_to_human",
+        "transferConfigurations": [{"transferType": "phone", "transferTo": "010-1234-5678"}]
+      }
+    ]
+  }
 )
 ```
 
 `builtInTools`는 **교체(replace)** 방식입니다.
 - 일부만 바꾸려면 `get_agent()`로 현재 `data.builtInTools`를 읽고
-- 원하는 항목을 추가/제거한 전체 배열을 다시 `update_agent(builtInTools=[...])`로 저장하세요.
+- 원하는 항목을 추가/제거한 전체 배열을 다시 `update_agent(data={"builtInTools": [...]})`로 저장하세요.
+- `end_call.speakDuringExecution`, `transferConfigurations`, `send_sms.responseMode`, `send_dtmf.allowInterruption`처럼 기본값이 아닌 public schema 필드는 기존 객체에서 그대로 보존하세요.
 
 ### 4. 커스텀 도구 생성 & 연결
 
@@ -94,7 +101,7 @@ get_agent(agent_id="agent-uuid")
 
 ### 도구 장착 순서
 
-`update_agent`의 도구 관련 입력은 `builtInTools`, `toolIds`이며 모두 **교체(replace)** 방식입니다.
+`update_agent`의 built-in tool 입력은 `data.builtInTools`이며 **교체(replace)** 방식입니다.
 - 단건 추가/해제도 `현재 목록 조회 -> 목록 수정 -> 전체 목록 저장` 순서로 처리하세요.
 
 ### 커스텀 도구 삭제

@@ -2,7 +2,7 @@
 
 빌트인 도구(end_call, transfer_call, transfer_agent, send_sms, send_dtmf)의 장착, 해제 및 타입별 파라미터 상세입니다.
 
-빌트인 도구는 별도 생성/연결 엔드포인트가 없습니다. 에이전트 데이터 객체의 `data.builtInTools[]` 배열로 존재하며, 이 배열을 `create_agent` / `update_agent`로 통째로 보내서 장착·해제합니다.
+빌트인 도구는 별도 생성/연결 엔드포인트가 없습니다. 에이전트 데이터 객체의 `data.builtInTools[]` 배열로 존재하며, 이 배열을 `create_agent` / `update_agent(data={"builtInTools": [...]})`로 통째로 보내서 장착·해제합니다.
 
 ## payload 스키마 조회: list_schemas / get_schema
 
@@ -13,9 +13,11 @@ list_schemas(namespace="tool-schema", category="built_in", include_schema=true)
 get_schema(namespace="tool-schema", schema_type="transfer_agent")
 ```
 
-## 장착: update_agent(builtInTools=[...])
+## 장착: update_agent(data={"builtInTools": [...]})
 
 `builtInTools`는 배열 전체 교체(replace) 방식입니다. `toolType`에 따라 item 객체 구조가 다릅니다.
+
+수정 전에는 `get_agent()`로 현재 `data.builtInTools`를 읽고, 기본값이 아닌 tool-level 설정을 보존합니다. 프롬프트/LLM만 바꾸는 업데이트라면 `builtInTools`를 보내지 않습니다. backend PATCH는 전송되지 않은 `data` sub-key를 유지하지만, `builtInTools`를 전송하면 그 배열 전체를 교체합니다.
 
 ### end_call
 
@@ -40,8 +42,7 @@ get_schema(namespace="tool-schema", schema_type="transfer_agent")
   "toolType": "transfer_call",
   "name": "transfer_to_agent",
   "description": "고객이 상담원 연결을 요청할 때 전환합니다.",
-  "transferConfiguration": [{"transferType": "phone", "transferTo": "010-1234-5678"}],
-  "transferType": "cold"
+  "transferConfigurations": [{"transferType": "phone", "transferTo": "010-1234-5678"}]
 }
 ```
 
@@ -50,16 +51,12 @@ get_schema(namespace="tool-schema", schema_type="transfer_agent")
 | `toolType` | 필수 | | `"transfer_call"` |
 | `name` | 필수 | | 도구 이름 (고유) |
 | `description` | 선택 | | 호출 조건 설명 |
-| `transferConfiguration` | 필수 | | 전환 대상 배열 (최소 1개) |
-| `transferConfiguration[].transferType` | 선택 | `"phone"` | `"phone"` 또는 `"sip"` |
-| `transferConfiguration[].transferTo` | 필수 | | 전화번호 또는 SIP URI |
-| `transferConfiguration[].transferCondition` | 선택 | | 전환 조건 설명 |
-| `transferType` | 선택 | `"cold"` | `"cold"` 또는 `"warm"` |
-| `displayedCallerId` | 선택 | `"agent"` | `"agent"` 또는 `"user"` |
-| `transferMessageType` | 선택 | `"dynamic"` | warm 시 메시지 타입: `"static"` / `"dynamic"` |
-| `warmTransferPrompt` | 선택 | | warm + dynamic: AI 브리핑 프롬프트 |
-| `warmTransferStaticSentence` | 선택 | | warm + static: 고정 브리핑 문장 |
-| `sipHeaders` | 선택 | `[]` | SIP 헤더 배열 (최대 10개, `{name, value}`) |
+| `transferConfigurations` | 필수 | | 전환 대상 배열. v3 public/API canonical field |
+| `transferConfigurations[].transferType` | 선택 | `"phone"` | `"phone"` 또는 `"sip"` |
+| `transferConfigurations[].transferTo` | 필수 | | 전화번호 또는 SIP URI |
+| `transferConfigurations[].transferCondition` | 선택 | | 전환 조건 설명 |
+
+runtime/DB legacy shape는 singular `transferConfiguration`을 쓰지만, v3 API와 MCP round-trip 기준은 `transferConfigurations`입니다.
 
 **cold vs warm**:
 
@@ -110,10 +107,13 @@ MCP/v3에서는 기존 `transferAgentId` / `transferAgentVersion` 대신 `agent`
 | `toolType` | 필수 | | `"send_sms"` |
 | `name` | 필수 | | 도구 이름 (고유) |
 | `description` | 선택 | | 호출 조건 설명 |
+| `responseMode` | 선택 | `"wait"` | `"fire_and_forget"` 이면 발송 결과를 기다리지 않고 대화 진행 (늦은 결과는 대화에 미주입) |
 | `smsMessageType` | 선택 | `"static"` | `"static"` (고정) 또는 `"dynamic"` (AI 생성) |
 | `smsMessagePrompt` | 선택 | | dynamic: AI가 SMS 생성할 프롬프트 |
 | `smsMessageStaticSentence` | 선택 | | static: 발송할 고정 문장 |
-| `responseMode` | 선택 | `"wait"` | `"fire_and_forget"` 이면 발송 결과를 기다리지 않고 대화 진행 (늦은 결과는 대화에 미주입) |
+| `smsMessageStaticTitle` | 선택 | | static: 선택 제목 |
+| `smsMessageStaticImageFileKeys` | 선택 | | static: MMS 이미지 file key, 최대 3개 |
+| `smsFromNumber` | 선택 | | 조직이 보유한 SMS 발신 가능 번호. 생략 시 통화 context 기본값 |
 
 ### send_dtmf
 
@@ -130,27 +130,33 @@ IVR 메뉴 탐색을 위한 DTMF 톤을 전송합니다.
 | `toolType` | 필수 | | `"send_dtmf"` |
 | `name` | 필수 | | 도구 이름 (고유) |
 | `description` | 선택 | | 호출 조건 설명 |
+| `allowInterruption` | 선택 | `true` | DTMF 도구 실행 중 사용자 발화로 끼어들 수 있는지 |
 
-## 공통 선택 필드
+## 필드 보존 주의
 
-모든 빌트인 도구에 공통:
+`builtInTools`를 보내면 배열 전체가 교체됩니다. 일부 도구만 수정하더라도 `get_agent()` 결과에서 수정하지 않는 도구 객체를 그대로 유지하고, 현재 public schema에 없는 필드는 임의로 추가하지 마세요.
 
-| 필드 | 기본값 | 설명 |
-|-----|--------|------|
-| `speakDuringExecution` | `{"enabled": false, "messages": []}` | 실행 중 발화 설정 |
-| `allowInterruptionDuringExecution` | 미지정 | 실행 중 인터럽트 허용 |
+특히 다음 public 필드는 기본값으로 재구성하면 실제 통화 동작이 바뀔 수 있습니다.
 
-`speakDuringExecution` 예시: `{"enabled": true, "messages": ["잠시만 기다려 주세요."]}`
+| 도구 | 보존할 대표 필드 |
+|------|------------------|
+| `end_call` | `speakDuringExecution` |
+| `transfer_call` | `transferConfigurations` 전체 |
+| `transfer_agent` | `agent`, `preserveChatContext` |
+| `send_sms` | `responseMode`, `smsMessageType`, `smsMessagePrompt`, `smsMessageStaticSentence`, `smsMessageStaticTitle`, `smsMessageStaticImageFileKeys`, `smsFromNumber` |
+| `send_dtmf` | `allowInterruption` |
 
-## 해제: update_agent(builtInTools=[...])
+## 해제: update_agent(data={"builtInTools": [...]})
 
 별도 해제 엔드포인트는 없습니다. 제거하려는 도구를 **제외한** 최종 배열을 `update_agent`로 다시 보내면 해당 도구가 빠집니다.
 
 ```
 update_agent(
   agent_id="agent-uuid",
-  builtInTools=[
-    {"toolType": "transfer_call", "name": "transfer_to_agent", "transferConfiguration": [{"transferType": "phone", "transferTo": "010-1234-5678"}]}
-  ]
+  data={
+    "builtInTools": [
+      {"toolType": "transfer_call", "name": "transfer_to_agent", "transferConfigurations": [{"transferType": "phone", "transferTo": "010-1234-5678"}]}
+    ]
+  }
 )
 ```
