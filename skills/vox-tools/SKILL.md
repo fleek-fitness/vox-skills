@@ -19,7 +19,8 @@ MCP 서버 연결 설정(Claude, Cursor, ChatGPT 등)은 `vox-onboarding` 스킬
 
 - 작업 유형에 맞는 reference를 먼저 열고 그 규칙을 적용한다.
 - vox 플랫폼의 도구명/필드/엔드포인트는 **확인된 목록**이 없으면 만들어내지 않는다 — 존재하지 않는 도구를 안내하면 고객이 디버깅에 시간을 낭비한다.
-- MCP로 실제 업데이트는 유저가 "적용/업데이트"를 명시했을 때만 실행한다 — `builtInTools`와 `toolIds`는 전체 교체(replace) 방식이라 실수로 실행하면 기존 도구가 전부 지워진다.
+- MCP로 실제 업데이트는 유저가 "적용/업데이트"를 명시했을 때만 실행한다 — `data.builtInTools`와 `data.toolIds`는 전체 교체(replace) 방식이라 실수로 실행하면 기존 도구가 전부 지워진다.
+- `data.builtInTools`를 보낼 때는 먼저 `get_agent()`로 현재 도구 객체를 읽고, `list_schemas(namespace="tool-schema", category="built_in", include_schema=true)` 또는 `get_schema(namespace="tool-schema", schema_type="<toolType>")`로 현재 schema를 확인한다. 프롬프트/LLM만 바꾸는 업데이트라면 `builtInTools`를 보내지 않는다.
 - 도구 이름 규칙: 영문/숫자/`_`/`-`만 허용, 1-64자, 에이전트 내 중복 금지.
 
 ## Ownership Boundary

@@ -78,6 +78,18 @@ list_schemas(namespace="tool-schema", category="built_in")
 get_schema(namespace="tool-schema", schema_type="<built-in-tool-schema>")
 ```
 
+`data.builtInTools`는 전체 배열 교체(replace) 방식이다. 프롬프트/LLM만 바꾸는 update에서는 보내지 않는다. backend PATCH는 전송되지 않은 `data` sub-key를 기존 값으로 유지하므로, `builtInTools`를 생략해야 기존 도구 설정이 보존된다. 보내야 한다면 `get_agent()`로 현재 배열을 읽고, 각 도구 객체의 기본값이 아닌 설정을 그대로 보존한 전체 배열을 다시 보낸다.
+
+특히 다음 값은 재구성 중 default로 되돌리면 실제 통화 동작이 바뀐다.
+
+| 도구 | 보존해야 하는 대표 필드 |
+|------|-------------------------|
+| `end_call` | `speakDuringExecution` |
+| `transfer_call` | `transferConfigurations` 전체와 각 item 안의 `transferType`, `transferTo`, `transferCondition` 등 schema/runtime 필드 |
+| `transfer_agent` | `agent`, `preserveChatContext` |
+| `send_sms` | `responseMode`, `smsMessageType`, `smsMessagePrompt`, `smsMessageStaticSentence`, `smsMessageStaticTitle`, `smsMessageStaticImageFileKeys`, `smsFromNumber` |
+| `send_dtmf` | `allowInterruption` |
+
 ## MCP 동작 규칙
 
 ### create_agent
@@ -100,7 +112,7 @@ get_schema(namespace="tool-schema", schema_type="<built-in-tool-schema>")
 4. `update_agent(agent_id=..., data=...)` 호출
 5. `get_agent()`로 round-trip 확인
 
-**sub-schema replacement semantics가 핵심이다** — `builtInTools`에 `end_call` 하나만 넣으면 기존 도구가 전부 사라질 수 있다. 반드시 `get_agent()`로 현재 값을 읽고, 수정 후 보존할 sibling 값을 함께 다시 보내라.
+**sub-schema replacement semantics가 핵심이다** — `builtInTools`에 `end_call` 하나만 넣으면 기존 도구가 전부 사라질 수 있다. 기존 도구 객체를 schema 기본값으로 다시 만들면 전환 대상, SMS 발신/본문 설정, DTMF interrupt, 종료 도구 실행 중 발화 같은 tool-level 설정도 사라진다. 반드시 `get_agent()`로 현재 값을 읽고, 수정 후 보존할 sibling 값을 함께 다시 보내라.
 
 ## 실전 예시
 
@@ -131,6 +143,8 @@ update_agent(
   }
 )
 ```
+
+프롬프트/LLM만 바꿀 때는 `builtInTools`를 포함하지 않는다.
 
 ### update_agent — builtInTools 추가 (replace 주의)
 
