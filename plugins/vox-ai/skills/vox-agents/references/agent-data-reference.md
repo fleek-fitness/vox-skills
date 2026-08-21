@@ -55,6 +55,7 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 - `silenceCallTimeoutInSeconds`: 양쪽 무음 시 자동 종료. 기본 30초.
 - `backgroundMusic` enum: `none` | `cafe` | `office` | `call_center` | `library` | `dial_tone`
 - `noiseCancellation` enum: `none` | `nc` | `bvc` (기본 `bvc`)
+- `dtmfInterruptible`: 기본 `false`. `true`이면 DTMF 묶음의 첫 키에서 현재 에이전트 발화를 중단한다. 입력 묶음은 기존 timeout/종료 키까지 계속 수집하며, 첫 메시지는 `isFirstMessageInterruptible` 설정을 따른다.
 - `dtmfTerminationEnabled` / `dtmfTerminationKey` / `dtmfTimeoutSeconds`: DTMF 입력 종료 설정.
 
 ### speech

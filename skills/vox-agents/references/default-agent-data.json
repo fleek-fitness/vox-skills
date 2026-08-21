@@ -44,6 +44,7 @@
     "callTimeoutInSeconds": 900,
     "silenceCallTimeoutInSeconds": 30,
     "ringDurationInSeconds": 30,
+    "dtmfInterruptible": false,
     "dtmfTerminationEnabled": false,
     "dtmfTerminationKey": "#",
     "dtmfTimeoutSeconds": 3
