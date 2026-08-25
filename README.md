@@ -111,6 +111,16 @@ vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI �
 - Chrome MCP extension으로 화면 보며 안내 지원
 - `skills/vox-web-app/SKILL.md`
 
+### vox-cli
+
+Codex/Claude Code가 vox CLI를 이용해 agent/tool/knowledge를 코드처럼 관리하도록 안내합니다.
+
+- `vox init`, `vox sync`, `vox agent pull/validate/diff/status/push/delete`
+- repo/git 기반 Agent-as-Code 루프, CI/리뷰/롤백, `vox chat` smoke
+- prod 기본값과 내부 dev profile 선택 규칙
+- MCP는 조회/일회성, CLI는 durable authoring으로 나누는 운영 규칙
+- `skills/vox-cli/SKILL.md`
+
 ## MCP Servers
 
 이 플러그인은 두 개의 MCP 서버를 연결합니다:
@@ -119,3 +129,7 @@ vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI �
 |------|-----|------|
 | `vox` | `https://mcp.tryvox.co/mcp` | 플랫폼 도구 (에이전트, 통화, 조직 등) |
 | `vox-docs` | `https://fleek.mintlify.app/mcp` | 공식 문서 검색 (search_vox_ai_docs + query_docs_filesystem) |
+
+## vox CLI와 함께 쓰는 방식
+
+코딩 에이전트가 vox.ai 리소스를 레포에 남기고 리뷰/롤백 가능하게 수정해야 하면 `vox-cli` skill을 사용합니다. 빠른 조회나 일회성 실행은 MCP가 맡고, agent/tool/knowledge의 durable authoring은 `vox` CLI가 맡습니다.

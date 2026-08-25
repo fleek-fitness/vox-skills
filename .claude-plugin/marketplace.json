@@ -19,6 +19,7 @@
         "./skills/vox-agents",
         "./skills/vox-flow",
         "./skills/vox-tools",
+        "./skills/vox-cli",
         "./skills/vox-web-app"
       ]
     }
