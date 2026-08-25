@@ -55,6 +55,7 @@
 - skill↔MCP 도구 conformance CI를 추가했다 (`scripts/check-skill-mcp-conformance.sh` + `scripts/vox-mcp-public-tools.json` 매니페스트, `.github/workflows/bundle-sync.yml`에 step 추가). 스킬이 공개 surface(`PUBLIC_TOOL_NAMES`)에 없는 vox 도구명을 호출하도록 안내하면 CI가 실패하고, 어떤 스킬도 참조하지 않는 공개 도구는 경고한다. `create_custom_tool` 같은 phantom 도구명 회귀를 자동 차단한다(이번 라운드에 실제로 잔존 phantom을 잡아냄).
 
 ### Changed
+- `vox-agents`의 call settings guidance에 `dtmfInterruptible`을 추가했다. 기본값은 `false`이며, `true`일 때 첫 DTMF 키가 현재 발화만 중단하고 입력 묶음 처리와 첫 메시지 끼어들기 정책은 유지된다는 계약을 canonical reference와 Codex plugin bundle에 함께 반영했다.
 - `vox-tools` / `vox-agents`의 built-in tool guidance를 v3 `data.builtInTools` PATCH 계약과 맞췄다. prompt/LLM-only update에서는 `builtInTools`를 생략하고, built-in tool을 수정할 때만 `get_agent()` 결과의 public tool fields(`speakDuringExecution`, `transferConfigurations`, `responseMode`, SMS sender/content fields, `allowInterruption` 등)를 보존한 전체 배열을 다시 보내도록 명시했다.
 - `vox-flow` S5 eval lesson 을 반영해 사용자-facing 요약에서 boolean/control variable 을 직접 발화하지 않도록 했다. `is_emergency`, `address_complete`, `access_allowed` 같은 변수는 condition branching 용으로 두고, endCall/conversation 멘트에서는 자연어 요약 또는 별도 string summary 변수로 바꾸도록 references와 review checklist를 보강했다.
 - `vox-flow` eval lesson 을 반영해 flow authoring guidance 를 보강했다. flow-only 작업에서는 agent `data` 를 생략하고, `begin` outgoing edge 에 `skip_user_response` 를 붙이지 않으며, extraction/static one-shot 정상 진행을 fallback 으로 표현하지 않도록 했다. 또한 "요약 확인" 요구는 endCall summary 가 아니라 확인/수정 conversation turn 으로 설계하도록 `flow-guide`, node markdown references, review checklist 를 정리했다.
