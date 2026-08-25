@@ -73,12 +73,16 @@ vox.ai 관련 요청의 routing entrypoint. 요청 내용에 따라 아래 domai
 
 ### vox-agents
 
-프롬프트 에이전트(single prompt) 설계와 공통 음성 UX 규칙을 담당합니다.
+프롬프트 에이전트(single prompt) 설계와 Agent의 선택적 기능인 Manual, 공통 음성 UX 규칙을 담당합니다.
 
 - 신규 프롬프트 작성 워크플로우 + 한국어 템플릿
+- Manual 분리 판단, Trigger/content/linked 체인, Manual 소유 Tool 설계
+- 직접·linked Manual 재귀 품질 검사
+- 쓰기 Tool·PostCall·내용 확인을 구분하는 Side-effect 완료 근거 계약
+- 인바운드·아웃바운드 정상 종료 확인 질문과 `end_call.speakDuringExecution` 종료 멘트 계약
 - 실패 사례 원인 진단 → 리팩터링
 - agent.data 스키마 (MCP create_agent/update_agent)
-- Agent Type 판단 (prompt vs flow) + flow handoff
+- Agent Type 판단 (prompt-based vs flow) + single_prompt 내부 Manual 사용 판단 + flow handoff
 - `skills/vox-agents/SKILL.md`
 
 ### vox-flow

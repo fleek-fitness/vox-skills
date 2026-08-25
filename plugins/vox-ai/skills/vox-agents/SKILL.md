@@ -1,26 +1,35 @@
 ---
 name: vox-agents
-description: "Use whenever the user is building a vox.ai voice agent — writing or revising a system prompt, diagnosing agent behavior, or working with agent.data schema via MCP (create_agent / update_agent). This is the default agent skill for prompt-based agents. For flow agent design (multi-node), use vox-flow instead. Trigger on '프롬프트 작성해줘', '프롬프트 고쳐줘', '에이전트가 이상하게 답해', '음성 에이전트', or any vox prompt agent authoring question."
+description: "Use whenever the user is building or diagnosing a vox.ai prompt-based (`single_prompt`) voice agent — including its system prompt, optional Manuals (Trigger/content/linked chains), agent.data, and runtime behavior. Manuals are a feature of prompt-based agents, not a separate agent type. For `flow` agent design, use vox-flow instead. Trigger on '프롬프트 작성해줘', '매뉴얼 만들어줘', '프롬프트 고쳐줘', '에이전트가 이상하게 답해', '음성 에이전트', or any vox prompt-agent authoring question."
 ---
 
 # vox-agents
 
-vox.ai 프롬프트 에이전트(single prompt)를 설계하는 domain skill. 공통 음성 UX 규칙과 에이전트 생성/수정/진단/리팩터링을 담당한다.
+vox.ai 프롬프트 에이전트(single prompt)를 설계하는 domain skill. 공통 음성 UX 규칙과 Agent의 선택적 기능인 Manual을 포함해 에이전트 생성/수정/진단/리팩터링을 담당한다.
 
 Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 handoff. 사용자가 flow node, node prompt, condition_node, transition, fallback 을 언급하면 single prompt 를 작성하지 말고 `vox-flow` 로 handoff한다.
 
 ## Agent Type 판단 기준
 
-| 기준 | Single Prompt | Flow |
-|------|---------------|------|
-| 대화 복잡도 | 단순 Q&A, 1~2 분기 | 3개 이상 분기, 복잡한 시나리오 |
-| 결정적 흐름 제어 | prompt에 의존 | node 단위로 보장 |
-| 조건부 분기 | 어려움 | condition node로 정확히 제어 |
-| 외부 API 연동 | tool로 가능 | api node로 응답 변수 추출까지 |
-| 변수 추적 | 어려움 | extraction → condition 체인 |
-| 유지보수 | prompt 하나 수정 | node 단위 독립 수정 |
+| 기준 | Prompt-based (`single_prompt`) | Flow |
+|------|-------------------------------|------|
+| 흐름 제어 | LLM 판단에 맡길 수 있는 대화와 독립 절차 | 순서와 분기를 node·edge로 결정적으로 강제해야 하는 시나리오 |
+| 조건부 분기 | 본문 자연어 분기 또는 선택적 Manual Trigger | extraction → condition처럼 명시적 상태 체인 |
+| 외부 API 연동 | Agent Tool 또는 Manual 소유 Tool | api node로 응답 변수 추출·후속 분기까지 보장 |
+| 변수 추적 | 대화 맥락과 Manual 로드 시점 변수 | extraction 변수와 condition 체인 |
+| 유지보수 | 본문과 선택적 Manual을 기능 단위로 수정 | node 단위로 수정 |
 
-사용자가 유형을 명시하지 않으면 위 기준으로 판단하여 제안한다. Flow가 적합하면 `vox-flow`로 handoff.
+사용자가 유형을 명시하지 않으면 위 기준으로 판단하여 제안한다. 분기 수나 Manual 유무로 Agent type을 바꾸지 않는다. 규제·과금·필수 순서처럼 진입 자체를 모델 재량에 맡길 수 없거나 명시적 상태 체인이 필요하면 `vox-flow`로 handoff한다.
+
+### Manual 사용 판단 (`single_prompt` 내부)
+
+| 업무 | 배치 |
+|------|------|
+| 짧은 FAQ, 항상 적용되는 역할·톤·가드레일 | Agent 본문 prompt |
+| 독립적인 다턴 수집·검증·조건 판정 절차 | Manual |
+| 특정 절차에서만 필요한 Tool | 해당 Manual에 귀속 |
+| 진입부터 결정적으로 강제해야 하는 규제·과금·필수 순서 | Flow 검토 |
+| 3단 이상의 linked Manual 체인이 필요한 절차 | Flow 검토 |
 
 ## References
 
@@ -32,6 +41,9 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 - **voice-ai-prompt-revision.md** — 진단 기반 리팩터링. **diagnosis 산출물의 change_requests를 반영할 때 읽기.** See [references/voice-ai-prompt-revision.md](references/voice-ai-prompt-revision.md)
 - **variable-system.md** — 변수 카테고리(system/dynamic/extraction), naming, 렌더링 위치. **변수 설계 시 읽기.** See [references/variable-system.md](references/variable-system.md)
 - **voice-emotive-speech.md** — Cartesia Sonic-3 기반 감정/속도/웃음 표현력 prompting 가이드 (SSML `<emotion>`, `<speed>`, `[laughter]`). **유저가 "자연스럽게", "웃게", "속도 조절", "감정 표현"을 요청할 때 읽기.** See [references/voice-emotive-speech.md](references/voice-emotive-speech.md)
+- **manual-authoring.md** — Manual 분리 기준, Trigger 작성, 본문 StartManual 라우팅, content 구조와 Tool 귀속. **Manual을 새로 쓰거나 고칠 때 가장 먼저 읽기.** See [references/manual-authoring.md](references/manual-authoring.md)
+- **manual-data-reference.md** — Manual 필드와 Agent·Tool·linked Manual 연결 및 `@tool:`·`@manual:` 참조 규칙. **Manual 필드와 연결 관계를 작성할 때 읽기.** See [references/manual-data-reference.md](references/manual-data-reference.md)
+- **manual-review.md** — 직접 연결 및 linked Manual 전체를 재귀적으로 검토하는 품질 게이트. **Manual이 연결된 Agent를 완성·리뷰할 때 읽기.** See [references/manual-review.md](references/manual-review.md)
 
 ## Core Operating Rules
 
@@ -50,7 +62,10 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 신규 작성:
 1. `voice-ai-playbook.md` 읽기 → 규칙 숙지
 2. `voice-ai-prompt-template.md` 복사 → 요구사항 반영
-3. agent.data 스키마 참조하여 MCP로 생성
+3. 다턴 수집·검증·조건 판정·절차 전용 Tool이 있으면 `manual-authoring.md`로 Manual 분리 경계와 Trigger 중첩을 설계
+4. 각 업무의 결과를 쓰기 Tool 성공 / 요청 기록(PostCall 포함) / 내용 확인으로 분류해 Side-effect 완료 표현을 확정
+5. agent.data 스키마 참조하여 MCP로 생성
+6. Manual이 연결됐으면 `manual-review.md` 기준으로 직접·linked Manual과 Tool을 재귀 검토
 
 디버깅/개선:
 1. `voice-ai-prompt-diagnosis.md` 읽기 → 실패 원인 진단
@@ -76,6 +91,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 | Owns | Does Not Own |
 |------|--------------|
 | prompt authoring / diagnosis / revision | flow design (→ vox-flow) |
+| Manual 분리 판단 / Trigger / content / linked 체인 / 재귀 품질 검토 | Manual과 별개인 tool CRUD (→ vox-tools) |
 | agent.data schema | tool management (→ vox-tools) |
 | voice AI playbook rules (공통) | pricing / billing |
 | IVR/DTMF best practice (공통) | phone number management |
@@ -94,6 +110,17 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 - `get_schema(namespace='agent-schema', schema_type='agent-data-create')` — `create_agent.data` shape 확인
 - `get_schema(namespace='agent-schema', schema_type='agent-data-update')` — `update_agent.data` shape 확인
 - `get_schema(namespace='flow-schema', schema_type='flow-data')` — flow agent graph shape 확인 (필요 시 `vox-flow`로 handoff)
+
+현재 public vox MCP surface에는 Manual CRUD가 없다. 존재하지 않는 Manual 생성·조회 MCP Tool을 가정하지 않는다. Manual 원격 작업은 Vox CLI가 설치된 환경에서 아래 명령을 사용하고, CLI가 없으면 Manual 초안·검토 결과를 산출하되 원격 적용이 미검증임을 명시한다.
+
+### Vox CLI (Manual, when available)
+
+- `vox manual list --json` / `vox manual pull <id> --manual <local-name> --json`
+- `vox manual init <local-name> --tool-call-sound typing --json`
+- `vox manual validate <local-name> --json`
+- `vox manual push <local-name> --dry-run --json` → 승인된 적용 작업에서만 실제 push
+- `vox agent attach manual <agent> <manual> --json`
+- `node skills/vox-agents/scripts/review-manual-tree.mjs --workspace <path> --agent <local-name> --json`
 
 ### Docs (vox-docs search)
 - `https://docs.tryvox.co/docs/build/overview` — 에이전트 빌드 개요
