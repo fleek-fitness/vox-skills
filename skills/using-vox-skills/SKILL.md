@@ -12,7 +12,7 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 | Skill | Trigger | Owns | Does Not Own |
 |-------|---------|------|--------------|
 | `vox-onboarding` | 시작/온보딩, 에이전트 만들기, 전화 걸기/받기, MCP 연결 설정, 일반 안내 | onboarding, quickstart, 에이전트 생성 가이드, 전화 실행, MCP 서버 연결 설정 | prompt 세부 작성, flow 설계, 도구 관리 |
-| `vox-agents` | prompt 작성/리팩터링/진단, agent.data, 에이전트 유형 판단 | prompt authoring, diagnosis, revision, agent.data, voice AI playbook, agent type 판단 | flow 설계, tool management, web app UI |
+| `vox-agents` | prompt 작성/리팩터링/진단, Manual 설계·Trigger·라우팅·linked 체인 진단, agent.data, 에이전트 유형 판단 | prompt authoring, Manual authoring/review, diagnosis, revision, agent.data, voice AI playbook, agent type 판단 | flow 설계, tool management, web app UI |
 | `vox-flow` | flow 설계/노드 변환/리뷰, 노드별 프롬프트, condition_node 설정, 스크립트 시각화, 변수 시스템 | flow design, node conversion, node-scoped prompt, variable system, flow sketch, flow review | single-prompt authoring, tool management |
 | `vox-tools` | 빌트인/커스텀 도구 관리 | built-in tools, custom tools, tool workflow | prompt authoring, flow design |
 | `vox-web-app` | 웹 앱 UI 사용법, 딥링크, UI 전용 흐름(보이스 클론, CSV 업로드, 녹취 재생, 결제, 멤버 초대) | web app UI usage, navigation, deep links, UI-only flows, voice clone, CSV upload, call playback, billing, member management | prompt authoring, flow design, tool management |
@@ -50,6 +50,7 @@ docs MCP는 router가 직접 처리하는 검색 케이스다 — 단순 검색 
 | 요청 패턴 | 라우팅 | 이유 |
 |-----------|--------|------|
 | 프롬프트 안에서 도구 호출 방법 언급 | `vox-agents` | 프롬프트 컨텍스트 안의 도구 언급은 prompt authoring |
+| "매뉴얼 만들어줘", Manual Trigger/content/linked 체인 수정·진단 | `vox-agents` | Manual은 single-prompt Agent의 선택적 기능이며 본문 라우팅·완료 근거와 함께 설계해야 함 |
 | 도구 자체의 생성/삭제/파라미터 변경 | `vox-tools` | 도구 CRUD는 tools 영역 |
 | 대시보드에서 TTS/속도/설정 변경 | `vox-web-app` | UI 조작 가이드는 웹 앱 영역 |
 | "에이전트 만들어줘" (첫 사용자/MCP 미연결) | `vox-onboarding` | 온보딩 플로우에 에이전트 생성 포함 |

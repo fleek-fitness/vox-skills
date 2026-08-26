@@ -48,6 +48,14 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 - `actions[]` 각 항목에 `type`, `name` 필수.
 - `type` enum: `string` | `enum` | `boolean` | `number`
 - `type="enum"`이면 `enumOptions` 필수 — 없으면 런타임에 빈 선택지가 되어 추출 실패.
+- PostCall은 통화 내용을 구조화해 저장하는 기능이다. 예약·변경·취소·발송·결제 같은 외부 Side-effect를 실행하거나 성공시키지 않는다.
+
+### manualIds
+
+- single-prompt Agent에 직접 연결하는 Manual UUID 배열이다.
+- 특정 Manual 이후에만 사용하는 후속 Manual은 부모 Manual의 `linked_manual_ids`에 연결한다.
+- Manual이 연결된 Agent는 `manual-review.md` 기준으로 직접·linked Manual과 Manual 소유 Tool을 재귀 검토한다.
+- Manual content·Trigger·`StartManual` 라우팅은 `manual-authoring.md`, 필드와 연결·참조 규칙은 `manual-data-reference.md`를 따른다.
 
 ### callSettings
 
