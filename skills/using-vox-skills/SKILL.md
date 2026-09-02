@@ -1,6 +1,6 @@
 ---
 name: using-vox-skills
-description: "Use FIRST — before any other vox skill — when a user asks anything related to vox.ai: voice agent creation, prompt writing, flow design, tool setup, pricing, MCP connection, web app usage, testing, deployment, or general platform questions. Always route through this skill instead of calling vox domain skills directly. Trigger on '프롬프트 작성해줘', '요금이 얼마예요', 'MCP 연결', 'flow 설계', '도구 추가', '웹 앱 안내', '에이전트 만들어줘', '전화 걸어줘', '음성 AI', '통화 기록', '대량발신', or any vox.ai-related request."
+description: "Use FIRST — before any other vox skill — when a user asks anything related to vox.ai: voice agent creation, prompt writing, Manual authoring, flow design, tool setup, CLI / Agent-as-Code work (Codex·Claude Code), pricing, MCP connection, web app usage, testing, deployment, or general platform questions. Always route through this skill instead of calling vox domain skills directly. Trigger on '프롬프트 작성해줘', '매뉴얼 만들어줘', '요금이 얼마예요', 'MCP 연결', 'CLI', 'vox init', 'Agent-as-Code', 'diff 보고 push', 'flow 설계', '도구 추가', '웹 앱 안내', '에이전트 만들어줘', '전화 걸어줘', '음성 AI', '통화 기록', '대량발신', or any vox.ai-related request."
 ---
 
 # using-vox-skills
@@ -16,6 +16,18 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 | `vox-flow` | flow 설계/노드 변환/리뷰, 노드별 프롬프트, condition_node 설정, 스크립트 시각화, 변수 시스템 | flow design, node conversion, node-scoped prompt, variable system, flow sketch, flow review | single-prompt authoring, tool management |
 | `vox-tools` | 빌트인/커스텀 도구 관리 | built-in tools, custom tools, tool workflow | prompt authoring, flow design |
 | `vox-web-app` | 웹 앱 UI 사용법, 딥링크, UI 전용 흐름(보이스 클론, CSV 업로드, 녹취 재생, 결제, 멤버 초대) | web app UI usage, navigation, deep links, UI-only flows, voice clone, CSV upload, call playback, billing, member management | prompt authoring, flow design, tool management |
+
+> CLI / Agent-as-Code 작업(레포에서 코드처럼 관리, diff/push, Codex·Claude Code)은 별도 설치 skill이 아니라 **설치된 `vox` CLI가 소유**한다 — 아래 "CLI / Agent-as-Code" 섹션 참조.
+
+## CLI / Agent-as-Code (Codex·Claude Code)
+
+레포에서 코드처럼 관리(diff/PR/리뷰/롤백/CI), sync/import, validate·diff·status·push, chat smoke가 필요하거나 Codex·Claude Code 같은 코딩 에이전트가 vox.ai 리소스를 다루면, 이 작업은 **별도 설치 skill이 아니라 설치된 `vox` CLI가 소유**한다. `vox` 바이너리는 자기 사용법을 스스로 설명하므로, 별도 public skill 설치 없이 아래로 시작한다. 이 레포의 6개 스킬은 CLI 안에도 offline pack으로 들어 있어(`vox skills show <skill> --brief --json`) 같은 playbook을 CLI에서 조회할 수 있다.
+
+1. **첫 명령**: `vox guide coding-agent --brief --json` (target별 `vox guide coding-agent --target codex|claude --brief --json`) — CLI 운영 계약과 첫 명령 루프를 반환한다. flow authoring 세부는 `vox guide flow --task "<intent>" --json`.
+2. **local 부트스트랩**: `vox init` / `vox agent init` / `vox agent create`는 root `CLAUDE.md`/`AGENTS.md`를 만들지 않고, 충돌이 적은 launcher를 `.claude/skills/vox-ai/SKILL.md`와 `.codex/skills/vox-ai/SKILL.md`에 만든다(원치 않으면 `--no-agent-skills`; 갱신은 `vox agent skills refresh`). 이 launcher도 위 `vox guide coding-agent`를 가리킨다.
+3. **durable 루프**: 정본은 `vox guide coding-agent`가 돌려주는 루프다. 요약하면 `vox init --json` → plan/create 또는 pull → 파일 편집 또는 `vox agent flow` helper → `vox doctor --json` → `vox agent validate --agent <name> --json` → 프로젝트 리뷰 `vox agent status --all --offline --json` / `vox agent diff --all --offline --check --json` → `vox agent push --agent <name> --json`. `push`/`delete`/`vox call create`는 사용자가 명시 요청할 때만.
+
+라우팅: 사용자가 "레포", "코드처럼", "diff/PR/리뷰", "롤백", "CI", "sync/import", "push 전 검증", "Codex/Claude가 CLI 쓰게", "AI-first CLI"를 언급하면 durable authoring 루프는 위 CLI 계약이 소유하고, 도메인 설계 세부는 해당 domain skill(`vox-agents`/`vox-flow`/`vox-tools`)을 secondary로 참조한다.
 
 ## Docs MCP 활용
 

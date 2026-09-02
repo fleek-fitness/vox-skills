@@ -50,6 +50,8 @@ claude mcp add --transport http vox https://mcp.tryvox.co/mcp
 npx skills add https://github.com/vox-public/vox-skills --skill using-vox-skills
 ```
 
+레포에서 에이전트를 코드처럼 관리하는 코딩 에이전트 작업은 [vox CLI](https://docs.tryvox.co/docs/ai/cli)가 담당합니다. CLI에는 이 레포의 스킬이 offline pack으로 함께 들어 있어 `vox skills show <skill> --brief --json`으로 같은 내용을 조회할 수 있습니다.
+
 설치 전에 레포에 포함된 스킬 목록을 확인하려면:
 
 ```bash
