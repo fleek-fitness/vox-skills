@@ -8,7 +8,7 @@ vox.ai 에이전트는 두 종류의 도구를 사용합니다.
 
 | 구분 | 빌트인 도구 | 커스텀 도구 |
 |------|------------|------------|
-| 종류 | `end_call`, `transfer_call`, `transfer_agent`, `send_sms`, `send_dtmf` | HTTP/API |
+| 종류 | `end_call`, `transfer_call`, `transfer_agent`, `send_sms`, `send_dtmf`, `search_address` (정본: `list_schemas`) | HTTP/API |
 | 범위 | 플랫폼 전체 공통 | 조직(organization) 단위 |
 | 생성 | 불가 (플랫폼 제공) | `create_tool()` |
 | 에이전트 연결 | `update_agent(data={"builtInTools": [...]})` | `update_agent(data={"toolIds": [...]})` |

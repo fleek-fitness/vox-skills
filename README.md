@@ -101,7 +101,7 @@ vox.ai 관련 요청의 routing entrypoint. 요청 내용에 따라 아래 domai
 
 vox.ai 에이전트의 빌트인/커스텀 도구 관리를 담당합니다.
 
-- 빌트인 도구: end_call, transfer_call, transfer_agent, send_sms, send_dtmf
+- 빌트인 도구: end_call, transfer_call, transfer_agent, send_sms, send_dtmf, search_address
 - 커스텀 도구 (API/MCP type) 생성/연결/해제
 - `skills/vox-tools/SKILL.md`
 

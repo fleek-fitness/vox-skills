@@ -1,6 +1,6 @@
 # 커스텀 도구 레퍼런스
 
-조직 단위 커스텀 도구(HTTP/API)의 조회, 생성, 수정, 삭제 및 에이전트 연결/해제입니다. 커스텀 도구는 HTTP 엔드포인트 호출 설정만 지원합니다 — MCP 타입 커스텀 도구 생성은 없습니다.
+조직 단위 커스텀 도구(HTTP/API)의 조회, 생성, 수정, 삭제 및 에이전트 연결/해제입니다. 공개 MCP `create_tool`은 HTTP 엔드포인트 호출 설정(API 타입)만 지원합니다. MCP 서버를 도구로 붙이는 MCP 타입 커스텀 도구는 웹 앱(`/dashboard/{orgId}/tools?create=mcp`)에서만 만들 수 있으며, 그 안내는 `vox-web-app` 스킬이 담당합니다.
 
 ## 조회: list_tools(organization_id)
 
