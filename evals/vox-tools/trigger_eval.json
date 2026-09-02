@@ -1,0 +1,82 @@
+[
+  {
+    "query": "지금 에이전트에 end_call만 붙어 있는데 상담원 연결도 추가하고 싶어요. 번호는 02-555-0100이고 기존 종료 멘트 설정은 날아가면 안 돼요.",
+    "should_trigger": true
+  },
+  {
+    "query": "예약 조회 API를 도구로 붙이려고 해요. GET https://api.ourclinic.kr/v1/reservations 이고 예약번호가 파라미터예요. 만들고 에이전트에도 연결해주세요.",
+    "should_trigger": true
+  },
+  {
+    "query": "테스트로 만든 커스텀 도구 3개가 목록에 남아 있어요. 뭐가 어디 붙어 있는지 확인하고 안 쓰는 것만 지워주세요.",
+    "should_trigger": true
+  },
+  {
+    "query": "SMS로 예약 확인 문자 보내는 기능 켜고 싶은데 발신번호는 우리가 등록한 070 번호 쓰고 문구는 AI가 상황 맞춰 쓰게 하고 싶어요",
+    "should_trigger": true
+  },
+  {
+    "query": "도구 이름을 request_api로 했더니 저장이 안 되는데 왜 그런 거예요?",
+    "should_trigger": true
+  },
+  {
+    "query": "에이전트에서 transfer_call 빼줘. 더 이상 상담원 연결 안 해",
+    "should_trigger": true
+  },
+  {
+    "query": "주소 검색 빌트인 도구 있다던데 우리 배송 에이전트에 붙여줘",
+    "should_trigger": true
+  },
+  {
+    "query": "커스텀 도구 응답을 기다리지 말고 바로 다음 말 하게 하고 싶어. fire and forget 설정이 있어?",
+    "should_trigger": true
+  },
+  {
+    "query": "send_dtmf 도구 붙이면 끼어들기 허용 옵션이 뭐야",
+    "should_trigger": true
+  },
+  {
+    "query": "vox custom tool의 Authorization 헤더에 토큰 넣는 형식 알려줘",
+    "should_trigger": true
+  },
+  {
+    "query": "Claude Code에 vox MCP 서버 연결하려는데 /plugin install 하고 나서 도구가 안 보여요",
+    "should_trigger": false
+  },
+  {
+    "query": "프롬프트에서 check_order 도구를 언제 부르라고 써야 할지 모르겠어요. 도구 호출 조건 문구 좀 잡아주세요",
+    "should_trigger": false
+  },
+  {
+    "query": "flow에서 tool 노드 실패하면 안내 멘트 나가게 edge 설계해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "대시보드 도구 페이지에서 MCP 서버 URL 넣는 폼 어디 있어",
+    "should_trigger": false
+  },
+  {
+    "query": "에이전트가 도구 결과를 지어내서 말해. 프롬프트 진단해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "openai function calling 스키마 작성법 알려줘",
+    "should_trigger": false
+  },
+  {
+    "query": "mcp 서버 직접 만들어서 우리 크롬 확장에 붙이고 싶어",
+    "should_trigger": false
+  },
+  {
+    "query": "api 노드 응답 변수 json path 어떻게 써?",
+    "should_trigger": false
+  },
+  {
+    "query": "에이전트 처음 만드는데 도구는 나중에 붙일게. 일단 전화 한번 걸어보자",
+    "should_trigger": false
+  },
+  {
+    "query": "에이전트 설정 화면에서 도구 탭이 안 보여. 권한 문제야?",
+    "should_trigger": false
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "query": "고객 300명 리스트 엑셀로 있는데 대량발신 어떻게 돌려? 발신 시간대 제한도 걸고 싶어.",
+    "should_trigger": true
+  },
+  {
+    "query": "어제 오후에 온 전화 중에 클레임 건 하나 녹취를 팀장한테 보내야 해. 어디서 듣고 어떻게 공유해?",
+    "should_trigger": true
+  },
+  {
+    "query": "번호 사려는데 '구매할 수 없습니다'만 뜨고 진행이 안 돼. 뭘 먼저 해야 돼?",
+    "should_trigger": true
+  },
+  {
+    "query": "대시보드에서 통화 기록에 추출 필드 칼럼이 안 보이는데 어디서 켜?",
+    "should_trigger": true
+  },
+  {
+    "query": "웹훅 서명 키 어디서 발급해? 설정 어디 들어가야 하는지 화면 순서대로 알려줘",
+    "should_trigger": true
+  },
+  {
+    "query": "보이스 클론 하려면 tryvox 어디로 들어가? 샘플 몇 분 필요해?",
+    "should_trigger": true
+  },
+  {
+    "query": "팀원 초대하고 싶은데 멤버 페이지 링크 줘",
+    "should_trigger": true
+  },
+  {
+    "query": "vox 결제 수단 등록하는 화면 어디야",
+    "should_trigger": true
+  },
+  {
+    "query": "번호 구매 다이얼로그 바로 열리는 링크 있어?",
+    "should_trigger": true
+  },
+  {
+    "query": "에이전트 목소리 남자로 바꾸는 화면 어디야",
+    "should_trigger": true
+  },
+  {
+    "query": "번호 하나 사서 예약접수 에이전트에 연결까지 해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "대시보드 프롬프트 편집기에 뭘 써야 좋을지 모르겠어. 우리 업종에 맞게 초안 좀",
+    "should_trigger": false
+  },
+  {
+    "query": "플로우 에디터에서 condition 노드 조건식 어떻게 써?",
+    "should_trigger": false
+  },
+  {
+    "query": "커스텀 API 도구 만들어서 에이전트에 붙여줘. URL은 https://api.example.com/orders",
+    "should_trigger": false
+  },
+  {
+    "query": "에이전트가 더 자연스럽게 말하게 해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "우리 회사 어드민 페이지 React로 만드는데 사이드바 컴포넌트 추천해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "vox 요금이 얼마야",
+    "should_trigger": false
+  },
+  {
+    "query": "통화 로그 보니까 상담원 연결이 안 됐어. 왜 그런지 프롬프트 진단해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "구글 애널리틱스 대시보드 만드는 법",
+    "should_trigger": false
+  },
+  {
+    "query": "vox mcp 연결이 안 돼. 클로드 코드에서",
+    "should_trigger": false
+  }
+]

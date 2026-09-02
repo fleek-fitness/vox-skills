@@ -1,0 +1,82 @@
+[
+  {
+    "query": "vox로 병원 예약 받는 전화 AI 만들려는데 처음이라 뭐부터 해야 할지 모르겠어요. 사업자는 있고요.",
+    "should_trigger": true
+  },
+  {
+    "query": "에이전트가 자꾸 상담원 연결을 안 해주고 혼자 계속 설명해요. 프롬프트 문제인지 flow 문제인지도 모르겠는데 봐주실 수 있나요?",
+    "should_trigger": true
+  },
+  {
+    "query": "우리 회사 vox 쓴지 3개월인데 어제 통화 몇 건 로그 보고 어디서 끊긴 건지 확인하고 싶어요. 어디서 봐요?",
+    "should_trigger": true
+  },
+  {
+    "query": "vox 요금이 분당 얼마예요? 070 번호 월 비용도 같이 알려줘",
+    "should_trigger": true
+  },
+  {
+    "query": "치과 리콜 스크립트 워드파일 있는데 이거 vox 플로우로 바꿔줄 수 있어?",
+    "should_trigger": true
+  },
+  {
+    "query": "vox mcp 연결했는데 codex에서 도구가 안 보임",
+    "should_trigger": true
+  },
+  {
+    "query": "보험사 콜센터에 자동으로 전화 걸어서 ARS 1번 2번 누르고 담당자 연결되게 만들고 싶어요",
+    "should_trigger": true
+  },
+  {
+    "query": "vox 에이전트에 send_sms 붙여서 예약 확인 문자 나가게 해줘",
+    "should_trigger": true
+  },
+  {
+    "query": "지금 조직이 프릭테크로 돼 있는데 프릭헬스케어 쪽 에이전트 목록 봐야 해. 바꿔줘",
+    "should_trigger": true
+  },
+  {
+    "query": "tryvox 대시보드에서 대량발신 시간대 제한 어디서 걸어?",
+    "should_trigger": true
+  },
+  {
+    "query": "voxel 라이브러리로 3D 포인트 클라우드 렌더링하는 파이썬 예제 좀 짜줘. open3d 씀",
+    "should_trigger": false
+  },
+  {
+    "query": "우리 콜센터 상담원 교육자료 만들어야 하는데 응대 스크립트 예시 20개만 워드로 뽑아줘",
+    "should_trigger": false
+  },
+  {
+    "query": "twilio로 IVR 전화 트리 만드는 파이썬 코드 짜줘",
+    "should_trigger": false
+  },
+  {
+    "query": "elevenlabs tts로 이 문단 mp3로 만들어줘",
+    "should_trigger": false
+  },
+  {
+    "query": "우리 회사 slack에 붙는 챗봇을 claude api로 만들고 싶어",
+    "should_trigger": false
+  },
+  {
+    "query": "Vapi assistant를 retell로 마이그레이션하려는데 스키마 차이 알려줘",
+    "should_trigger": false
+  },
+  {
+    "query": "고객 통화 녹음 mp3 파일 있는데 회의록처럼 정리해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "리액트 앱에 음성 인식 STT 버튼 붙이는 방법 알려줘",
+    "should_trigger": false
+  },
+  {
+    "query": "카카오톡 채널 자동응답 설정하는 법 알려줘",
+    "should_trigger": false
+  },
+  {
+    "query": "LiveKit agents 프레임워크로 outbound call 샘플 코드 짜줘",
+    "should_trigger": false
+  }
+]
