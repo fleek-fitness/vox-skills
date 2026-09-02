@@ -2,6 +2,8 @@
 
 매뉴얼 엔티티의 필드와 연결·참조 규칙을 정리한다. 작성 doctrine은 `manual-authoring.md` 참조.
 
+표기 규칙: agent.data(MCP `create_agent`/`update_agent`)는 camelCase(`builtInTools`, `toolIds`, `manualIds`)이고, Manual 엔티티(CLI·Agent-as-Code 파일)는 snake_case(`built_in_tools`, `tool_ids`, `linked_manual_ids`)다. 표면이 다르기 때문이며, 한쪽 표기를 다른 쪽에 섞어 쓰지 않는다.
+
 ## 1. 엔티티 필드
 
 | 필드 | 타입 | 설명 |

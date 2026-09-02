@@ -2,6 +2,8 @@
 
 이 파일은 node type 을 고르는 기준과 흔한 실수를 정리한다. 실제 `flow` 의 node type, field, enum, required 여부는 이 파일에 박아두지 않는다. 작업 직전에 MCP schema endpoint 를 호출해 현재 API 계약을 확인한다.
 
+> 규칙의 정본은 `vox-flow/SKILL.md`의 Core Operating Rules다. 이 문서의 서술이 그 규칙과 다르면 SKILL.md가 우선하고, 이 문서를 고친다.
+
 ## Authoritative schema
 
 MCP 로 flow JSON 을 만들거나 수정하기 전에 항상 호출한다. default 는 `flow-data` 한 번이다. 이 한 응답에 public `flow` graph, edge condition, 모든 node type 의 `data` shape 가 함께 포함된다.

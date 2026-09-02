@@ -1,6 +1,6 @@
 # vox.ai MCP 수동 연결 가이드
 
-이 문서는 **Plugin을 사용하지 않고** vox.ai MCP 서버에 직접 연결하려는 사용자를 위한 reference다. 대부분의 사용자는 [AI 앱 연동 개요](https://docs.tryvox.co/docs/ai/overview)를 따라 Plugin을 설치하면 되고, Plugin이 `.mcp.json`으로 MCP 연결을 자동 구성한다.
+이 문서는 **Plugin을 사용하지 않고** vox.ai MCP 서버에 직접 연결하려는 사용자를 위한 reference다. 대부분의 사용자는 이 레포 README의 Plugin 설치 절차를 따르면 되고, Plugin이 `.mcp.json`으로 MCP 연결을 자동 구성한다. 레포에서 에이전트를 코드처럼 관리하는 코딩 에이전트 작업은 [vox CLI](https://docs.tryvox.co/docs/ai/cli)가 담당한다.
 
 ## MCP 서버 연결
 
@@ -64,9 +64,9 @@ codex mcp login vox
 
 Plugin을 설치한 경우에는 `/vox-ai:vox-onboarding`(Claude Code/Codex/Cowork) 또는 "에이전트 만들어줘" 같은 자연어 요청으로 온보딩이 시작된다.
 
-## 공개 MCP 도구 (Phase 1)
+## 공개 MCP 도구
 
-아래는 공개 surface(`PUBLIC_TOOL_NAMES`)에 노출되는 도구다.
+아래는 공개 surface에 노출되는 도구다. 정본은 레포의 `scripts/vox-mcp-public-tools.json`(vox-mcp `PUBLIC_TOOL_NAMES` 스냅샷)이고, 개수와 이름은 그 파일 기준이다.
 
 | 도구 | 설명 |
 |------|------|
@@ -94,6 +94,6 @@ Plugin을 설치한 경우에는 `/vox-ai:vox-onboarding`(Claude Code/Codex/Cowo
 | `list_llm_models` | 허용 LLM 모델 목록 |
 | `list_voice_models` | 허용 음성 모델 목록 |
 | `list_telephone_numbers` | 보유 번호 조회 (read-only) |
-| `update_telephone_number_agent` | 번호에 인바운드/아웃바운드 에이전트 연결/해제 |
+| `update_telephone_number_agent` | 번호에 인바운드 에이전트 연결/해제 (`inbound_agent` / `clear_inbound_agent`) |
 
 번호 구매, 대량 발신 캠페인은 이 phase에서 공개 MCP 도구가 없다. 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/numbers`)에서 수행한다.

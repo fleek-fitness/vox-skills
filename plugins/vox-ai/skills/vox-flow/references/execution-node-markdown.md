@@ -2,6 +2,15 @@
 
 이 문서는 conversation 외 노드의 **설계 markdown** 작성법을 다룬다. MCP/API `flow` JSON field 는 항상 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 결과를 따른다. api / transferCall / transferAgent / sendSms / tool 처럼 prose 가 load-bearing 인 무거운 노드는 SKILL.md [Schema Fetching](../SKILL.md#schema-fetching) 에 따라 그 type 만 standard 모드로 보강한다.
 
+> 규칙의 정본은 `vox-flow/SKILL.md`의 Core Operating Rules다. 이 문서의 서술이 그 규칙과 다르면 SKILL.md가 우선하고, 이 문서를 고친다.
+
+## 목차
+
+- [Shared rules](#shared-rules)
+- [extraction](#extraction) · [condition](#condition) · [api](#api) (Post-success SMS fallback, JSON shape) · [endCall](#endcall)
+- [transferCall](#transfercall) · [transferAgent](#transferagent) · [sendSms](#sendsms) · [tool](#tool)
+- [Global node](#global-node)
+
 ## Shared rules
 
 - 실패, else, fallback path 가 필요하면 markdown 에 의도를 쓰고 JSON 변환 시 `edges` 로 명시한다.

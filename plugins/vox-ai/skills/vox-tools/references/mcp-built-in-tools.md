@@ -1,6 +1,6 @@
 # 빌트인 도구 레퍼런스
 
-빌트인 도구(end_call, transfer_call, transfer_agent, send_sms, send_dtmf)의 장착, 해제 및 타입별 파라미터 상세입니다.
+빌트인 도구(end_call, transfer_call, transfer_agent, send_sms, send_dtmf, search_address)의 장착, 해제 및 타입별 파라미터 상세입니다. 현재 제공되는 전체 목록은 `list_schemas(namespace="tool-schema", category="built_in")` 결과가 정본입니다 — 이 문서에 없는 toolType이 조회되면 schema를 따르세요.
 
 빌트인 도구는 별도 생성/연결 엔드포인트가 없습니다. 에이전트 데이터 객체의 `data.builtInTools[]` 배열로 존재하며, 이 배열을 `create_agent` / `update_agent(data={"builtInTools": [...]})`로 통째로 보내서 장착·해제합니다.
 
@@ -56,7 +56,7 @@ get_schema(namespace="tool-schema", schema_type="transfer_agent")
 | `transferConfigurations[].transferTo` | 필수 | | 전화번호 또는 SIP URI |
 | `transferConfigurations[].transferCondition` | 선택 | | 전환 조건 설명 |
 
-runtime/DB legacy shape는 singular `transferConfiguration`을 쓰지만, v3 API와 MCP round-trip 기준은 `transferConfigurations`입니다.
+`get_agent()` 응답에 singular `transferConfiguration`이 보이더라도(runtime/DB legacy shape) 다시 보낼 때는 복수형 `transferConfigurations`를 씁니다. v3 API와 MCP round-trip은 복수형 기준입니다.
 
 **cold vs warm**:
 
@@ -132,6 +132,27 @@ IVR 메뉴 탐색을 위한 DTMF 톤을 전송합니다.
 | `description` | 선택 | | 호출 조건 설명 |
 | `allowInterruption` | 선택 | `true` | DTMF 도구 실행 중 사용자 발화로 끼어들 수 있는지 |
 
+### search_address
+
+통화 중 들은 한국 주소를 검색해 도로명·지번 주소 후보를 돌려줍니다. 도구는 후보와 근거만 반환하고 주소를 확정하지 않으므로, 에이전트가 후보를 읽어 주고 사용자 확인을 받아 확정하도록 프롬프트에 적어야 합니다.
+
+- 설계 가이드: 주소 수집 절차를 Manual로 분리할 때는 `vox-agents` 스킬의 Manual 작성 규칙을 따른다 (`@tool:search_address` 참조 방식)
+
+```json
+{"toolType": "search_address", "name": "search_address", "description": "고객이 배송지나 방문지 주소를 말할 때 주소 후보를 검색합니다."}
+```
+
+| 필드 | 필수 | 기본값 | 설명 |
+|-----|------|--------|------|
+| `toolType` | 필수 | | `"search_address"` |
+| `name` | 필수 | | 도구 이름 (고유). 기본 이름은 `search_address` |
+| `description` | 선택 | 서버 기본 설명 | 호출 조건 설명 |
+| `speakDuringExecution` | 선택 | | 검색 중 재생할 TTS 메시지 설정 |
+| `allowInterruptionDuringExecution` | 선택 | | 검색 중 사용자 발화로 끼어들 수 있는지 |
+| `toolCallSound` | 선택 | | 검색 중 재생할 대기음 프리셋 (`none` / `typing` / `elevator_1`~`elevator_4`) |
+
+정확한 필드명과 기본값은 `get_schema(namespace="tool-schema", schema_type="search_address")` 결과를 따릅니다.
+
 ## 필드 보존 주의
 
 `builtInTools`를 보내면 배열 전체가 교체됩니다. 일부 도구만 수정하더라도 `get_agent()` 결과에서 수정하지 않는 도구 객체를 그대로 유지하고, 현재 public schema에 없는 필드는 임의로 추가하지 마세요.
@@ -145,6 +166,7 @@ IVR 메뉴 탐색을 위한 DTMF 톤을 전송합니다.
 | `transfer_agent` | `agent`, `preserveChatContext` |
 | `send_sms` | `responseMode`, `smsMessageType`, `smsMessagePrompt`, `smsMessageStaticSentence`, `smsMessageStaticTitle`, `smsMessageStaticImageFileKeys`, `smsFromNumber` |
 | `send_dtmf` | `allowInterruption` |
+| `search_address` | `speakDuringExecution`, `allowInterruptionDuringExecution`, `toolCallSound` |
 
 ## 해제: update_agent(data={"builtInTools": [...]})
 

@@ -70,7 +70,8 @@ Manual이 연결된 Agent는 본문 prompt와 직접 연결 Manual만 따로 검
 Agent-as-Code 프로젝트에서는 다음 helper를 사용한다.
 
 ```bash
-node skills/vox-agents/scripts/review-manual-tree.mjs \
+# 스크립트는 이 스킬 디렉터리의 scripts/ 에 있다 (플러그인 설치본: ${CLAUDE_PLUGIN_ROOT}/skills/vox-agents/scripts/)
+node <vox-agents 스킬 디렉터리>/scripts/review-manual-tree.mjs \
   --workspace /path/to/vox-project \
   --agent agent-local-name \
   --json
