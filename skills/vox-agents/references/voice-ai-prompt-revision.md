@@ -1,6 +1,6 @@
 # Voice AI system prompt 리팩터링 가이드
 
-이 문서는 `references/voice-ai-prompt-diagnosis.md`의 **진단 결과**(failure modes + change_requests)를 바탕으로, **개선된 한국어 음성 system prompt**를 “수술적으로” 만들어내는 가이드입니다.
+이 문서는 `voice-ai-prompt-diagnosis.md`(같은 references 폴더)의 **진단 결과**(failure modes + change_requests)를 바탕으로, **개선된 한국어 음성 system prompt**를 “수술적으로” 만들어내는 가이드입니다.
 
 목표:
 - 프롬프트를 처음부터 다시 설계하지 않는다.
@@ -58,7 +58,7 @@ update_agent(
 
 ## 리팩터링 원칙(음성 특화)
 
-- voice-ai-playbook.md의 `Rules (must)`와 관련 섹션(도구/가드레일/정규화)을 기준으로 수정한다.
+- voice-ai-playbook.md의 `필수 규칙`과 관련 섹션(`도구 & 액션`, `확인 › 가드레일`, `문자 정규화`)을 기준으로 수정한다.
 - 아래 워크플로우는 중복을 피하고, 리팩터링 절차/우선순위만 다룬다.
 
 ## 리팩터링 워크플로우

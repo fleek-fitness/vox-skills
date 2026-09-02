@@ -115,12 +115,14 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 
 ### Vox CLI (Manual, when available)
 
+설치 여부는 먼저 `command -v vox`(또는 `vox --version`)로 확인한다. 없으면 아래 명령을 시도하지 말고 초안·검토 결과만 낸다.
+
 - `vox manual list --json` / `vox manual pull <id> --manual <local-name> --json`
 - `vox manual init <local-name> --tool-call-sound typing --json`
 - `vox manual validate <local-name> --json`
 - `vox manual push <local-name> --dry-run --json` → 승인된 적용 작업에서만 실제 push
 - `vox agent attach manual <agent> <manual> --json`
-- `node skills/vox-agents/scripts/review-manual-tree.mjs --workspace <path> --agent <local-name> --json`
+- `node <이 스킬 디렉터리>/scripts/review-manual-tree.mjs --workspace <path> --agent <local-name> --json [--strict]` — 이 SKILL.md와 같은 디렉터리의 `scripts/`에 있다(플러그인 설치본에서는 `${CLAUDE_PLUGIN_ROOT}/skills/vox-agents/scripts/...`). exit 0 통과, 1 Critical, `--strict`에서 Warning이면 2.
 
 ### Docs (vox-docs search)
 - `https://docs.tryvox.co/docs/build/overview` — 에이전트 빌드 개요
