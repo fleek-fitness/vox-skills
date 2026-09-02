@@ -9,13 +9,15 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 
 ## Skill Catalog
 
-| Skill | Trigger | Owns | Does Not Own |
-|-------|---------|------|--------------|
-| `vox-onboarding` | 시작/온보딩, 에이전트 만들기, 전화 걸기/받기, MCP 연결 설정, 일반 안내 | onboarding, quickstart, 에이전트 생성 가이드, 전화 실행, MCP 서버 연결 설정 | prompt 세부 작성, flow 설계, 도구 관리 |
-| `vox-agents` | prompt 작성/리팩터링/진단, Manual 설계·Trigger·라우팅·linked 체인 진단, agent.data, 에이전트 유형 판단 | prompt authoring, Manual authoring/review, diagnosis, revision, agent.data, voice AI playbook, agent type 판단 | flow 설계, tool management, web app UI |
-| `vox-flow` | flow 설계/노드 변환/리뷰, 노드별 프롬프트, condition_node 설정, 스크립트 시각화, 변수 시스템 | flow design, node conversion, node-scoped prompt, variable system, flow sketch, flow review | single-prompt authoring, tool management |
-| `vox-tools` | 빌트인/커스텀 도구 관리 | built-in tools, custom tools, tool workflow | prompt authoring, flow design |
-| `vox-web-app` | 웹 앱 UI 사용법, 딥링크, UI 전용 흐름(보이스 클론, CSV 업로드, 녹취 재생, 결제, 멤버 초대) | web app UI usage, navigation, deep links, UI-only flows, voice clone, CSV upload, call playback, billing, member management | prompt authoring, flow design, tool management |
+| Skill | Trigger |
+|-------|---------|
+| `vox-onboarding` | 시작/온보딩, 첫 에이전트 만들기(에이전트 0건 또는 MCP 미연결), 전화 걸기/받기, MCP 연결 설정, 일반 안내 |
+| `vox-agents` | prompt 작성/리팩터링/진단, Manual 설계·Trigger·라우팅·linked 체인 진단, agent.data, 에이전트 유형 판단, IVR/DTMF 탐색 전략, 발화 표현력(감정·속도·웃음) 프롬프트 |
+| `vox-flow` | flow 설계/노드 변환/리뷰, 노드별 프롬프트, condition_node 설정, 스크립트 시각화, 변수 시스템 |
+| `vox-tools` | 빌트인/커스텀 도구 관리 — 장착·해제·생성·수정·삭제 |
+| `vox-web-app` | 웹 앱 UI 사용법, 딥링크, UI 전용 흐름(보이스 클론, CSV 업로드, 녹취 재생, 결제, 멤버 초대), 통화 기록·녹취 조회 |
+
+소유 경계(Owns / Does Not Own)의 정본은 각 domain skill의 Ownership Boundary다. 라우터는 그 표를 복제하지 않는다 — 경계가 궁금하면 해당 스킬의 표를 읽는다.
 
 > CLI / Agent-as-Code 작업(레포에서 코드처럼 관리, diff/push, Codex·Claude Code)은 별도 설치 skill이 아니라 **설치된 `vox` CLI가 소유**한다 — 아래 "CLI / Agent-as-Code" 섹션 참조.
 
@@ -64,9 +66,10 @@ docs MCP는 router가 직접 처리하는 검색 케이스다 — 단순 검색 
 | 프롬프트 안에서 도구 호출 방법 언급 | `vox-agents` | 프롬프트 컨텍스트 안의 도구 언급은 prompt authoring |
 | "매뉴얼 만들어줘", Manual Trigger/content/linked 체인 수정·진단 | `vox-agents` | Manual은 single-prompt Agent의 선택적 기능이며 본문 라우팅·완료 근거와 함께 설계해야 함 |
 | 도구 자체의 생성/삭제/파라미터 변경 | `vox-tools` | 도구 CRUD는 tools 영역 |
-| 대시보드에서 TTS/속도/설정 변경 | `vox-web-app` | UI 조작 가이드는 웹 앱 영역 |
-| "에이전트 만들어줘" (첫 사용자/MCP 미연결) | `vox-onboarding` | 온보딩 플로우에 에이전트 생성 포함 |
-| "에이전트 만들어줘" (기존 사용자) | `vox-agents` | 온보딩 이후의 에이전트 생성은 authoring |
+| 대시보드에서 voice·속도 슬라이더 등 설정값 변경 | `vox-web-app` | UI 조작 가이드는 웹 앱 영역 |
+| "더 자연스럽게 말하게", "감정 넣어서", "웃게", 구간별 속도 조절 | `vox-agents` | 발화 표현력은 프롬프트 규칙(표현력 opt-in 모듈). 판별 기준은 설정값 변경이냐 프롬프트 규칙이냐 |
+| "에이전트 만들어줘" — `list_agents`가 에러(미연결)이거나 0건 | `vox-onboarding` | 온보딩 플로우에 에이전트 생성 포함. 첫 사용자 여부는 짐작하지 말고 `list_agents`를 먼저 호출해 판별한다 |
+| "에이전트 만들어줘" — `list_agents`가 1건 이상 | `vox-agents` | 온보딩 이후의 에이전트 생성은 authoring |
 | "flow 설계해줘", "스크립트를 노드로 변환" | `vox-flow` | flow 전용 설계 작업 |
 | "node prompt 작성", "노드별 프롬프트", "condition_node 수정" | `vox-flow` | flow node 의 `data.prompt` / transition / fallback 보존은 flow 영역 |
 | "flow vs single prompt 뭐가 나아?" | `vox-agents` | 유형 판단은 agents가 소유, flow 결정 시 handoff |
@@ -74,6 +77,8 @@ docs MCP는 router가 직접 처리하는 검색 케이스다 — 단순 검색 
 | SDK 사용법, API reference | docs MCP | 문서 검색으로 충분 |
 | "캠페인 만들어줘", "대량발신 설정" | `vox-web-app` | 대량발신/캠페인 관리는 웹 앱 영역 |
 | "번호 구매 페이지 알려줘", "녹취 어디서 들어?" | `vox-web-app` | 페이지 경로/딥링크 안내 |
+| "통화 기록 보여줘", "어제 통화 로그", "콜 로그에서 끊긴 원인" | `vox-web-app` | 통화 이력·녹취 조회는 monitor 영역. 데이터 확인은 `list_calls`/`get_call`, 화면 안내는 history 페이지 |
+| "ARS 뚫고 상담원 연결", "IVR 메뉴 눌러야 해", DTMF 탐색 | `vox-agents` | 탐색 전략과 프롬프트는 agents 소유(IVR best practice). `send_dtmf` 장착만 필요하면 `vox-tools` secondary |
 | "조직 전환", "다른 organization 으로 작업", "멀티 조직 계정" | router 직접 (org 도구) | 세션 활성 조직 전환은 domain 로직이 아닌 단일 MCP 호출 |
 | "지식 베이스 뭐 있어?", "knowledge base 목록" | router 직접 (`list_knowledges`) | 지식 베이스 전용 스킬 없음 — 조회만 가능 |
 | 어떤 스킬에도 매핑 안 되는 vox.ai 질문 | docs MCP → `vox-onboarding` | docs 검색 먼저, 없으면 onboarding이 가장 넓은 안내 범위 |
