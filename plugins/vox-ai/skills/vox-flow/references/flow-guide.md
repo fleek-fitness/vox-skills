@@ -2,6 +2,20 @@
 
 vox.ai flow agent 의 구조와 설계 원칙을 이해하기 위한 가이드. flow 를 처음 설계하거나, 기존 flow 를 수정할 때 읽는다.
 
+> 규칙의 정본은 `vox-flow/SKILL.md`의 Core Operating Rules다. 이 문서의 서술이 그 규칙과 다르면 SKILL.md가 우선하고, 이 문서를 고친다.
+
+## 목차
+
+- [Schema-first workflow](#schema-first-workflow)
+- [Public Flow Shape](#public-flow-shape) — Agent 최상위 `data` 와 `flow` / FlowNode / FlowEdge
+- [Edge Conditions](#edge-conditions) — AI / Logic / Fallback
+- [Global Node](#global-node)
+- [변수 흐름](#변수-흐름) — 생성 / 소비
+- [설계 원칙](#설계-원칙) — 노드 수 최소화 · 한 노드 한 목적 · Fallback 경로 · Extraction 전 Conversation · 요약 확인 turn · Condition 은 logic 전용
+- [설계 패턴](#설계-패턴) — Linear / Branching / Data Collection / Transfer Fallback
+- [API / MCP 로 Flow 만들고 수정](#api--mcp-로-flow-만들고-수정) — 생성 / 수정 / Legacy `flow_data` / 조회
+- [Round-trip 검증](#round-trip-검증)
+
 본 가이드는 v3 API / vox.ai MCP 의 public `flow` workflow 기준이다. 정확한 node type, data field, enum, required 여부는 문서에 고정하지 않고 MCP schema endpoint 결과를 따른다.
 
 ## Schema-first workflow
@@ -205,7 +219,7 @@ flow 에서 변수는 노드 간 데이터를 전달하는 핵심 메커니즘�
 
 사용자에게 말하는 문구에는 내부 제어 변수를 그대로 넣지 않는다. `is_emergency`, `address_complete`, `access_allowed`, `access_permission_provided` 같은 boolean/control variable 은 condition node 의 logic branching 용이다. 종료 요약에서 상태를 말해야 하면 `{{is_emergency}}` 를 읽히게 하는 대신 "물이나 전기 위험 여부는 말씀해 주신 내용 기준으로 함께 남기겠습니다"처럼 자연어로 쓰거나, 별도 string summary variable 을 추출해 읽는다.
 
-상세 → `variable-system.md` (vox-agents/references/) 참조.
+상세는 `vox-agents` 스킬이 소유한다(변수 시스템 reference) — 필요하면 `vox-agents` 스킬을 호출한다.
 
 ## 설계 원칙
 
@@ -331,7 +345,7 @@ POST /v3/agents
 vox.ai MCP:
 
 ```text
-mcp__vox__create_agent(
+create_agent(
   name="My Flow Agent",
   type="flow",
   data={ ... },
@@ -353,7 +367,7 @@ PATCH /v3/agents/{id}
 vox.ai MCP:
 
 ```text
-mcp__vox__update_agent(
+update_agent(
   agent_id="<UUID>",
   flow={ "nodes": [...], "edges": [...] }
 )
@@ -376,7 +390,7 @@ GET /v3/agents/{id}
 vox.ai MCP:
 
 ```text
-mcp__vox__get_agent(agent_id="<UUID>")
+get_agent(agent_id="<UUID>")
 ```
 
 flow agent 응답에는 public `flow` 가 포함된다. `flow_data` 가 같이 보일 수 있어도 deprecated compatibility field 로 취급한다.

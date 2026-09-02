@@ -1,0 +1,82 @@
+[
+  {
+    "query": "vox 처음 써봐. 우리 필라테스 스튜디오 예약 문의 받는 AI 만들고 내 폰 010-2233-4455로 테스트 전화 한 번 걸어줘.",
+    "should_trigger": true
+  },
+  {
+    "query": "에이전트는 어제 만들었는데 번호가 없어. 번호 사서 그 번호로 전화 오면 그 에이전트가 받게 해줘.",
+    "should_trigger": true
+  },
+  {
+    "query": "Cursor에서 vox 도구가 안 보여. API 키를 어디에 넣어야 하는지 모르겠어.",
+    "should_trigger": true
+  },
+  {
+    "query": "vox 방금 가입했는데 뭐부터 하면 돼?",
+    "should_trigger": true
+  },
+  {
+    "query": "우리 번호 07079174264로 전화 오면 AI가 받게 하고 싶은데",
+    "should_trigger": true
+  },
+  {
+    "query": "codex에 vox 플러그인 설치했는데 재시작해도 mcp가 안 떠",
+    "should_trigger": true
+  },
+  {
+    "query": "치과 예약 확인 에이전트 하나 만들어줘. vox에 아직 아무것도 없어",
+    "should_trigger": true
+  },
+  {
+    "query": "vox mcp 연결됐는지 어떻게 확인해?",
+    "should_trigger": true
+  },
+  {
+    "query": "테스트 콜 걸어봤는데 통화 결과 어디서 봐? get_call로 되나",
+    "should_trigger": true
+  },
+  {
+    "query": "인바운드 에이전트 연결 해제하고 싶어. 번호는 그대로 두고",
+    "should_trigger": true
+  },
+  {
+    "query": "어제 만든 상담 에이전트가 자꾸 말을 길게 해. 프롬프트 좀 고쳐줘",
+    "should_trigger": false
+  },
+  {
+    "query": "사내 노션 MCP 서버를 Claude Code에 붙이려는데 설정이 안 먹어",
+    "should_trigger": false
+  },
+  {
+    "query": "flow 에이전트 노드 설계 리뷰해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "대량발신 캠페인 어떻게 돌려? 엑셀 300명이야",
+    "should_trigger": false
+  },
+  {
+    "query": "end_call 도구 설정에서 종료 멘트 바꾸고 싶어",
+    "should_trigger": false
+  },
+  {
+    "query": "vox 요금제 뭐가 있어? 분당 얼마?",
+    "should_trigger": false
+  },
+  {
+    "query": "twilio 번호 사서 파이썬으로 전화 거는 코드 짜줘",
+    "should_trigger": false
+  },
+  {
+    "query": "기존 에이전트 5개 중에 예약 에이전트 프롬프트 리팩터링해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "회원 등급별 분기 condition 노드 설정해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "대시보드에서 팀원 초대 어떻게 해",
+    "should_trigger": false
+  }
+]

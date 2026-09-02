@@ -39,7 +39,8 @@ Playbook의 revision Pattern A("강하게 1회, 다른 곳은 참조만")를 표
 ## 전제 조건
 
 - 에이전트의 voice가 **Cartesia** 제공자여야 한다. 다른 제공자(ElevenLabs/OpenAI 등)에서는 아래 태그가 그대로 읽히거나 무시될 수 있다.
-- voice 변경 방법은 `vox-web-app` 스킬의 `references/build.md` → `#### 목소리(TTS)/속도` 섹션을 참조한다.
+- 현재 provider 확인 방법: `get_agent()` 응답의 `data.voice.provider`를 본다. `voice`가 비어 있으면 서버 기본 음성이 적용된 상태이므로 `list_voice_models`로 기본 provider를 확인한다. 규칙 8(기본값은 서버가 채운다) 때문에 생성 시 `voice`를 생략했다면 이 확인 없이는 provider를 알 수 없다.
+- voice 변경은 대시보드 UI 작업이므로 `vox-web-app` 스킬을 호출해 안내한다(에이전트 상세 › 목소리(TTS)/속도).
 - 감정 표현은 Cartesia voice 중에서도 emotive-tagged voice에서 더 안정적으로 나온다(선택사항).
 
 ## 지원하는 컨트롤
@@ -109,4 +110,4 @@ Playbook의 revision Pattern A("강하게 1회, 다른 곳은 참조만")를 표
 
 - Cartesia 공식 문서: Volume, Speed, and Emotion
 - Cartesia SSML 태그 전체 목록: `build-with-cartesia/sonic-3/ssml-tags`
-- vox 플랫폼에서 voice 변경 UI: `vox-web-app` 스킬의 `references/build.md` `#### 목소리(TTS)/속도`
+- vox 플랫폼에서 voice 변경 UI 안내: `vox-web-app` 스킬 호출 (에이전트 상세 › 목소리(TTS)/속도)

@@ -38,7 +38,7 @@
   ex) 01012341234
 
 ## transition conditions
-(조건 없이 다음 노드로 진행. JSON 변환 시 현재 schema 의 skip/edge field 를 확인하고 edge 를 명시.)
+(추출 완료 후 다음 노드로 진행. JSON 변환 시 명시 condition 으로 edge 를 만들고, fallback 으로 정상 진행을 표현하지 않는다. 사용자 발화를 기다리지 않는 edge 인지 확인한 뒤에만 `skip_user_response` 를 쓴다.)
 ```
 
 ## Condition
@@ -84,13 +84,13 @@
 - delivery_date: $.data.delivery_date — 배송 예정일
 
 ## transition conditions
-- 성공: API 응답 정상 수신 시 결과 안내 노드로 진행. ai-edge 또는 logic-edge — 응답 변수 (`{{order_status}}`) 채워짐 기준 판단.
+- 성공: API 응답 정상 수신 시 다음 노드로 진행. `condition:{type:"ai", prompt:"요청 성공 시"}` 로 보내고, 응답 변수(`{{order_status}}`) 값 비교는 api 노드의 edge 가 아니라 다음 condition 노드의 logic edge 에서 한다.
 - 실패: API 호출 실패 시 [API조회실패안내] conversation 노드로 진행. fallback edge 명시. **endCall 직행 금지** — 실패 시 사용자에게 양해 멘트 한 마디라도 전달.
 ```
 
 ### 짝꿍 노드: API 실패 안내 conversation
 
-위 api 노드의 실패 분기를 받는 경량 conversation 노드 예시. 안내 1회 후 마무리로 자연스럽게 흘려보낸다.
+위 api 노드의 실패 분기를 받는 경량 conversation 노드 예시. 재시도나 추가 응답이 필요할 때만 이 노드를 만든다 — 안내 후 종료만 남았다면 별도 노드 대신 endCall 종료 멘트에 복구 안내를 넣는 편을 우선한다(`conversation-markdown.md`, `execution-node-markdown.md` api 절).
 
 ```md
 ## name
@@ -102,7 +102,6 @@ API조회실패안내
 
 ### 모드
 - message mode: static
-- is_skip_user_response: true
 
 ### 발화 멘트
 - "조회가 잠시 어렵네요. 확인 후 다시 안내드릴게요."
@@ -111,7 +110,7 @@ API조회실패안내
 1. 사과는 한 번만. 재시도 권유 금지.
 
 ## transition conditions
-- 안내 후 자동 마무리: 발화 직후 다음 노드(endCall)로. (JSON 변환 시 현재 schema 의 skip/edge field 를 확인하고 edge 를 명시.)
+- 안내 완료: 안내 멘트 발화 후 마무리 단계로 진행. (JSON 변환 시 명시 condition 으로 edge 를 만들고, 사용자 응답을 기다리지 않는 edge 이므로 edge `skip_user_response` 사용 여부를 schema 로 확인한다. node `data` 에는 그런 키가 없다.)
 ```
 
 ## Transfer call

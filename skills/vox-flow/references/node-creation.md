@@ -2,6 +2,8 @@
 
 콜센터/OB/CS 스크립트나 확정된 flowchart 를 `## name / ## content / ## transition conditions` 형식의 flow-node markdown 으로 변환한다.
 
+> 규칙의 정본은 `vox-flow/SKILL.md`의 Core Operating Rules다. 이 문서의 서술이 그 규칙과 다르면 SKILL.md가 우선하고, 이 문서를 고친다.
+
 이 문서의 출력은 **대시보드 입력/리뷰용 설계 markdown** 이다. MCP/API `flow` JSON 이 아니다. markdown 을 JSON 으로 변환할 때는 반드시 `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 를 호출하고, schema endpoint 결과의 field/enum/required 여부를 따른다.
 
 ## Read only what you need

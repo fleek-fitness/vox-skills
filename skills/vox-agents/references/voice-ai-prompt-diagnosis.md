@@ -5,7 +5,7 @@
 목표:
 - 실패를 **재현 가능한 실패 모드(failure mode)**로 묶는다.
 - 각 실패 모드를 **프롬프트 드라이버(prompt driver)**(특정 섹션/문장/규칙)와 연결한다.
-- “어떻게 고칠지”는 다음 문서에서 다룬다: `references/voice-ai-prompt-revision.md`
+- “어떻게 고칠지”는 다음 문서에서 다룬다: `voice-ai-prompt-revision.md` (같은 references 폴더)
 
 ## 입력(필수)
 
@@ -108,7 +108,7 @@ trace_id: T1
 
 ### 1) Turn-taking 붕괴
 - 증상: 질문을 여러 개 던짐, 사용자가 말할 틈이 없음, 무한 확인 루프
-- 점검 포인트: voice-ai-playbook.md의 Rules (must)와 Turn-taking 섹션 기준으로 일치 여부 확인
+- 점검 포인트: voice-ai-playbook.md의 `필수 규칙`과 `턴테이킹` 섹션 기준으로 일치 여부 확인
 
 ### 2) 장문/과설명(Voice verbosity)
 - 증상: 한 응답이 너무 길어 TTS/청취 부담, 핵심 질문이 뒤로 밀림

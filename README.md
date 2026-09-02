@@ -50,6 +50,8 @@ claude mcp add --transport http vox https://mcp.tryvox.co/mcp
 npx skills add https://github.com/vox-public/vox-skills --skill using-vox-skills
 ```
 
+레포에서 에이전트를 코드처럼 관리하는 코딩 에이전트 작업은 [vox CLI](https://docs.tryvox.co/docs/ai/cli)가 담당합니다. CLI에는 이 레포의 스킬이 offline pack으로 함께 들어 있어 `vox skills show <skill> --brief --json`으로 같은 내용을 조회할 수 있습니다.
+
 설치 전에 레포에 포함된 스킬 목록을 확인하려면:
 
 ```bash
@@ -99,7 +101,7 @@ vox.ai 관련 요청의 routing entrypoint. 요청 내용에 따라 아래 domai
 
 vox.ai 에이전트의 빌트인/커스텀 도구 관리를 담당합니다.
 
-- 빌트인 도구: end_call, transfer_call, transfer_agent, send_sms, send_dtmf
+- 빌트인 도구: end_call, transfer_call, transfer_agent, send_sms, send_dtmf, search_address
 - 커스텀 도구 (API/MCP type) 생성/연결/해제
 - `skills/vox-tools/SKILL.md`
 
@@ -114,6 +116,16 @@ vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI �
 - 딥링크 치트시트 (`?new=1`, `?clone=true`, `?create=api` 등)
 - Chrome MCP extension으로 화면 보며 안내 지원
 - `skills/vox-web-app/SKILL.md`
+
+## 검사
+
+```bash
+bash scripts/check-bundle-sync.sh            # Codex 번들·매니페스트 버전 동기화
+bash scripts/check-skill-mcp-conformance.sh  # MCP 도구명·인자 형태 회귀
+node --test 'tests/**/*.test.mjs'            # 스킬 계약 테스트
+```
+
+trigger eval 세트는 `evals/<skill>/trigger_eval.json`에 있고, 실행 방법은 `evals/README.md`를 참고합니다. 라이선스는 [MIT](LICENSE)입니다.
 
 ## MCP Servers
 

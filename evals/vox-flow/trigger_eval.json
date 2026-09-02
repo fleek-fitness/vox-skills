@@ -1,0 +1,82 @@
+[
+  {
+    "query": "우리 치과 예약확인 OB 스크립트야. 인사, 본인확인, 예약일 안내, 변경이면 상담원 연결, 거절이면 종료. 이걸 노드로 쪼개서 flow 에이전트로 올려줘.",
+    "should_trigger": true
+  },
+  {
+    "query": "기존 flow 에이전트에서 조회 실패했을 때 그냥 끊기는 게 클레임 들어왔어. 실패했을 때 한마디 하고 끝나게 고쳐줘.",
+    "should_trigger": true
+  },
+  {
+    "query": "어제 만든 flow 설계인데 리뷰해줘. 특히 수집한 주소를 고객한테 다시 확인받는 부분",
+    "should_trigger": true
+  },
+  {
+    "query": "콜센터 스크립트 워드파일 하나 있는데 이거 vox 플로우 노드로 바꿔줄 수 있어? 분기가 좀 많아",
+    "should_trigger": true
+  },
+  {
+    "query": "condition 노드에서 member_grade 비교하는데 계속 else로 빠져. 뭐가 문제야",
+    "should_trigger": true
+  },
+  {
+    "query": "스크립트 받았는데 일단 mermaid 플로우차트로만 먼저 그려줘",
+    "should_trigger": true
+  },
+  {
+    "query": "api 노드에서 받은 order_status로 분기 태우려면 어떻게 연결해?",
+    "should_trigger": true
+  },
+  {
+    "query": "글로벌 노드로 '상담원 연결해줘'를 언제든 잡게 하고 싶어",
+    "should_trigger": true
+  },
+  {
+    "query": "validate_flow 돌렸더니 no_terminal_reachable 나오는데 뭘 고쳐야 해",
+    "should_trigger": true
+  },
+  {
+    "query": "flow json에 transitions 키 넣었더니 거부되는데 최신 스키마가 뭐야",
+    "should_trigger": true
+  },
+  {
+    "query": "single prompt 에이전트인데 프롬프트 안에서 '고객이 거절하면 이렇게' 분기를 자연어로 넣어줘",
+    "should_trigger": false
+  },
+  {
+    "query": "대시보드에서 플로우 에디터 어디로 들어가는지 알려줘. 노드 드래그가 안 돼",
+    "should_trigger": false
+  },
+  {
+    "query": "transfer_call 빌트인 도구를 에이전트에 붙여줘. 번호는 02-555-0100",
+    "should_trigger": false
+  },
+  {
+    "query": "우리 에이전트가 말이 너무 길어. 프롬프트 좀 다듬어줘",
+    "should_trigger": false
+  },
+  {
+    "query": "vox 처음인데 에이전트 하나 만들고 내 폰으로 테스트 전화 걸어줘",
+    "should_trigger": false
+  },
+  {
+    "query": "n8n 워크플로우로 슬랙 알림 자동화하는 법 알려줘",
+    "should_trigger": false
+  },
+  {
+    "query": "매뉴얼 trigger 문장이 겹쳐서 엉뚱한 매뉴얼이 시작돼. 어떻게 나눠?",
+    "should_trigger": false
+  },
+  {
+    "query": "react-flow로 노드 에디터 UI 만드는 예제 코드 짜줘",
+    "should_trigger": false
+  },
+  {
+    "query": "대량발신 캠페인 CSV 업로드가 안 돼. 컬럼 형식이 뭐야",
+    "should_trigger": false
+  },
+  {
+    "query": "send_sms 도구 발신번호를 우리 070으로 바꾸고 싶어",
+    "should_trigger": false
+  }
+]

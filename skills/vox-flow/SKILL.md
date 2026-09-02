@@ -1,13 +1,15 @@
 ---
 name: vox-flow
 description: "Use when the user is designing a vox.ai flow agent — selecting node types, planning branching logic, wiring transitions, extracting variables between nodes, configuring global nodes, converting a call-center script into flow nodes, visualizing scripts as Mermaid flowcharts, or reviewing flow designs. Flow agents are the multi-node extension of prompt agents for complex scenarios. Trigger on 'flow 설계', '스크립트를 노드로 변환해줘', 'flow vs single prompt', '플로우차트 그려줘', '노드 설계', 'flow 리뷰해줘', 'condition node 설정', '플로우 검증', '노드 연결 어떻게 해', or any vox.ai flow agent question."
+license: MIT
+compatibility: "Requires the vox MCP server (https://mcp.tryvox.co/mcp, OAuth login on first tool call), registered by the vox-ai plugin. Works in Claude Code, Codex, and any agentskills.io-compatible client; the vox CLI bundles the same skill offline."
 ---
 
 # vox-flow
 
 vox.ai **플로우 에이전트**를 설계하는 domain skill. 여러 node를 연결해 대화 흐름을 제어한다.
 
-Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agents`의 playbook을 따른다.** 새 flow 설계 시 `vox-agents/references/voice-ai-playbook.md`를 먼저 읽어야 한다.
+Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agents`의 playbook을 따른다.** 새 flow 설계 시 `vox-agents` 스킬을 먼저 호출해 그 규칙을 받는다.
 
 ## Flow vs Single Prompt 판단 기준
 
@@ -25,14 +27,13 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 - **node-types.md** — 노드 타입 선택 기준 + schema endpoint 사용 규칙. **특정 노드의 JSON 설정 옵션이 필요하면 먼저 schema endpoint 를 호출하기.** See [references/node-types.md](references/node-types.md)
 - **flow-review.md** — 설계물 체크리스트 기반 검증. **3단계: 설계 완료 후 또는 "리뷰해줘" 요청 시 읽기.** See [references/flow-review.md](references/flow-review.md)
 
-공통 reference (`vox-agents`에 위치):
-- **variable-system.md** — 변수 naming, 추출 설정, 렌더링 위치. **extraction/condition 변수 흐름을 설계할 때 읽기.**
-- **voice-ai-playbook.md** — 음성 UX 핵심 규칙. **새 flow 설계 시 가장 먼저 읽기.**
-- **default-agent-data.json** + **agent-data-reference.md** — agent.data 구조 예시(값은 복사하지 말 것 — override 안 하는 sub-schema는 OMIT, 기본값은 api-server가 채움) + MCP 동작 규칙. **MCP로 에이전트를 생성할 때 읽기.**
-- **ivr-navigation-best-practice.md** — IVR/DTMF 패턴. **ARS/IVR 통과 시나리오에서 읽기.**
-- **voice-ai-prompt-template.md** — 프롬프트 템플릿. **generated conversation 노드의 `data.prompt` 를 채울 때 checklist 로 참고하되, 전체 prompt 를 복사하지 않는다.**
-- **voice-ai-prompt-diagnosis.md** — 실패 사례 진단. **flow 에이전트가 이상하게 동작할 때 읽기.**
-- **voice-ai-prompt-revision.md** — 진단 기반 리팩터링. **diagnosis 후 노드 프롬프트를 수정할 때 읽기.**
+`vox-agents` 스킬이 소유한 공통 지식은 파일 경로로 열지 말고 **`vox-agents` 스킬을 호출**해 받는다 — 플러그인 설치 위치에 따라 다른 스킬의 상대 경로는 해석되지 않는다. 호출 시점:
+- 새 flow 설계 시작 — 음성 UX 핵심 규칙(voice-ai-playbook). **가장 먼저.**
+- extraction/condition 변수 흐름 설계 — 변수 naming·추출 설정·렌더링 위치(variable-system).
+- MCP로 에이전트를 생성하며 agent `data` 도 보낼 때 — agent.data 동작 규칙(값은 복사하지 말 것 — override 안 하는 sub-schema는 OMIT, 기본값은 api-server가 채움).
+- ARS/IVR 통과 시나리오 — IVR/DTMF 패턴.
+- generated conversation 노드의 `data.prompt` 를 채울 때 — 프롬프트 템플릿을 checklist 로 참고하되 전체 prompt 를 복사하지 않는다.
+- flow 에이전트가 이상하게 동작할 때 — 실패 사례 진단, 그 뒤 노드 프롬프트 수정(진단 기반 리팩터링).
 
 ## Workflow
 
@@ -47,7 +48,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
    - **validate**: MCP `validate_flow(flow=..., level="all")` 를 호출하고 `errors` / `advisories` 를 [Response Handling](#response-handling) 기준으로 처리한다.
    - **save**: blocking `errors` 가 비었을 때에만 `create_agent(flow=...)` / `update_agent(flow=...)` 를 호출한다.
 
-사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지. 새 작성/수정은 `flow` 를 사용한다. `flow_data`, `validate_flow_data`, `autofix_flow_data`, `update_agent_partial` 는 legacy `flow_data` graph 를 다뤄야 하는 경우에만 쓴다.
+사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지. 각 단계에서 여는 reference 는 위 목록의 해당 파일 하나(2단계는 `node-creation.md` + 필요한 노드 계열 1개)로 제한한다. 새 작성/수정은 `flow` 를 사용하고, legacy `flow_data` 경계는 [Incremental Editing](#incremental-editing) 한 곳에서 정의한다.
 
 ## Schema Fetching
 
@@ -150,14 +151,13 @@ standard 보강으로 확인할 수 있는 대표 정보:
 9. **동일 인물/동일 대상 shortcut 을 명시한다** — "계약자와 학습자가 본인", "예약자와 방문자가 동일"처럼 앞에서 받은 답이 뒤 질문의 답을 결정하면 다시 묻지 않는다. extraction 에서 동일성 변수(`is_same_person` 등)를 만들고 condition 으로 재사용 path 와 추가질문 path 를 나눈다.
 10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, `update_agent(flow=...)` 는 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. legacy `flow_data` graph 를 명시적으로 다루는 경우에만 `flow_data` / `update_agent_partial` 를 사용한다.
 11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema(flow-data, minimal)` 결과를 기준으로 `flow` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
-12. **flow 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow` 를 보내기 전, MCP `validate_flow(flow=..., level="all")` 를 먼저 호출해 dry-run 한다. `errors` 는 저장을 막는 문제이고, `advisories` 는 저장은 되지만 실행 중 문제가 될 수 있는 항목이다. `errors` 가 비었을 때만 진짜 호출하고, `advisories` 는 사용자에게 한두 줄로 요약 전달한다. legacy `flow_data` 를 다룰 때만 `validate_flow_data` / `autofix_flow_data` 응답의 `fixed_flow_data` 와 `warnings` 를 따른다.
+12. **flow 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow` 를 보내기 전 `validate_flow(flow=..., level="all")` 를 호출하고, `errors` 가 비었을 때만 진짜 호출한다. 응답별 처리와 legacy `flow_data` 도구는 [Response Handling](#response-handling) 한 곳에서만 정의한다.
 13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent.agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
 14. **외부 fixture 값은 만들지 않는다** — `transferCall` 은 실제 전화번호/SIP target 이 있을 때만 쓰고, `transferAgent` 는 실제 대상 agent UUID 가 있을 때만 쓴다. `tool` 은 `list_tools` 결과의 실제 id 를 사용한다. `sendSms` 의 발신번호/첨부 파일 key 처럼 운영 리소스가 필요한 값은 시나리오나 API가 제공하지 않으면 비워 두거나 해당 노드를 쓰지 않는다. placeholder 번호, 임의 UUID, 가짜 sender 를 넣지 않는다.
-15. **agent data latency/STT 기본값은 보존한다** — flow agent 생성/수정에서 `data` 를 같이 보낼 때, override 하지 않는 sub-schema(`llm`/`voice` 등)는 OMIT 해 api-server 기본값을 그대로 받는다(기본값을 하드코딩하거나 복사하지 않는다). 명시 override 시 허용값은 `list_llm_models`/`list_voice_models`, shape 는 `get_schema(... detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리한다. `speech.responsiveness` 는 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움을 추측해 낮추지 않는다.
-16. **flow 검증 중심 작업에서는 agent `data` 를 만들지 않는다** — 사용자가 agent-level prompt/voice/llm/stt 변경을 요구하지 않았고 flow graph 만 생성·검증한다면 `create_agent(name, type="flow", flow=...)` 처럼 최소 payload 로 보낸다. schema 에 보인다는 이유만으로 `data.stt.speed:"high"`, `llm`, `voice`, `speech` 기본값을 채우지 않는다.
-17. **edge 의미를 fallback 으로 뭉개지 않는다** — `begin` 에서 첫 실행 node 로 가는 edge 에는 `skip_user_response:true` 를 붙이지 않는다. extraction 완료, static one-shot 안내 후 다음 단계, API 성공 후 일반 진행처럼 정상 진행이 확정된 edge 는 명시적인 condition 으로 표현하고, fallback 은 실패/else/default 복구 path 에만 쓴다.
-18. **"확인" 요구는 실제 확인 turn 으로 만든다** — 사용자가 수집 정보 요약을 확인받으라고 했으면 endCall 종료 멘트에 요약을 넣는 것만으로 끝내지 않는다. 요약을 읽고 "맞으면 진행, 틀리면 수정"을 받는 conversation node 와 확인/수정 edge 를 둔 뒤 종료한다.
-19. **분기용 제어 변수를 그대로 말하지 않는다** — `is_emergency`, `address_complete`, `access_allowed` 같은 boolean/control variable 은 condition branching 에 쓰는 내부 상태다. endCall 또는 conversation 의 사용자-facing 문구에서 `{{is_emergency}}` 처럼 그대로 읽히게 하지 말고, 자연어 문장이나 별도 string summary 변수로 바꾼다.
+15. **agent `data` 는 요청받은 것만, 기본값은 서버가 채운다** — flow graph 만 생성·검증하는 작업이면 `create_agent(name, type="flow", flow=...)` 처럼 `data` 없이 보낸다. `data` 를 같이 보내야 할 때도 override 하지 않는 sub-schema(`llm`/`voice`/`speech`/`stt.speed` 등)는 OMIT 해 api-server 기본값을 받는다 — schema 에 보인다는 이유로 기본값을 복사하지 않는다. 명시 override 시 허용값은 `list_llm_models`/`list_voice_models`, shape 는 `get_schema(... detail="minimal")` 로 확인한다. 한국어 STT 는 `stt.languages:["ko"]`, voice locale 은 `voice.language:"ko-KR"` 로 분리하고, `speech.responsiveness` 는 요구가 없으면 `1.0` 을 유지한다.
+16. **edge 의미를 fallback 으로 뭉개지 않는다** — `begin` 에서 첫 실행 node 로 가는 edge 에는 `skip_user_response:true` 를 붙이지 않는다. extraction 완료, static one-shot 안내 후 다음 단계, API 성공 후 일반 진행처럼 정상 진행이 확정된 edge 는 명시적인 condition 으로 표현하고, fallback 은 실패/else/default 복구 path 에만 쓴다.
+17. **"확인" 요구는 실제 확인 turn 으로 만든다** — 사용자가 수집 정보 요약을 확인받으라고 했으면 endCall 종료 멘트에 요약을 넣는 것만으로 끝내지 않는다. 요약을 읽고 "맞으면 진행, 틀리면 수정"을 받는 conversation node 와 확인/수정 edge 를 둔 뒤 종료한다.
+18. **분기용 제어 변수를 그대로 말하지 않는다** — `is_emergency`, `address_complete`, `access_allowed` 같은 boolean/control variable 은 condition branching 에 쓰는 내부 상태다. endCall 또는 conversation 의 사용자-facing 문구에서 `{{is_emergency}}` 처럼 그대로 읽히게 하지 말고, 자연어 문장이나 별도 string summary 변수로 바꾼다.
 
 ## Response Handling
 
@@ -257,5 +257,5 @@ update_agent_partial(agent_id="<UUID>", operations=[...], validate_only?)
 - `https://docs.tryvox.co/docs/build/flow/advanced/global-node` — 글로벌 노드
 
 ### App URLs
-- `https://www.tryvox.co/flow/{agentId}` — 플로우 에이전트 에디터. **agent_id 를 그대로 쓴다 — 별도 flow_id 가 아니다.**
+- `https://www.tryvox.co/flow/{agentId}` — 플로우 에이전트 에디터. **agent_id 를 그대로 쓴다 — 별도 flow_id 가 아니다.** (UI 경로 정본은 `vox-web-app` 딥링크 치트시트)
 - `https://www.tryvox.co/dashboard/{organizationId}/agents` — 에이전트 목록

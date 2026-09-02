@@ -10,13 +10,13 @@
 
 | Placeholder | 참조 소스 | 포함 조건 |
 |-------------|----------|----------|
-| `[[style_rules]]` | `voice-ai-playbook.md` § Style / Brevity (짧은 문장, 선택지 2-3개) | 항상 |
-| `[[filler_rules]]` | `voice-ai-playbook.md` § Filler (허용/금지) | 항상 |
+| `[[style_rules]]` | `voice-ai-playbook.md` § 필수 규칙 (한 문장 한 행동, 기본 1–2문장, 선택지 2–3개) | 항상 |
+| `[[filler_rules]]` | `voice-ai-playbook.md` § 자연스러움 (필러) (설정, 허용 필러, 금지 상황) | 항상 |
 | `[[turn_taking_rules]]` | `voice-ai-playbook.md` § 턴테이킹 (질문 1개, 끊어 말하기, **인터럽션 복구 포함**) | 항상 |
 | `[[expressivity_rules]]` | `voice-emotive-speech.md` (SSML `<speed>`/`<emotion>`/`[laughter]`) | **Opt-in** — 요청 없으면 `# 표현력` 섹션 전체 삭제 |
-| `[[normalization_rules]]` | `voice-ai-playbook.md` § Character normalization (발화 vs 도구 입력) | 항상 |
+| `[[normalization_rules]]` | `voice-ai-playbook.md` § 문자 정규화 (발화 vs 도구 입력) | 항상 |
 | `[[tool_rules]]` | `voice-ai-playbook.md` § 도구 & 액션 (결과 확인 전 말하지 않기) | 항상 |
-| `[[guardrails_rules]]` | `voice-ai-playbook.md` § Rules (must) (메타 발화 금지 등) | 항상 |
+| `[[guardrails_rules]]` | `voice-ai-playbook.md` § 필수 규칙 (메타 발화 금지, 도구 결과 추측 금지, 이모지 금지) + § 확인 › 가드레일 | 항상 |
 
 ## Contents
 

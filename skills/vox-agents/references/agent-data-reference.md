@@ -144,11 +144,14 @@ create_agent(
 ### update_agent — 프롬프트 + LLM 변경
 
 ```text
+# 허용 모델은 먼저 조회한다 — 모델명을 기억으로 쓰지 않는다
+list_llm_models()
+
 update_agent(
   agent_id="agent-uuid",
   data={
     "prompt": {"prompt": "수정된 프롬프트..."},
-    "llm": {"model": "gpt-4o-mini", "temperature": 0.2}
+    "llm": {"model": "<list_llm_models 결과에서 선택>", "temperature": 0.2}
   }
 )
 ```

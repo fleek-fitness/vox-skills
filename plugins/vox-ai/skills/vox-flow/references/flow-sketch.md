@@ -152,6 +152,7 @@ flowchart TD
 | endCall | `G([종료])` | stadium | 흐름의 끝 |
 | transferCall | `H{{상담원연결}}` | hexagon | 외부 전환 |
 | transferAgent | `I{{에이전트전환}}` | hexagon | 내부 전환 |
+| sendSms | `J[/SMS발송\]` | trapezoid | 문자 발송 |
 
 **모양을 섞어 쓰지 않는다.** conversation에 `{}` 쓰거나, condition에 `[]` 쓰면 안 된다.
 

@@ -127,7 +127,7 @@ generated conversation 의 `data.prompt` 에는 완료 시 아래 의미를 명�
 
 ## Generated prompt 채우기
 
-`vox-agents/references/voice-ai-prompt-template.md` 는 single prompt agent 전체를 위한 템플릿이다. flow conversation 노드에서는 전체 템플릿을 복사하지 말고, 현재 노드 범위로 줄인 `data.prompt` 를 작성한다.
+`vox-agents` 스킬의 프롬프트 템플릿(voice-ai-prompt-template)은 single prompt agent 전체를 위한 템플릿이다. flow conversation 노드에서는 전체 템플릿을 복사하지 말고, 현재 노드 범위로 줄인 `data.prompt` 를 작성한다.
 
 - 사용자가 "노드 프롬프트", "node prompt", "이 conversation node 의 prompt" 를 요청하면 산출물은 해당 노드의 `data.first_message` / `data.prompt` / 전환 판단만이다. 전체 agent system prompt, 도구 계약, 전역 대화 흐름을 고봉밥으로 출력하지 않는다.
 - `data.first_message`: 노드 진입 시 실제로 말할 첫 문장/질문 하나.

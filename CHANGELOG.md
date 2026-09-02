@@ -51,6 +51,10 @@
 ## Unreleased
 
 ### Added
+- `using-vox-skills`에 "CLI / Agent-as-Code" 라우팅 섹션을 추가했다(`garden-tryvox/vox-skills` `garden/using-vox-skills-cli-routing` 0e7974d5 이식). 공개 main이 MCP 플러그인과 vox CLI offline skill pack 양쪽의 단일 원본이 되고, CLI `generate-skill-guides.ts`의 필수 문자열 검사(`vox guide coding-agent` 등)가 공개 main에서 통과한다. CLI 팩 재생성은 PROD-2699에서 한다.
+- trigger eval 세트 `evals/<skill>/trigger_eval.json` 6종을 추가했다(스킬당 20문항, 절반은 형제 스킬 near-miss). skill-creator `run_eval.py`(`claude -p`)로 발동률을 재고 결과는 PR 본문에만 남긴다. 실행법은 `evals/README.md`.
+- LICENSE(MIT)와 6개 SKILL.md frontmatter `license`·`compatibility`(vox MCP OAuth 전제)를 추가했다.
+- CI에 `node --test 'tests/**/*.test.mjs'` step을 추가했다(계약 테스트 12건이 있었지만 CI에서 실행되지 않았다). conformance 스크립트에 `update_agent(prompt=…)`/`update_agent(toolIds=…)`처럼 agent 필드를 top-level 인자로 쓰는 회귀 검사를 추가했다 — 도구명 검사는 인자 형태를 보지 못해 같은 회귀가 두 번 살아남았다.
 - `vox-manuals-temp`에서 검증한 Manual 작성 doctrine을 `vox-agents`의 progressive-disclosure 모듈로 편입했다. `manual-authoring.md`·`manual-data-reference.md`·`manual-review.md`와 로컬 Agent-as-Code용 `review-manual-tree.mjs`를 추가해 Trigger/content/linked 체인/Manual 소유 Tool을 Agent 계약 안에서 함께 설계·재귀 검토한다. Manual을 별도 top-level skill로 분리하지 않아 Agent 본문 라우팅과 완료 근거 ownership이 갈라지는 문제를 방지한다.
 - 모든 prompt Agent에 적용되는 Side-effect 근거 계약을 추가했다. 외부 상태 변경 완료는 해당 쓰기 Tool이 최종 성공을 명시했을 때만 허용하고, PostCall만 있으면 “요청으로 남김”, 후속 요청이 없으면 “내용 확인”으로 제한한다. 고객 발화 지침은 voice playbook과 prompt template에 두고, agent data reference는 PostCall이 외부 Side-effect를 수행하지 않는다는 데이터 의미만 설명하도록 책임을 분리했다.
 - `vox-agents`에 정상 종료 확인 계약을 추가했다. 인바운드는 “혹시 더 도와드릴 내용 있으실까요?”, 아웃바운드는 “더 남기실 말씀 있으신가요?”라고 묻고 응답을 기다린 뒤, 추가 요청이 없을 때만 Agent 발화 없이 `end_call`을 호출한다. 최종 종료 멘트는 `speakDuringExecution`이 담당하며, 수신 제외·오접속·현재 통화 불가·명시적 거절/중단/종료는 확인 질문을 생략할 수 있는 예외로 분리했다.
@@ -58,6 +62,12 @@
 - skill↔MCP 도구 conformance CI를 추가했다 (`scripts/check-skill-mcp-conformance.sh` + `scripts/vox-mcp-public-tools.json` 매니페스트, `.github/workflows/bundle-sync.yml`에 step 추가). 스킬이 공개 surface(`PUBLIC_TOOL_NAMES`)에 없는 vox 도구명을 호출하도록 안내하면 CI가 실패하고, 어떤 스킬도 참조하지 않는 공개 도구는 경고한다. `create_custom_tool` 같은 phantom 도구명 회귀를 자동 차단한다(이번 라운드에 실제로 잔존 phantom을 잡아냄).
 
 ### Changed
+- `vox-web-app`의 "화면 보며 안내(Chrome MCP) 권장" 모드를 삭제하고 텍스트 안내 단일 워크플로로 바꿨다. Codex·Cursor·`npx skills add` 설치본에는 브라우저 제어 도구가 없어 권장 경로가 실행 불가였고, 사용자 브라우저를 대신 조작하지 않는다. "작업 전 reference 5개를 반드시 읽는다"도 "영역이 정해지면 하나만"으로 바꿨다.
+- 스킬 간 파일 참조(`vox-agents/references/...`를 읽어라) 9곳을 스킬 호출(handoff)로 바꿨다. 플러그인 설치 위치에 따라 다른 스킬의 상대 경로는 해석되지 않는다. 같은 이유로 `review-manual-tree.mjs` 경로를 레포 루트 기준에서 스킬 디렉터리 기준으로 바꾸고 `vox` CLI 설치 판별(`command -v vox`)을 앞에 뒀다.
+- `vox-flow` SKILL.md Core Operating Rules를 규칙 정본으로 선언하고 references 상단에 우선순위 각주를 달았다. 규칙 15/16을 병합하고 규칙 12와 legacy `flow_data` 경계를 각각 한 절로 모았다(19→18). `flow-guide.md`·`execution-node-markdown.md`에 목차를 추가했다. S5 eval 패치가 `node-examples.md`와 `flow-review.md` B16에 닿지 않았던 것이 중복 서술의 결과였다.
+- `using-vox-skills` Skill Catalog에서 Owns/Does Not Own 열을 제거했다(정본은 각 스킬의 Ownership Boundary, 이미 IVR·naming에서 어긋나 있었다). 통화 기록·IVR/DTMF·표현력 라우팅 행과 "첫 사용자" 판별 절차(`list_agents` 결과)를 추가했다.
+- `vox-tools`에 read-modify-write Workflow 절, 예약어 4종, detach 트리거('도구 빼줘'), Ownership 화살표를 추가하고 빌트인 도구 목록에 `search_address`를 넣었다(docs·api-server·Manual reference에는 있었고 vox-tools 6곳에만 빠져 있었다). MCP 타입 커스텀 도구는 웹 앱 전용임을 명시했다.
+- `vox-onboarding` description에 배타 조건(에이전트 0건 또는 MCP 미연결일 때만, 아니면 vox-agents)을 넣었다. 세 스킬이 '에이전트 만들어줘'를 같은 트리거로 주장하고 있었다.
 - `vox-agents`의 call settings guidance에 `dtmfInterruptible`을 추가했다. 기본값은 `false`이며, `true`일 때 첫 DTMF 키가 현재 발화만 중단하고 입력 묶음 처리와 첫 메시지 끼어들기 정책은 유지된다는 계약을 canonical reference와 Codex plugin bundle에 함께 반영했다.
 - `vox-tools` / `vox-agents`의 built-in tool guidance를 v3 `data.builtInTools` PATCH 계약과 맞췄다. prompt/LLM-only update에서는 `builtInTools`를 생략하고, built-in tool을 수정할 때만 `get_agent()` 결과의 public tool fields(`speakDuringExecution`, `transferConfigurations`, `responseMode`, SMS sender/content fields, `allowInterruption` 등)를 보존한 전체 배열을 다시 보내도록 명시했다.
 - `vox-flow` S5 eval lesson 을 반영해 사용자-facing 요약에서 boolean/control variable 을 직접 발화하지 않도록 했다. `is_emergency`, `address_complete`, `access_allowed` 같은 변수는 condition branching 용으로 두고, endCall/conversation 멘트에서는 자연어 요약 또는 별도 string summary 변수로 바꾸도록 references와 review checklist를 보강했다.
@@ -77,6 +87,11 @@
 - `using-vox-skills` 라우터에 `set_organization`(조직 전환)·`list_knowledges`(지식 베이스 조회, read-only) 라우팅을 추가했다 — 어떤 스킬도 참조하지 않던 공개 도구를 surface(생성/연결 도구는 비공개이므로 발명하지 않음).
 
 ### Fixed
+- `vox-tools/references/mcp-custom-tools.md`·`mcp-tool-management.md`와 `vox-agents/references/voice-ai-prompt-revision.md`가 `update_agent(toolIds=[...])`/`update_agent(prompt={...})`처럼 top-level 인자를 지시하던 것을 `data={...}`로 고쳤다. 문서대로 하면 호출이 실패했고, 이전 `Fixed`의 "top-level shortcut 제거"가 이 두 파일을 놓쳤다.
+- 프롬프트 템플릿·playbook·diagnosis·revision이 존재하지 않는 playbook 섹션 이름(`Style / Brevity`, `Filler`, `Character normalization`, `Rules (must)`)을 참조하던 것을 실제 헤딩(`필수 규칙`, `자연스러움 (필러)`, `문자 정규화`)으로 고쳤다. playbook `빠른 탐색`이 12개 섹션 중 5개만 덮던 것을 전체 앵커로 확장했다.
+- `vox-onboarding` Step 2의 `data.prompt`를 객체(`{prompt: {prompt: ...}}`)로 고쳤다. 문자열로 읽혀 첫 호출이 422로 갈 경로였다.
+- `vox-flow/references/node-examples.md`의 extraction 예시가 규칙과 반대(조건 없는 진행)였던 것, 스키마에 없는 `is_skip_user_response` 키, api 성공 edge를 응답 변수 비교로 쓰던 것을 고쳤다. `flow-review.md` B16 "자동 전환" 옛 문구, A6 레이아웃 방향(flow-sketch와 충돌), A1 모양 목록(tool·sendSms 누락)을 고쳤다.
+- `agent-data-reference.md` 예시의 `gpt-4o-mini` 하드코딩을 `list_llm_models` 조회로 바꿨다. `default-agent-data.json`에 `manualIds`를 추가했다. `flow-guide.md`의 Claude Code 전용 `mcp__vox__` 접두를 bare 이름으로 통일했다. reference 안에서 형제 파일을 `references/xxx.md`로 가리키던 표기(실경로 기준 `references/references/`)를 파일명만으로 고쳤다. `voice-emotive-speech.md` Cartesia 전제에 현재 provider 확인법(`get_agent().data.voice.provider`)을 추가했다.
 - plugin feedback 회귀 방지 규칙을 추가했다. `vox-agents` / `vox-flow` 가 agent data 를 만들 때 한국어 STT 는 `["ko"]`, voice locale 은 `ko-KR` 로 분리하고 `speech.responsiveness` 는 명시 요청 없이 `1.0` 에서 낮추지 않도록 했다. 또한 node prompt 요청이 single prompt 전체 템플릿으로 새지 않도록 `using-vox-skills` 라우팅과 flow conversation node 지침을 강화했고, 기존 condition node fallback(`Else` 등)의 label/id/sourceHandle 을 임의 변경하지 않도록 flow guide/review 체크를 추가했다.
 - Codex plugin package를 설치 cache 안에서 self-contained 하도록 고쳤다. Codex installer가 `plugins/vox-ai/.mcp.json` / `plugins/vox-ai/skills` symlink를 cache에 복사하지 않아 `vox` / `vox-docs` MCP 서버가 노출되지 않던 문제를 해결하고, 기존 `1.0.0` cache 재사용을 피하도록 plugin version을 `1.0.1`로 올렸다.
 - `vox-agents`의 agent data / variable reference를 현재 MCP surface와 맞췄다. top-level `prompt`나 `agent_type` shortcut을 가정하지 않고, agent `data` schema와 flow 변수 전달 규칙을 기준으로 설명한다.
@@ -90,6 +105,7 @@
 - `quickstart-ko.md`의 공개 도구 표를 실제 24개 surface로 교정했다(phantom tool 제거 + `list_tools`/`create_tool`/`get_tool`/`update_tool`/`delete_tool`·`list_llm_models`/`list_voice_models`·`update_agent_partial`·`autofix_flow_data`·`list_knowledges` 반영). conformance CI가 잔존 phantom을 잡아 발견.
 
 ### Docs
+- `quickstart-ko.md` 공개 도구 표를 `scripts/vox-mcp-public-tools.json` 기준으로 표기하고(개수 명시 제거), `update_telephone_number_agent` 설명을 인바운드로 한정했다. 온보딩의 근거 없는 "10~30초" 수치를 제거했다. README에 vox CLI 경로·검사 명령·라이선스를 적었다. `vox-web-app/references/deep-links.md`에 플로우 에디터 경로를 추가하고 게이트 원인을 내부 코드명(`blockedReason`) 대신 UI 문구로 전달하도록 했다.
 - `README.md`의 Claude Code Plugin 섹션에 `/reload-plugins` 단계와 "첫 도구 호출 시 OAuth 로그인" 시점을 명시했다. 설치 직후 도구가 보이지 않는 상황을 줄이기 위함이다.
 - `vox-web-app/references/deep-links.md`의 `list_organizations` 예시 조직 UUID를 실재 식별자에서 명백한 placeholder(`00000000-0000-0000-0000-000000000000`)로 교체했다(공개 repo 노출 제거, Codex 번들 복사본 포함).
 - `references/mcp-vox-integration.md`, `references/quickstart-ko.md`, `README.md`의 MCP 서버 URL을 canonical `/mcp` 경로로 통일했다. `https://mcp.tryvox.co/`(root)는 404이고 실제 endpoint는 `/mcp`다.
