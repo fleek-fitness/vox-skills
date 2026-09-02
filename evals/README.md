@@ -25,6 +25,13 @@ python -m scripts.run_eval \
   --runs-per-query 3 --verbose
 ```
 
+러너를 쓸 때 주의할 것:
+
+- `--num-workers 1`로 돌린다. 워커가 여럿이면 같은 description의 사본이 `.claude/commands/`에 동시에 보여 각 사본의 발동률이 1/N로 떨어진다. 병렬화가 필요하면 스킬별로 프로젝트 디렉터리를 따로 만든다.
+- Claude Code 세션 안에서 돌리면 자식 `claude -p`가 `CLAUDE_CODE_SESSION_ID`를 물려받아 부모 대화를 이어간다. `CLAUDE*` 환경변수를 지운 셸에서 돌린다.
+- 사용자 스킬·MCP가 섞이지 않게 빈 디렉터리에서 `--setting-sources project --strict-mcp-config`를 붙인다. 러너가 인자를 넘기지 않으므로 PATH 앞에 `claude` shim을 둔다.
+- 스킬을 하나씩 재므로 형제 near-miss는 실제보다 높게 오발동한다. 6개를 함께 스테이징하면 `using-vox-skills`가 먼저 잡는다.
+
 결과는 레포에 커밋하지 않는다. 기준선 측정값은 해당 PR 본문에 남긴다. description을 바꾸는 PR은 바꾼 스킬과 형제 스킬을 다시 측정한다.
 
 functional eval(산출물 채점)은 아직 없다. 넣을 때는 "MCP를 호출하지 말고 보낼 JSON을 파일로 써라"로 고정해 프로덕션에 닿지 않게 한다.
