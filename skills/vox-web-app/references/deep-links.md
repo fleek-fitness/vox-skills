@@ -69,6 +69,7 @@ https://www.tryvox.co/dashboard/{orgId}/outbound/single?numberId={num_id}
 | 대시보드 홈 | `/dashboard/{orgId}` |
 | 에이전트 목록 | `/dashboard/{orgId}/agents` |
 | 에이전트 상세 | `/dashboard/{orgId}/agents/{agentUid}` (또는 `/agent/{uid}?version=N`) |
+| 플로우 에디터 | `https://www.tryvox.co/flow/{agentUid}` — agent id를 그대로 쓴다, 별도 flow id 없음 |
 | 보이스 라이브러리 | `/dashboard/{orgId}/voice` |
 | 도구 목록 | `/dashboard/{orgId}/tools` |
 | 지식 베이스 목록 | `/dashboard/{orgId}/knowledge` |
@@ -128,4 +129,4 @@ list_organizations 호출 → [{id: "00000000-0000-0000-0000-000000000000", name
 | API 키 발급 | 권한 필요 (owner/admin) |
 | 멤버 초대/결제 변경 | owner 권한 필요 |
 
-게이트에 걸리면 UI가 자동으로 해당 인증/결제 다이얼로그를 대신 연다. 사용자가 "왜 구매가 안 돼요?"라고 물으면 게이트 원인(`blockedReason`)을 먼저 확인.
+게이트에 걸리면 UI가 자동으로 해당 인증/결제 다이얼로그를 대신 연다. 사용자가 "왜 구매가 안 돼요?"라고 물으면 위 표의 게이트 조건을 먼저 짚어 보고, 원인은 UI가 표시하는 문구로 전달한다 — 내부 코드명(`blockedReason` 값)을 그대로 말하지 않는다.

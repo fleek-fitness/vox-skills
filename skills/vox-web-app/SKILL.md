@@ -1,11 +1,11 @@
 ---
 name: vox-web-app
-description: "Guide for using the vox.ai web app (tryvox.co/dashboard) — navigation, deep links, and UI-only flows such as voice clone, CSV upload, call playback, and billing. Also serves as the UI reference other vox skills consult when they need to explain how to do something in the web app. Trigger on '웹 앱에서 어떻게', '대시보드 사용법 알려줘', '번호 구매 페이지', '통화 기록 보기', '녹취 들어보기', '대량 발신 설정', '에이전트 설정 어떻게 해', '화면 보여줘', 'UI에서 어떻게 해', or any question about navigating or operating the vox.ai web app. Supports screen-guided mode via Chrome MCP extension when a dashboard URL is provided."
+description: "Guide for using the vox.ai web app (tryvox.co/dashboard) — navigation, deep links, and UI-only flows such as voice clone, CSV upload, call playback, and billing. Also serves as the UI reference other vox skills consult when they need to explain how to do something in the web app. Trigger on '웹 앱에서 어떻게', '대시보드 사용법 알려줘', '번호 구매 페이지', '통화 기록 보기', '녹취 들어보기', '대량 발신 설정', '에이전트 설정 어떻게 해', '화면 보여줘', 'UI에서 어떻게 해', or any question about navigating or operating the vox.ai web app. If the ask can be done with a vox MCP tool (prompt edit, tool attach, flow change), use the owning domain skill instead."
 ---
 
 # vox.ai 웹 앱 가이드
 
-vox.ai 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/...`)에서 사용자가 수행하는 모든 UI 조작 — 에이전트 구축, 번호 관리, 발신 실행, 통화 데이터 분석, 조직 설정 — 을 안내하는 스킬. 다른 vox 스킬(vox-agents, vox-flow, vox-tools, vox-onboarding)이 UI 경로를 설명할 때 secondary reference로 참조한다.
+vox.ai 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/...`)에서 사용자가 수행하는 모든 UI 조작 — 에이전트 구축, 번호 관리, 발신 실행, 통화 데이터 분석, 조직 설정 — 을 안내하는 스킬. 다른 vox 스킬(vox-agents, vox-flow, vox-tools, vox-onboarding)이 UI 경로를 설명해야 할 때 이 스킬을 호출해 참조한다.
 
 ## 언제 이 스킬을 사용하나
 
@@ -15,13 +15,13 @@ vox.ai 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/...`)에서 사
 
 ## 레퍼런스 역할 분담
 
-이 스킬은 라우터다. 영역별로 references에 분할되어 있으므로, 작업 전 해당 파일을 반드시 읽는다.
+영역별로 references에 분할되어 있다. 질문이 어느 영역인지 정해지면 그 파일 **하나만** 읽는다 — 딥링크만 필요하면 `deep-links.md` 하나로 끝난다. 다섯 파일을 모두 읽을 이유는 거의 없다.
 
 | 파일 | 주제 | 언제 읽나 |
 |------|------|-----------|
 | `references/build.md` | 구축: agents, voice, tools, knowledge | 에이전트/보이스/도구/지식베이스 UI 조작 안내 시 |
 | `references/deploy.md` | 배포: numbers, single/batch outbound | 번호 구매, 단건/대량 발신, SIP 연동 안내 시 |
-| `references/monitor.md` | 모니터링: analytics, history, alerts | 통화 이력 조회, 녹취 재생, 차트/필터, 알림 규칙 안내 시 |
+| `references/monitor.md` | 모니터링: analytics, history, alerts, evals | 통화 이력 조회, 녹취 재생, 차트/필터, 알림 규칙, 테스트(evals) 안내 시 |
 | `references/settings.md` | 설정: workspace, billing, member, api-key, webhook, sms, profile | 조직/결제/멤버/API 키/웹훅 등 운영 안내 시 |
 | `references/deep-links.md` | 딥링크 치트시트 | 쿼리 파라미터로 다이얼로그/폼을 바로 열어야 할 때 |
 
@@ -53,23 +53,10 @@ vox.ai 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/...`)에서 사
 
 ## 워크플로우
 
-### 모드 A: 화면 보며 안내 (권장)
-
-사용자가 대시보드 URL을 공유하면 이 모드로 진행한다. Claude Chrome extension(MCP)이 필요하다. 미설치 시 사용자에게 설치를 안내한다.
-
-1. 사용자가 대시보드 URL을 공유한다 (예: `https://www.tryvox.co/dashboard/{orgId}/agents`)
-2. Chrome으로 해당 페이지를 연다
-3. 스크린샷을 찍고, 화면에 보이는 UI 요소를 가리키며 해당 영역의 reference 내용을 설명한다
-4. 질문이 없으면 다음 영역으로 이동 → 스크린샷 → 설명 반복
-5. 마지막에 전체 요약과 추가 질문 여부를 확인한다
-
-### 모드 B: 텍스트 안내
-
-화면 없이 reference 기반으로 설명하는 모드. URL 없이 시작하면 이 모드로 진행한다.
-
-1. 해당 영역의 reference를 읽고 핵심 내용을 설명한다
-2. 사용자 질문에 답변한다
-3. 필요하면 `deep-links.md`의 URL을 공유해 사용자가 바로 해당 화면으로 이동하게 한다
+1. 질문이 어느 영역인지 정하고 그 reference 하나를 읽는다
+2. 화면 경로를 순서대로 설명하고, 필요하면 `deep-links.md`의 URL을 공유해 사용자가 바로 해당 화면으로 이동하게 한다
+3. UI에서만 되는 작업인지, MCP 도구로 대신할 수 있는 작업인지를 함께 말한다 — MCP로 되는 작업은 해당 domain skill로 넘긴다
+4. 사용자가 대시보드 URL이나 스크린샷을 공유하면 그 화면을 기준으로 설명한다. 사용자의 브라우저를 대신 조작하지 않는다
 
 ## 딥링크 활용
 
@@ -94,7 +81,7 @@ vox.ai 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/...`)에서 사
 |---|---|
 | 웹 앱 UI 조작 방법 안내 | 프롬프트 작성/진단 로직 (→ vox-agents) |
 | 딥링크 및 쿼리 파라미터 치트시트 | 플로우 노드 설계 (→ vox-flow) |
-| 화면 기반 가이드 (Chrome MCP) | 도구 생성/관리 로직 (→ vox-tools) |
+| UI 전용 작업과 MCP 대체 가능 작업의 구분 | 도구 생성/관리 로직 (→ vox-tools) |
 | 다른 vox 스킬의 UI 보충 참조 | 온보딩 전체 플로우 (→ vox-onboarding) |
 | UI에서만 가능한 기능(보이스 클론, CSV 업로드, 녹취 재생, 결제, 멤버 초대) 안내 | 가격/플랜 상세 (→ vox-docs MCP) |
 
