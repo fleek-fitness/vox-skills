@@ -2,13 +2,15 @@
 
 flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반으로 리뷰하고, CRITICAL/WARN/INFO로 분류한 리포트를 출력한다.
 
+> 규칙의 정본은 `vox-flow/SKILL.md`의 Core Operating Rules다. 이 문서의 서술이 그 규칙과 다르면 SKILL.md가 우선하고, 이 문서를 고친다.
+
 검증 기준은 같은 디렉토리의 레퍼런스를 따른다:
 - [flow-sketch.md](flow-sketch.md) — Mermaid 모양 규칙, 패턴
 - [node-creation.md](node-creation.md) — 노드 작성 workflow, 전환조건/멘트 공통 규칙
 - [conversation-markdown.md](conversation-markdown.md) — conversation 노드 작성 규칙
 - [execution-node-markdown.md](execution-node-markdown.md) — execution/transfer/tool 노드 작성 규칙
 - [node-types.md](node-types.md) — 노드 선택 기준과 schema endpoint 사용 규칙
-- variable-system.md — 변수 시스템 (`vox-agents/references/`에 위치)
+- 변수 시스템 규칙은 `vox-agents` 스킬이 소유한다 — 필요하면 `vox-agents` 스킬을 호출한다
 
 ## 입력
 
@@ -33,12 +35,12 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
-| A1 | CRITICAL | 노드 모양 정확성 | conversation=`[]`, condition=`{}`, extraction=`[//]`, api=`[()]`, begin/endCall=`([])`, transfer=`{{}}` |
+| A1 | CRITICAL | 노드 모양 정확성 | conversation=`[]`, condition=`{}`, extraction=`[//]`, api=`[()]`, tool=`[[]]`, sendSms=`[/\\]`, begin/endCall=`([])`, transferCall/transferAgent=`{{}}` — `flow-sketch.md` 모양 표와 1:1 |
 | A2 | CRITICAL | conversation vs condition 혼동 | 고객 발화 기반 분기 → conversation. 변수 값 비교 → condition. "동의/거절" 판단은 conversation |
 | A3 | CRITICAL | condition 앞에 extraction/api 없음 | condition은 이미 추출된 변수를 비교. 변수 생성 노드 없이 condition 사용하면 오류 |
 | A4 | WARN | 필수 예외 분기 누락 | 오대상(본인아님/관리사무소아님), 통화거절 등 OB콜 기본 예외 |
 | A5 | WARN | 불필요한 분기 추가 | 원본 스크립트에 없는 분기를 임의 추가 |
-| A6 | INFO | 레이아웃 | happy path 좌→우 일직선, 거절/예외 위아래 분기 |
+| A6 | INFO | 레이아웃 | Mermaid 는 `flowchart TD` — happy path 위→아래 일직선, 거절/예외는 오른쪽 분기 (`flow-sketch.md` 레이아웃 원칙). 좌→우 배치는 JSON `position` 규칙에만 적용 |
 | A7 | INFO | 엣지 라벨 | 2~5단어 이내 키워드 |
 
 ### B. 노드 상세 설계
@@ -60,7 +62,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B13 | INFO | 사용자 응답 대기 여부 | 일방 안내/실행 노드에서 사용자 응답 대기 없이 다음 edge 로 진행해야 하는지 명시했는가 |
 | B14 | INFO | 멘트 품질 | 큰따옴표 감싸기, TTS 불가 특수문자, 자연스러운 존댓말 |
 | B15 | INFO | `{{변수}}` 누락 | 원본 스크립트의 런타임 변수가 빠지지 않았는지 |
-| B16 | CRITICAL | extraction 포맷 | extraction 노드에 추출 변수 목록(변수명/타입/설명)이 정의되어 있는가. transition conditions가 "자동 전환"으로 표기되어 있는가 |
+| B16 | CRITICAL | extraction 포맷 | extraction 노드에 추출 변수 목록(변수명/타입/설명)이 정의되어 있는가. transition conditions 가 "자동 전환"이 아니라 추출 완료 후 진행하는 명시 condition 으로 표기되어 있는가(정상 진행을 fallback 으로 쓰지 않는다 — SKILL.md 규칙 16) |
 | B17 | CRITICAL | condition 분기 완전성 | condition 노드의 분기 조건이 모든 케이스를 커버하는가. else/default 분기가 존재하는가 |
 | B18 | WARN | condition 변수 소비 | condition 노드에서 참조하는 변수가 앞선 extraction/api 노드에서 실제로 생성되는가 |
 | B19 | WARN | api 응답 변수 정의 | api 노드에 응답 변수 추출 의도가 정의되어 있는가. JSON 작성 시 정확한 field shape 는 schema endpoint 결과를 따르는가 |
