@@ -44,13 +44,13 @@ get_agent(agent_id = call.agent_id)
 current_prompt = agent.data.prompt
 update_agent(
   agent_id = call.agent_id,
-  prompt = {**current_prompt, "prompt": revised_system_prompt}
+  data = {"prompt": {**current_prompt, "prompt": revised_system_prompt}}
 )
 ```
 
 권장:
 - 업데이트는 **유저가 “적용해줘/업데이트해줘”라고 명시했을 때만** 실행한다.
-- vox MCP의 `update_agent(prompt={...})`는 `data.prompt` 객체를 교체(replace)하므로 `firstLine`/`firstLineType` 등 필요한 필드를 포함한 최종 객체를 전달한다.
+- `update_agent`의 프롬프트 변경은 top-level `prompt` 인자가 아니라 `data.prompt` 객체로 보낸다. `data.prompt`는 sub-schema 전체 교체(replace)이므로 `firstLine`/`firstLineType` 등 필요한 필드를 포함한 최종 객체를 전달한다.
 - LLM/STT/postCall 같은 설정 변경은 `agent-data-reference.md`를 따른다.
 - 적용 후 `get_agent`로 다시 읽어서 프롬프트가 바뀌었는지 확인한다.
 

@@ -86,18 +86,18 @@ update_tool(tool_id="tool-uuid", description="예약 상태 및 잔여석 조회
 delete_tool(tool_id="tool-uuid")
 ```
 
-## 에이전트 연결: update_agent(toolIds=[...])
+## 에이전트 연결: update_agent(data={"toolIds": [...]})
 
 ```
-update_agent(agent_id="agent-uuid", toolIds=["tool-uuid"])
+update_agent(agent_id="agent-uuid", data={"toolIds": ["tool-uuid"]})
 ```
 
-`list_tools()` 또는 `create_tool()` 응답의 `uid`를 `toolIds` 배열에 넣어 전달합니다.
+`list_tools()` 또는 `create_tool()` 응답의 `uid`를 `data.toolIds` 배열에 넣어 전달합니다. `toolIds`는 top-level 인자가 아니라 `data` 안의 필드입니다 — top-level로 보내면 호출이 거부됩니다.
 
-## 에이전트 해제: update_agent(toolIds=[...])
+## 에이전트 해제: update_agent(data={"toolIds": [...]})
 
 ```
-update_agent(agent_id="agent-uuid", toolIds=[])
+update_agent(agent_id="agent-uuid", data={"toolIds": []})
 ```
 
 `toolIds`는 교체(replace) 방식입니다. 일부만 변경할 때는 `get_agent()`로 현재 `data.toolIds`를 조회한 뒤 원하는 항목을 추가/제거한 전체 배열을 다시 저장하세요.

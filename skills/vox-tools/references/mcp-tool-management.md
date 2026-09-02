@@ -11,7 +11,7 @@ vox.ai 에이전트는 두 종류의 도구를 사용합니다.
 | 종류 | `end_call`, `transfer_call`, `transfer_agent`, `send_sms`, `send_dtmf` | HTTP/API |
 | 범위 | 플랫폼 전체 공통 | 조직(organization) 단위 |
 | 생성 | 불가 (플랫폼 제공) | `create_tool()` |
-| 에이전트 연결 | `update_agent(data={"builtInTools": [...]})` | `update_agent(toolIds=[...])` |
+| 에이전트 연결 | `update_agent(data={"builtInTools": [...]})` | `update_agent(data={"toolIds": [...]})` |
 
 - **빌트인 도구**: 플랫폼이 제공하는 기본 도구. 별도 생성/연결 엔드포인트 없이 `data.builtInTools[]` 배열로 에이전트에 직접 설정(파라미터)을 지정하여 장착합니다.
   - 상세: See [mcp-built-in-tools.md](mcp-built-in-tools.md)
@@ -76,7 +76,7 @@ create_tool(
   description="주문 상태 조회"
 )
 
-update_agent(agent_id="agent-uuid", toolIds=["tool-uuid"])
+update_agent(agent_id="agent-uuid", data={"toolIds": ["tool-uuid"]})
 ```
 
 ### 5. 확인
