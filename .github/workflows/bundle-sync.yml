@@ -17,3 +17,8 @@ jobs:
         run: bash scripts/check-bundle-sync.sh
       - name: Check skill↔MCP tool conformance
         run: bash scripts/check-skill-mcp-conformance.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run skill contract tests
+        run: node --test 'tests/**/*.test.mjs'

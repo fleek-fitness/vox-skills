@@ -1,6 +1,8 @@
 ---
 name: vox-onboarding
 description: "Getting started with vox.ai — create a voice AI agent, make an outbound call, and set up inbound reception. Guides the full onboarding flow: agent creation → outbound test call → inbound phone number setup. Especially useful for first-time users and general vox.ai questions. Trigger on '에이전트 만들어줘', '전화 걸어줘', 'vox 시작', '음성 에이전트', '아웃바운드', '인바운드', or any getting-started request. Use this when the user has no agent yet or no working MCP connection (list_agents fails or returns 0). If agents already exist and the ask is about the prompt or agent settings, use vox-agents instead."
+license: MIT
+compatibility: "Requires the vox MCP server (https://mcp.tryvox.co/mcp, OAuth login on first tool call), registered by the vox-ai plugin. Works in Claude Code, Codex, and any agentskills.io-compatible client; the vox CLI bundles the same skill offline."
 ---
 
 # vox — 음성 AI 에이전트 시작하기

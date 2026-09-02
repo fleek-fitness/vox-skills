@@ -1,6 +1,8 @@
 ---
 name: vox-tools
 description: "Use whenever the user asks about vox.ai tool management — adding or removing built-in tools (end_call, transfer_call, transfer_agent, send_sms, send_dtmf, search_address), creating custom HTTP/API tools, tool attachment/detachment workflow, or any question about managing tools on a vox agent. Trigger on 'end_call 추가해줘', 'custom tool 만들어줘', '도구 연결 어떻게 해', '도구 빼줘', 'transfer_call 제거해줘', '빌트인 도구 목록', or any vox tool question. If the question is about how to phrase tool usage inside the prompt, use vox-agents instead."
+license: MIT
+compatibility: "Requires the vox MCP server (https://mcp.tryvox.co/mcp, OAuth login on first tool call), registered by the vox-ai plugin. Works in Claude Code, Codex, and any agentskills.io-compatible client; the vox CLI bundles the same skill offline."
 ---
 
 # vox-tools

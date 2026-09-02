@@ -1,6 +1,8 @@
 ---
 name: vox-agents
 description: "Use whenever the user is building or diagnosing a vox.ai prompt-based (`single_prompt`) voice agent — including its system prompt, optional Manuals (Trigger/content/linked chains), agent.data, and runtime behavior. Manuals are a feature of prompt-based agents, not a separate agent type. For `flow` agent design, use vox-flow instead. Trigger on '프롬프트 작성해줘', '매뉴얼 만들어줘', '프롬프트 고쳐줘', '에이전트가 이상하게 답해', '음성 에이전트', or any vox prompt-agent authoring question."
+license: MIT
+compatibility: "Requires the vox MCP server (https://mcp.tryvox.co/mcp, OAuth login on first tool call), registered by the vox-ai plugin. Works in Claude Code, Codex, and any agentskills.io-compatible client; the vox CLI bundles the same skill offline."
 ---
 
 # vox-agents

@@ -1,6 +1,8 @@
 ---
 name: vox-web-app
 description: "Guide for using the vox.ai web app (tryvox.co/dashboard) — navigation, deep links, and UI-only flows such as voice clone, CSV upload, call playback, and billing. Also serves as the UI reference other vox skills consult when they need to explain how to do something in the web app. Trigger on '웹 앱에서 어떻게', '대시보드 사용법 알려줘', '번호 구매 페이지', '통화 기록 보기', '녹취 들어보기', '대량 발신 설정', '에이전트 설정 어떻게 해', '화면 보여줘', 'UI에서 어떻게 해', or any question about navigating or operating the vox.ai web app. If the ask can be done with a vox MCP tool (prompt edit, tool attach, flow change), use the owning domain skill instead."
+license: MIT
+compatibility: "Navigation guidance works without MCP. Data lookups (list_agents, list_calls) need the vox MCP server (https://mcp.tryvox.co/mcp, OAuth login on first tool call)."
 ---
 
 # vox.ai 웹 앱 가이드

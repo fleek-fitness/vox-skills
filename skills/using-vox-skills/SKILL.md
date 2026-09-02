@@ -1,6 +1,8 @@
 ---
 name: using-vox-skills
 description: "Use FIRST — before any other vox skill — when a user asks anything related to vox.ai: voice agent creation, prompt writing, Manual authoring, flow design, tool setup, CLI / Agent-as-Code work (Codex·Claude Code), pricing, MCP connection, web app usage, testing, deployment, or general platform questions. Always route through this skill instead of calling vox domain skills directly. Trigger on '프롬프트 작성해줘', '매뉴얼 만들어줘', '요금이 얼마예요', 'MCP 연결', 'CLI', 'vox init', 'Agent-as-Code', 'diff 보고 push', 'flow 설계', '도구 추가', '웹 앱 안내', '에이전트 만들어줘', '전화 걸어줘', '음성 AI', '통화 기록', '대량발신', or any vox.ai-related request."
+license: MIT
+compatibility: "Requires the vox MCP server (https://mcp.tryvox.co/mcp, OAuth login on first tool call) and the vox-docs MCP server, both registered by the vox-ai plugin. Works in Claude Code, Codex, and any agentskills.io-compatible client; the vox CLI bundles the same skills offline."
 ---
 
 # using-vox-skills

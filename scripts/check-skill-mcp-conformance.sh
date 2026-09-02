@@ -74,6 +74,20 @@ else
   echo "  ok"
 fi
 
+echo "→ agent fields passed as top-level update_agent/create_agent args (must be inside data={...})"
+# Background: the MCP signature is update_agent(agent_id, data={...}); docs that show
+# update_agent(toolIds=[...]) or update_agent(prompt={...}) fail when followed. The
+# tool-name check above cannot see argument shape, so this guards that class.
+toplevel="$(grep -rnE --include='*.md' --include='*.json' \
+  '(update_agent|create_agent)\((agent_id=[^,)]+, *)?(prompt|toolIds|builtInTools|manualIds|llm|voice|stt|speech|postCall)=' \
+  skills/ || true)"
+if [ -n "$toplevel" ]; then
+  printf '%s\n' "$toplevel" | sed 's/^/  ✗ /'
+  fail=1
+else
+  echo "  ok"
+fi
+
 echo "→ unreferenced manifest tools (warn only)"
 unref=""
 while IFS= read -r tok; do
@@ -100,6 +114,7 @@ Skill↔MCP conformance check FAILED. To reconcile:
     see scripts/vox-mcp-public-tools.README.md
   - Or, if the token is a false positive (non-MCP snake_case), add it to
     $ignore_file with a one-line reason.
+  - For top-level agent field args, move the field inside data={...}.
 EOF
   exit 1
 fi

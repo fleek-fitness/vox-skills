@@ -117,6 +117,16 @@ vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI �
 - Chrome MCP extension으로 화면 보며 안내 지원
 - `skills/vox-web-app/SKILL.md`
 
+## 검사
+
+```bash
+bash scripts/check-bundle-sync.sh            # Codex 번들·매니페스트 버전 동기화
+bash scripts/check-skill-mcp-conformance.sh  # MCP 도구명·인자 형태 회귀
+node --test 'tests/**/*.test.mjs'            # 스킬 계약 테스트
+```
+
+trigger eval 세트는 `evals/<skill>/trigger_eval.json`에 있고, 실행 방법은 `evals/README.md`를 참고합니다. 라이선스는 [MIT](LICENSE)입니다.
+
 ## MCP Servers
 
 이 플러그인은 두 개의 MCP 서버를 연결합니다:
