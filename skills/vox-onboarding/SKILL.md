@@ -1,6 +1,6 @@
 ---
 name: vox-onboarding
-description: "Getting started with vox.ai — create a voice AI agent, make an outbound call, and set up inbound reception. Guides the full onboarding flow: agent creation → outbound test call → inbound phone number setup. Especially useful for first-time users and general vox.ai questions. Trigger on '에이전트 만들어줘', '전화 걸어줘', 'vox 시작', '음성 에이전트', '아웃바운드', '인바운드', or any getting-started request."
+description: "Getting started with vox.ai — create a voice AI agent, make an outbound call, and set up inbound reception. Guides the full onboarding flow: agent creation → outbound test call → inbound phone number setup. Especially useful for first-time users and general vox.ai questions. Trigger on '에이전트 만들어줘', '전화 걸어줘', 'vox 시작', '음성 에이전트', '아웃바운드', '인바운드', or any getting-started request. Use this when the user has no agent yet or no working MCP connection (list_agents fails or returns 0). If agents already exist and the ask is about the prompt or agent settings, use vox-agents instead."
 ---
 
 # vox — 음성 AI 에이전트 시작하기
@@ -32,11 +32,9 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 - 사용 사례 (에이전트가 할 일?)
 - 웹사이트/참고 자료 (선택)
 
-**프롬프트 생성 시 반드시 vox-agents 스킬의 템플릿을 참조한다:**
-- `vox-agents/references/voice-ai-prompt-template.md`를 읽어서 프롬프트 구조를 따른다
-- `vox-agents/references/voice-ai-playbook.md`의 규칙을 적용한다
-- 핵심: 역할 정의, 인사말, 업무 범위, 톤, 금지사항, 마무리 멘트를 포함
-- 한국어 자연스러운 음성 대화체 사용
+**프롬프트는 `vox-agents` 스킬을 호출해 만든다.** 다른 스킬의 파일 경로를 직접 열지 않는다 — 플러그인 설치 위치에 따라 해석되지 않는다. 호출할 때 업종·사용 사례·참고 자료를 넘기고 완성된 프롬프트를 받는다.
+- 결과에는 역할 정의, 인사말, 업무 범위, 톤, 금지사항, 마무리 멘트가 있어야 한다
+- 한국어 자연스러운 음성 대화체
 
 수집한 정보로:
 1. 에이전트 이름 자동 생성 (업종 + 사용 사례 기반)
@@ -45,7 +43,7 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 4. 확인 받으면 `create_agent` MCP 도구로 생성
    - name: 이름
    - type: "single_prompt" (기본값 — 생략 가능)
-   - data: { prompt: 생성된 프롬프트 } — 프롬프트/설정은 top-level이 아니라 `data` 안에 넣는다(camelCase). 정확한 형태는 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")`로 확인
+   - data: { prompt: { prompt: "<생성된 프롬프트>" } } — `prompt`는 문자열이 아니라 객체다. `firstLine`/`firstLineType`은 생략하면 서버 기본값이 적용된다. 프롬프트/설정은 top-level이 아니라 `data` 안에 넣는다(camelCase). 정확한 형태는 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")`로 확인
    - llm/voice는 넣지 않는다 — `data.llm`/`data.voice`를 생략하면 서버가 기본값을 채운다. 사용자가 특정 음성·언어를 명시할 때만, 허용값을 `list_voice_models(language="ko-KR")`·`list_llm_models`로 조회해 지정한다.
 
 생성 성공 시에만 다음 단계로 진행.
@@ -72,7 +70,7 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
    - agent_id: Step 2에서 생성한 에이전트 ID
    - call_from: 보유 번호
    - call_to: 사용자가 알려준 번호
-5. 전화는 보통 10~30초 내에 걸려온다. 통화 후 결과를 확인하려면 `get_call` 도구를 사용할 수 있다.
+5. 발신 직후 연결이 시작된다. 통화 후 결과는 `get_call` 도구로 확인한다.
 
 ### Step 4: 인바운드 안내 (전화 받기)
 
